@@ -31,6 +31,11 @@ public class OnPlayWeaponBuffAndHealEffect implements Effect {
     }
 
     @Override
+    public boolean shouldCaptureSnapshot() {
+        return false;
+    }
+
+    @Override
     public void resolve(GameEngine gameEngine, Card sourceCard) {
         boolean isPlayer1 = sourceCard.getOwnerId().equals(gameEngine.getPlayer1().getUuid());
 
@@ -42,9 +47,7 @@ public class OnPlayWeaponBuffAndHealEffect implements Effect {
             return;
         }
 
-        List<Card> playedCards = isPlayer1
-                ? gameEngine.getGameState().getPlayer1PlayedCards()
-                : gameEngine.getGameState().getPlayer2PlayedCards();
+        List<Card> playedCards = gameEngine.getResolvedPlayedCardsForPlayer(sourceCard.getOwnerId());
 
         if (playedCards == null) {
             return;
@@ -93,5 +96,7 @@ public class OnPlayWeaponBuffAndHealEffect implements Effect {
 
         System.out.println("-> Ao jogar Arma (x" + weaponCount + "), " + myHero.getCardName() +
                 " recebeu +" + totalAtk + " de Ataque até o Final do Combate e curou para " + myHero.getVidaAtual() + " de Vida!");
+
+        gameEngine.captureSnapshot(sourceCard, this, "EFFECT_RESOLVED");
     }
 }

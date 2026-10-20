@@ -11,12 +11,18 @@ import java.util.List;
 
 public class OncePerCombatPlaySpellBuffEffect implements Effect {
 
+    private final CardType targetCardType;
     private final int espiritoBuff;
     private final int ataqueBuff;
     private final int defesaBuff;
     private boolean alreadyTriggeredThisCombat = false;
 
     public OncePerCombatPlaySpellBuffEffect(int espiritoBuff, int ataqueBuff, int defesaBuff) {
+        this(CardType.SPELL, espiritoBuff, ataqueBuff, defesaBuff);
+    }
+
+    public OncePerCombatPlaySpellBuffEffect(CardType targetCardType, int espiritoBuff, int ataqueBuff, int defesaBuff) {
+        this.targetCardType = targetCardType;
         this.espiritoBuff = espiritoBuff;
         this.ataqueBuff = ataqueBuff;
         this.defesaBuff = defesaBuff;
@@ -33,19 +39,22 @@ public class OncePerCombatPlaySpellBuffEffect implements Effect {
     }
 
     @Override
+    public boolean shouldCaptureSnapshot() {
+        return false;
+    }
+
+    @Override
     public void resolve(GameEngine gameEngine, Card sourceCard) {
         if (alreadyTriggeredThisCombat) return;
 
         boolean isPlayer1 = sourceCard.getOwnerId().equals(gameEngine.getPlayer1().getUuid());
 
-        List<Card> playedCards = isPlayer1 
-                ? gameEngine.getGameState().getPlayer1PlayedCards() 
-                : gameEngine.getGameState().getPlayer2PlayedCards();
+        List<Card> playedCards = gameEngine.getResolvedPlayedCardsForPlayer(sourceCard.getOwnerId());
 
-        boolean playedSpell = playedCards.stream()
-                .anyMatch(c -> c.getCardType() == CardType.SPELL); // MAGIA/FEITICO
+        boolean playedMatchingCard = playedCards.stream()
+                .anyMatch(c -> c.getCardType() == targetCardType);
 
-        if (playedSpell) {
+        if (playedMatchingCard) {
             java.util.UUID activeHeroId = isPlayer1
                     ? gameEngine.getGameState().getActiveHeroPlayer1Id()
                     : gameEngine.getGameState().getActiveHeroPlayer2Id();
@@ -63,8 +72,10 @@ public class OncePerCombatPlaySpellBuffEffect implements Effect {
                     activeHero.setAtaque(activeHero.getAtaque() + ataqueBuff);
                     activeHero.setDefesa(activeHero.getDefesa() + defesaBuff);
                     alreadyTriggeredThisCombat = true;
-                    
-                    System.out.println("Efeito de " + sourceCard.getCardName() + " ativado (Ao jogar Magia): +" + ataqueBuff + " Ataque!");
+                    gameEngine.registerCombatEndCleanup(() -> alreadyTriggeredThisCombat = false);
+
+                    System.out.println("Efeito de " + sourceCard.getCardName() + " ativado (Ao jogar " + targetCardType.name() + "): +" + ataqueBuff + " Ataque!");
+                    gameEngine.captureSnapshot(sourceCard, this, "EFFECT_RESOLVED");
                 }
             }
         }

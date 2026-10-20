@@ -45,8 +45,13 @@ public class CardFactory {
             // ==========================================
             // HERÓIS
             // ==========================================
-            case "Alucinação Cintlante":
             case "Esquadrão Goblin":
+                effects.add(new OncePerCombatPlaySpellBuffEffect(com.alkateca.lendasdapoeira.enums.CardType.SPELL, 1, 0, 0));
+                effects.add(new OncePerCombatPlaySpellBuffEffect(com.alkateca.lendasdapoeira.enums.CardType.ITEM, 0, 1, 0));
+                effects.add(new OncePerCombatPlaySpellBuffEffect(com.alkateca.lendasdapoeira.enums.CardType.ACTION, 0, 0, 1));
+                effects.add(new EndOfCombatHealEffect(2));
+                break;
+            case "Alucinação Cintlante":
             case "Rei Goblin":
             case "Traidor Goblin":
             case "Rainha Goblin":
@@ -87,6 +92,11 @@ public class CardFactory {
                 effects.add(new EndOfCombatMagicDamageEffect(5));
                 break;
             case "Heróis Lendários dos Goblin":
+                effects.add(new OnPlaySpellBuffEffect(com.alkateca.lendasdapoeira.enums.CardType.SPELL, 1, 0, 0));
+                effects.add(new OnPlaySpellBuffEffect(com.alkateca.lendasdapoeira.enums.CardType.ITEM, 0, 1, 0));
+                effects.add(new OnPlaySpellBuffEffect(com.alkateca.lendasdapoeira.enums.CardType.ACTION, 0, 0, 1));
+                effects.add(new EndOfCombatHealAlliesEffect(3));
+                break;
             case "Kael, Domador de Feras":
             case "Behemoth-29A":
             case "Rapinária-7B3":

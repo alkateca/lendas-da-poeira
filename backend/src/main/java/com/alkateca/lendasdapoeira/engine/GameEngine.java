@@ -39,6 +39,34 @@ public class GameEngine {
     // Ações de limpeza de buffs/debuffs temporários que expiram ao final do combate
     private List<Runnable> combatEndCleanupActions = new ArrayList<>();
 
+    // Rastreia as cartas jogadas que já resolveram na fase RESOLUTION atual e as cartas que foram apenas invocadas
+    private List<Card> resolvedCardsInCurrentCombat = new ArrayList<>();
+    private Set<UUID> invokedCardIdsInCurrentCombat = new HashSet<>();
+
+    public void markCardAsResolved(Card card) {
+        if (card != null && !resolvedCardsInCurrentCombat.contains(card)) {
+            resolvedCardsInCurrentCombat.add(card);
+        }
+    }
+
+    public List<Card> getResolvedPlayedCardsForPlayer(UUID playerId) {
+        if (playerId == null || gameState == null) return Collections.emptyList();
+        boolean isP1 = player1 != null && playerId.equals(player1.getUuid());
+        List<Card> playedCards = isP1
+                ? gameState.getPlayer1PlayedCards()
+                : gameState.getPlayer2PlayedCards();
+        if (playedCards == null) return Collections.emptyList();
+
+        if (!resolvedCardsInCurrentCombat.isEmpty()) {
+            return playedCards.stream()
+                    .filter(c -> resolvedCardsInCurrentCombat.contains(c) && !invokedCardIdsInCurrentCombat.contains(c.getUuid()))
+                    .toList();
+        }
+        return playedCards.stream()
+                .filter(c -> !invokedCardIdsInCurrentCombat.contains(c.getUuid()))
+                .toList();
+    }
+
     public void registerCombatEndCleanup(Runnable cleanupAction) {
         if (cleanupAction != null) {
             this.combatEndCleanupActions.add(cleanupAction);
@@ -51,6 +79,8 @@ public class GameEngine {
         for (Runnable action : actions) {
             action.run();
         }
+        this.resolvedCardsInCurrentCombat.clear();
+        this.invokedCardIdsInCurrentCombat.clear();
     }
 
     public GameEngine(Player player1, Player player2) {
@@ -143,6 +173,8 @@ public class GameEngine {
 
         gameState.getPlayer1PlayedCards().clear();
         gameState.getPlayer2PlayedCards().clear();
+        resolvedCardsInCurrentCombat.clear();
+        invokedCardIdsInCurrentCombat.clear();
 
         changePhase(TurnPhase.COMBAT);
     }
@@ -460,6 +492,8 @@ public class GameEngine {
             moveResolvedCardsToDestination(gameState.getPlayer2PlayedCards());
             gameState.getPlayer1PlayedCards().clear();
             gameState.getPlayer2PlayedCards().clear();
+            resolvedCardsInCurrentCombat.clear();
+            invokedCardIdsInCurrentCombat.clear();
 
             changePhase(TurnPhase.COMBAT);
         }
@@ -497,6 +531,9 @@ public class GameEngine {
     }
 
     private void enqueueInitialResolutionCards() {
+        resolvedCardsInCurrentCombat.clear();
+        invokedCardIdsInCurrentCombat.clear();
+
         boolean p1HasInitiative = gameState.getActiveTurnPlayerId() == null
                 || gameState.getActiveTurnPlayerId().equals(gameState.getPlayer1().getUuid());
         List<Card> firstPlayerCards = p1HasInitiative
@@ -511,27 +548,78 @@ public class GameEngine {
 
         for (int i = 0; i < maxCards; i++) {
             if (i < firstPlayerCards.size()) {
-                Card c1 = firstPlayerCards.get(i);
-                if (c1.getEffects() != null) {
-                    c1.getEffects().stream()
-                            .filter(effect -> effect.predicate(c1, TurnPhase.RESOLUTION))
-                            .forEach(effect -> resolutionQueue.enqueue(effect, c1));
-                }
+                enqueueCardAndHeroOnPlayResolution(firstPlayerCards.get(i), false);
             }
             if (i < secondPlayerCards.size()) {
-                Card c2 = secondPlayerCards.get(i);
-                if (c2.getEffects() != null) {
-                    c2.getEffects().stream()
-                            .filter(effect -> effect.predicate(c2, TurnPhase.RESOLUTION))
-                            .forEach(effect -> resolutionQueue.enqueue(effect, c2));
+                enqueueCardAndHeroOnPlayResolution(secondPlayerCards.get(i), false);
+            }
+        }
+    }
+
+    /**
+     * Enfileira uma carta jogada e, imediatamente após seus efeitos de RESOLUTION,
+     * enfileira os efeitos de TurnPhase.RESOLUTION ("Ao jogar") do Herói ativo de seu dono.
+     */
+    private void enqueueCardAndHeroOnPlayResolution(Card card, boolean atFront) {
+        if (card == null) return;
+
+        com.alkateca.lendasdapoeira.effects.Effect markResolvedStep = new com.alkateca.lendasdapoeira.effects.Effect() {
+            @Override
+            public boolean predicate(Card sourceCard, TurnPhase turnPhase) {
+                return turnPhase == TurnPhase.RESOLUTION;
+            }
+
+            @Override
+            public boolean shouldCaptureSnapshot() {
+                return false;
+            }
+
+            @Override
+            public void resolve(GameEngine gameEngine, Card sourceCard) {
+                gameEngine.markCardAsResolved(sourceCard);
+            }
+        };
+
+        boolean isP1 = player1 != null && card.getOwnerId() != null && card.getOwnerId().equals(player1.getUuid());
+        HeroCard ownerHero = isP1
+                ? getActiveHero(player1, gameState.getActiveHeroPlayer1Id())
+                : getActiveHero(player2, gameState.getActiveHeroPlayer2Id());
+
+        List<com.alkateca.lendasdapoeira.effects.Effect> cardEffects = new ArrayList<>();
+        if (card.getEffects() != null) {
+            for (com.alkateca.lendasdapoeira.effects.Effect eff : card.getEffects()) {
+                if (eff.predicate(card, TurnPhase.RESOLUTION)) {
+                    cardEffects.add(eff);
                 }
             }
         }
 
-        HeroCard p1Hero = getActiveHero(player1, gameState.getActiveHeroPlayer1Id());
-        HeroCard p2Hero = getActiveHero(player2, gameState.getActiveHeroPlayer2Id());
-        if (p1Hero != null) p1Hero.onPhaseChange(TurnPhase.RESOLUTION, resolutionQueue);
-        if (p2Hero != null) p2Hero.onPhaseChange(TurnPhase.RESOLUTION, resolutionQueue);
+        List<com.alkateca.lendasdapoeira.effects.Effect> heroOnPlayEffects = new ArrayList<>();
+        if (ownerHero != null && ownerHero.getEffects() != null) {
+            for (com.alkateca.lendasdapoeira.effects.Effect eff : ownerHero.getEffects()) {
+                if (eff.predicate(ownerHero, TurnPhase.RESOLUTION)) {
+                    heroOnPlayEffects.add(eff);
+                }
+            }
+        }
+
+        if (!atFront) {
+            resolutionQueue.enqueue(markResolvedStep, card);
+            for (com.alkateca.lendasdapoeira.effects.Effect eff : cardEffects) {
+                resolutionQueue.enqueue(eff, card);
+            }
+            for (com.alkateca.lendasdapoeira.effects.Effect eff : heroOnPlayEffects) {
+                resolutionQueue.enqueue(eff, ownerHero);
+            }
+        } else {
+            for (int i = heroOnPlayEffects.size() - 1; i >= 0; i--) {
+                resolutionQueue.enqueueFirst(heroOnPlayEffects.get(i), ownerHero);
+            }
+            for (int i = cardEffects.size() - 1; i >= 0; i--) {
+                resolutionQueue.enqueueFirst(cardEffects.get(i), card);
+            }
+            resolutionQueue.enqueueFirst(markResolvedStep, card);
+        }
     }
     public boolean hasMagicBasicAttacks(UUID heroId) {
         if (heroId == null) return false;
@@ -815,6 +903,7 @@ public class GameEngine {
 
         // 3. Coloca na zona RESOLVE temporariamente e executa seus efeitos de resolução IMEDIATAMENTE
         invokedCard.setZoneId(ZoneId.RESOLVE);
+        invokedCardIdsInCurrentCombat.add(invokedCard.getUuid());
         if (targetHero != null && invokedCard.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM) {
             invokedCard.setAttachedToCardId(targetHero.getUuid());
         }
@@ -829,6 +918,7 @@ public class GameEngine {
             addedTempToPlayed = true;
         }
 
+        boolean capturedAnyEffectSnapshot = false;
         if (invokedCard.getEffects() != null) {
             for (com.alkateca.lendasdapoeira.effects.Effect effect : invokedCard.getEffects()) {
                 // Mesmo que a partida esteja em COMBAT_START ou GAME_START,
@@ -836,11 +926,15 @@ public class GameEngine {
                 if (effect.predicate(invokedCard, TurnPhase.RESOLUTION)) {
                     effect.resolve(this, invokedCard);
                     captureSnapshot(invokedCard, effect, "EFFECT_RESOLVED");
+                    capturedAnyEffectSnapshot = true;
                 }
             }
         }
+        if (!capturedAnyEffectSnapshot) {
+            captureSnapshot(invokedCard, null, "EFFECT_RESOLVED");
+        }
 
-        if (addedTempToPlayed) {
+        if (addedTempToPlayed && this.turnPhase != TurnPhase.RESOLUTION) {
             ownerPlayedList.remove(invokedCard);
         }
 
@@ -941,28 +1035,7 @@ public class GameEngine {
             ownerPlayedList.add(cardToPlay);
         }
 
-        // Enfileira os efeitos de TurnPhase.RESOLUTION da nova carta no topo da fila (em ordem reversa para manter a sequência original)
-        if (cardToPlay.getEffects() != null) {
-            List<com.alkateca.lendasdapoeira.effects.Effect> resEffects = new ArrayList<>();
-            for (com.alkateca.lendasdapoeira.effects.Effect eff : cardToPlay.getEffects()) {
-                if (eff.predicate(cardToPlay, TurnPhase.RESOLUTION)) {
-                    resEffects.add(eff);
-                }
-            }
-            for (int i = resEffects.size() - 1; i >= 0; i--) {
-                resolutionQueue.enqueueFirst(resEffects.get(i), cardToPlay);
-            }
-        }
-
-        HeroCard ownerHero = isP1
-                ? getActiveHero(player1, gameState.getActiveHeroPlayer1Id())
-                : getActiveHero(player2, gameState.getActiveHeroPlayer2Id());
-        if (ownerHero != null && ownerHero.getEffects() != null) {
-            ownerHero.getEffects().stream()
-                    .filter(eff -> eff instanceof com.alkateca.lendasdapoeira.effects.combat.OnPlayWeaponBuffAndHealEffect
-                            && eff.predicate(ownerHero, TurnPhase.RESOLUTION))
-                    .forEach(eff -> resolutionQueue.enqueue(eff, ownerHero));
-        }
+        enqueueCardAndHeroOnPlayResolution(cardToPlay, true);
     }
 
     public void gamePhase(){

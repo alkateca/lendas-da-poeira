@@ -335,4 +335,98 @@ class FireHeroesIntegrationTest {
         assertEquals(6, moyra.getAtaque(), "Após o Final do Combate, os buffs temporários (+2 e +3) expiram e permanece apenas 4 + 2 (Bomba anexada) = 6.");
         assertEquals(4, enemyHero.getDefesa(), "Após o Final do Combate, o debuff de -2 de Defesa de Bomba de fumaça deve expirar (voltando para 4).");
     }
+
+    @Test
+    void testImmediateSlotOrderOnPlayEffectsInResolutionQueue() {
+        Player p1 = new Player();
+        p1.setUuid(UUID.randomUUID());
+        p1.setName("Jogador Alix");
+        Deck deck1 = new Deck();
+        deck1.setHeroList(new ArrayList<>());
+        deck1.setCardList(new ArrayList<>());
+        p1.setCurrentDeck(deck1);
+
+        Player p2 = new Player();
+        p2.setUuid(UUID.randomUUID());
+        p2.setName("Jogador Oponente");
+        Deck deck2 = new Deck();
+        deck2.setHeroList(new ArrayList<>());
+        deck2.setCardList(new ArrayList<>());
+        p2.setCurrentDeck(deck2);
+
+        GameEngine engine = new GameEngine(p1, p2);
+        GameState gameState = engine.getGameState();
+        gameState.setActiveTurnPlayerId(p1.getUuid());
+
+        HeroCard alix = new HeroCard();
+        alix.setUuid(UUID.randomUUID());
+        alix.setCardName("Alix, Dragão Flamejante");
+        alix.setOwnerId(p1.getUuid());
+        alix.setEspirito(2);
+        alix.setAtaque(5);
+        alix.setDefesa(2);
+        alix.setVidaMaxima(14);
+        alix.setVidaAtual(14);
+        alix.setEstaVivo(true);
+        CardFactory.buildCardLogic(alix);
+        deck1.getHeroList().add(alix);
+        gameState.setActiveHeroPlayer1Id(alix.getUuid());
+
+        HeroCard enemyHero = new HeroCard();
+        enemyHero.setUuid(UUID.randomUUID());
+        enemyHero.setCardName("Inimigo Teste");
+        enemyHero.setOwnerId(p2.getUuid());
+        enemyHero.setEspirito(0);
+        enemyHero.setAtaque(0);
+        enemyHero.setDefesa(0);
+        enemyHero.setVidaMaxima(20);
+        enemyHero.setVidaAtual(20);
+        enemyHero.setEstaVivo(true);
+        deck2.getHeroList().add(enemyHero);
+        gameState.setActiveHeroPlayer2Id(enemyHero.getUuid());
+
+        // Slot 1 (P1): Peitoral de brasas (Armadura: +1 Espírito, +2 Defesa)
+        Card peitoral = new Card();
+        peitoral.setUuid(UUID.randomUUID());
+        peitoral.setCardName("Peitoral de brasas");
+        peitoral.setCardType(CardType.ITEM);
+        peitoral.setItemType(ItemType.ARMADURA);
+        peitoral.setOwnerId(p1.getUuid());
+        peitoral.setZoneId(ZoneId.RESOLVE);
+        CardFactory.buildCardLogic(peitoral);
+        deck1.getCardList().add(peitoral);
+        gameState.getPlayer1PlayedCards().add(peitoral);
+
+        // Slot 2 (P2): Quimera (+2 Espírito ao Inimigo)
+        // Como Alix joga antes no Slot 1, a Bola de Fogo invocada deve resolver ANTES da Quimera dar +2 Espírito ao inimigo!
+        Card quimera = new Card();
+        quimera.setUuid(UUID.randomUUID());
+        quimera.setCardName("Quimera");
+        quimera.setCardType(CardType.ITEM);
+        quimera.setItemType(ItemType.JOIA);
+        quimera.setOwnerId(p2.getUuid());
+        quimera.setZoneId(ZoneId.RESOLVE);
+        CardFactory.buildCardLogic(quimera);
+        deck2.getCardList().add(quimera);
+        gameState.getPlayer2PlayedCards().add(quimera);
+
+        // Slot 3 (P1): Escudo ardente (Escudo, não é Armadura -> não deve re-invocar Bola de Fogo)
+        Card escudo = new Card();
+        escudo.setUuid(UUID.randomUUID());
+        escudo.setCardName("Escudo ardente");
+        escudo.setCardType(CardType.ITEM);
+        escudo.setItemType(ItemType.ESCUDO);
+        escudo.setOwnerId(p1.getUuid());
+        escudo.setZoneId(ZoneId.RESOLVE);
+        CardFactory.buildCardLogic(escudo);
+        deck1.getCardList().add(escudo);
+        gameState.getPlayer1PlayedCards().add(escudo);
+
+        engine.resolution();
+
+        // Peitoral de brasas deu +1 Espírito (2 -> 3) e Alix invocou 1 Bola de Fogo imediatamente no Slot 1:
+        // Dano = 4 + 3 (Espírito de Alix) - 0 (Espírito do Inimigo antes da Quimera no Slot 2) = 7 de Dano Mágico (20 -> 13)!
+        assertEquals(13, enemyHero.getVidaAtual(),
+                "A Bola de Fogo de Alix deve resolver imediatamente após o Peitoral de brasas (Slot 1), antes da Quimera do oponente (Slot 2).");
+    }
 }
