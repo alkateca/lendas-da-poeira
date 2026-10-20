@@ -1,0 +1,38 @@
+# Lendas da Poeira
+
+Monorepo contendo o backend (Spring Boot / Java) e o frontend (Phaser 3 / Vite) do jogo **Lendas da Poeira**.
+
+---
+
+## 📁 Estrutura do Repositório
+
+```text
+lendas-da-poeira/
+├── backend/       # API e regras de negócio em Java (Spring Boot)
+├── frontend/      # Interface e jogo em Phaser 3 + Vite
+├── .gitignore
+└── README.md
+```
+
+---
+
+## 🚀 Como Executar
+
+### 1. Backend (Java / Spring Boot)
+Pré-requisitos: JDK 17+ instalado.
+
+```bash
+cd backend
+./mvnw spring-boot:run
+```
+
+### 2. Frontend (Phaser 3 / Vite)
+Pré-requisitos: Node.js (v18+) e npm instalados.
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+O jogo estará disponível no navegador através do endereço exibido pelo Vite (normalmente `http://localhost:5173/` ou similar).

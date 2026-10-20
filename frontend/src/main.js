@@ -1,0 +1,33 @@
+import Phaser from 'phaser';
+import { BOARD_LAYOUT } from './config/BoardCoordinates.js';
+import LoginScene from './scenes/LoginScene.js';
+import MainMenuScene from './scenes/MainMenuScene.js';
+import DeckBuilderScene from './scenes/DeckBuilderScene.js';
+import MatchScene from './scenes/MatchScene.js';
+
+const config = {
+    type: Phaser.AUTO,
+    parent: 'game-container',
+    width: BOARD_LAYOUT.WIDTH,
+    height: BOARD_LAYOUT.HEIGHT,
+    backgroundColor: BOARD_LAYOUT.COLORS.BG_DARK,
+    fps: {
+        target: 60,
+        smoothStep: true
+    },
+    render: {
+        antialias: true,
+        powerPreference: 'high-performance',
+        roundPixels: false
+    },
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+    },
+    dom: {
+        createContainer: true // Necessário para inputs de texto HTML na LoginScene
+    },
+    scene: [LoginScene, MainMenuScene, DeckBuilderScene, MatchScene]
+};
+
+new Phaser.Game(config);

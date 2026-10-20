@@ -1,0 +1,889 @@
+[
+  {
+    "uuid": "10000000-0000-0000-0000-000000000003",
+    "cardName": "Alucinação Cintlante",
+    "cardType": "HERO",
+    "color": "WHITE",
+    "descricao": "Aura: Um erro.",
+    "espirito": 3,
+    "ataque": 3,
+    "defesa": 3,
+    "vidaMaxima": 20,
+    "vidaAtual": 20,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000004",
+    "cardName": "Esquadrão Goblin",
+    "cardType": "HERO",
+    "color": "GREEN",
+    "descricao": "Uma vez por Combate: Ao jogar Magia, recebe +1 de Espírito.\nAo jogar Item: Recebe +1 de Ataque.\nAo jogar Ação: Recebe +1 de Defesa.\nFinal do Combate: Recupere 2 de Vida.",
+    "espirito": 2,
+    "ataque": 4,
+    "defesa": 2,
+    "vidaMaxima": 12,
+    "vidaAtual": 12,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Goblin"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000005",
+    "cardName": "Rei Goblin",
+    "cardType": "HERO",
+    "color": "GREEN",
+    "descricao": "Aura: Seus Goblins recebem +1 em seus efeitos.",
+    "espirito": 3,
+    "ataque": 2,
+    "defesa": 1,
+    "vidaMaxima": 12,
+    "vidaAtual": 12,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Goblin"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000006",
+    "cardName": "Traidor Goblin",
+    "cardType": "HERO",
+    "color": "GREEN",
+    "descricao": "Início da Partida: Recebe +1 de Ataque e +1 de Defesa para cada Aliado Goblin.",
+    "espirito": 0,
+    "ataque": 6,
+    "defesa": 1,
+    "vidaMaxima": 12,
+    "vidaAtual": 12,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Goblin"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000007",
+    "cardName": "Rainha Goblin",
+    "cardType": "HERO",
+    "color": "BLACK",
+    "descricao": "Final do Combate: Cure seus Aliados em 2.",
+    "espirito": 3,
+    "ataque": 3,
+    "defesa": 2,
+    "vidaMaxima": 12,
+    "vidaAtual": 12,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Goblin",
+      "Zumbi"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Transformador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000008",
+    "cardName": "Quimera Carniceira",
+    "cardType": "HERO",
+    "color": "BLACK",
+    "descricao": "Início do Combate: Para cada Aliado Zumbi: Recebe +1 de Espírito e +1 de Ataque e recupere 2 de Vida.",
+    "espirito": 0,
+    "ataque": 5,
+    "defesa": 2,
+    "vidaMaxima": 14,
+    "vidaAtual": 14,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Zumbi",
+      "Constructo"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000009",
+    "cardName": "Necromante das Areias",
+    "cardType": "HERO",
+    "color": "BLACK",
+    "descricao": "Início do Combate: Invocar: Ritos Fúnebres.",
+    "espirito": 3,
+    "ataque": 3,
+    "defesa": 2,
+    "vidaMaxima": 15,
+    "vidaAtual": 15,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Zumbi"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Emissor",
+      "Transformador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000010",
+    "cardName": "Isenora, Santa das Laminas",
+    "cardType": "HERO",
+    "color": "BLUE",
+    "descricao": "Aura: Seus Aliados recebem +1 de Espírito, +1 de Ataque e +1 de Defesa.\nFinal do Combate: Cause 5 de Dano Mágico ao Herói Inimigo.",
+    "espirito": 2,
+    "ataque": 5,
+    "defesa": 1,
+    "vidaMaxima": 13,
+    "vidaAtual": 13,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Cristal"
+    ],
+    "afinidades": [
+      "Cristal"
+    ],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000011",
+    "cardName": "Moyra, Aprendiz da Santa",
+    "cardType": "HERO",
+    "color": "BLUE",
+    "descricao": "Início do Combate: Cause 3 de Dano Mágico ao Herói Inimigo.\nAo jogar Magia: Recebe +3 de Ataque até o Final do Combate.",
+    "espirito": 1,
+    "ataque": 4,
+    "defesa": 0,
+    "vidaMaxima": 13,
+    "vidaAtual": 13,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Cristal"
+    ],
+    "afinidades": [
+      "Cristal"
+    ],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000012",
+    "cardName": "Naelis, Grande Artesã de Cristais",
+    "cardType": "HERO",
+    "color": "BLUE",
+    "descricao": "Início da Partida: Invoque: Rapieira de Cristal.",
+    "espirito": 1,
+    "ataque": 4,
+    "defesa": 0,
+    "vidaMaxima": 12,
+    "vidaAtual": 12,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Cristal"
+    ],
+    "afinidades": [
+      "Cristal"
+    ],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000013",
+    "cardName": "Alka, Lutador do Grupo dos Heróis",
+    "cardType": "HERO",
+    "color": "WHITE",
+    "descricao": "Final do Combate: Se durante o Combate seu Ataque foi igual ou superior a 10: Realize um Ataque extra.",
+    "espirito": 1,
+    "ataque": 7,
+    "defesa": 3,
+    "vidaMaxima": 14,
+    "vidaAtual": 14,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Criador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000014",
+    "cardName": "Leone, Clériga do Grupo dos Heróis",
+    "cardType": "HERO",
+    "color": "WHITE",
+    "descricao": "Início do Combate: Cure seus Aliados em 2.\nFinal do Combate: Cause Dano Direto ao Herói Inimigo equivalente à soma da Cura do Combate.",
+    "espirito": 1,
+    "ataque": 3,
+    "defesa": 3,
+    "vidaMaxima": 15,
+    "vidaAtual": 15,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [],
+    "afinidades": [
+      "Ar"
+    ],
+    "ordem": [],
+    "classe": [
+      "Transformador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000015",
+    "cardName": "Enamor,O Grande Cavaleiro",
+    "cardType": "HERO",
+    "color": "BLUE",
+    "descricao": "Início do Combate: Se não estiver com Dragast Equipada: Invocar: Dragast.",
+    "espirito": 1,
+    "ataque": 5,
+    "defesa": 3,
+    "vidaMaxima": 14,
+    "vidaAtual": 14,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [],
+    "afinidades": [
+      "Cristal"
+    ],
+    "ordem": [
+      "Cavaleiro"
+    ],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000016",
+    "cardName": "Ageus, Constructo Cristalino",
+    "cardType": "HERO",
+    "color": "BLUE",
+    "descricao": "Aura: Quando um Cavaleiro Aliado morre, seus outros Cavaleiros Aliados vivos recebem +2 de Espírito e +2 de Defesa.",
+    "espirito": 2,
+    "ataque": 7,
+    "defesa": 3,
+    "vidaMaxima": 15,
+    "vidaAtual": 15,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Constructo"
+    ],
+    "afinidades": [
+      "Cristal"
+    ],
+    "ordem": [
+      "Cavaleiro"
+    ],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000017",
+    "cardName": "Cavaleiro Onear",
+    "cardType": "HERO",
+    "color": "BLUE",
+    "descricao": "Uma vez por Combate: Ao jogar Magia, recebe +2 de Ataque.",
+    "espirito": 2,
+    "ataque": 7,
+    "defesa": 3,
+    "vidaMaxima": 15,
+    "vidaAtual": 15,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [],
+    "afinidades": [
+      "Cristal"
+    ],
+    "ordem": [
+      "Cavaleiro"
+    ],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000018",
+    "cardName": "Moyra, Santa das Laminas",
+    "cardType": "HERO",
+    "color": "BLUE",
+    "descricao": "Início do Combate: O Herói Inimigo recebe -2 de Espírito.\nAo jogar Magia: Recebe +2 de Ataque.\nFinal do Combate: Cause 5 de Dano Mágico ao Herói Inimigo.",
+    "espirito": 2,
+    "ataque": 5,
+    "defesa": 2,
+    "vidaMaxima": 14,
+    "vidaAtual": 14,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Cristal"
+    ],
+    "afinidades": [
+      "Cristal"
+    ],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000019",
+    "cardName": "Heróis Lendários dos Goblin",
+    "cardType": "HERO",
+    "color": "BLACK",
+    "descricao": "Ao jogar Magia: Recebe +1 de Espírito.\nAo jogar Item: Recebe +1 de Ataque.\nAo jogar Ação: Recebe +1 de Defesa.\nFinal do Combate: Cure seus Aliados em 3.",
+    "espirito": 3,
+    "ataque": 5,
+    "defesa": 3,
+    "vidaMaxima": 13,
+    "vidaAtual": 13,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Goblin"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000020",
+    "cardName": "Kael, Domador de Feras",
+    "cardType": "HERO",
+    "color": "GREEN",
+    "descricao": "Início do Combate: Seus Constructos recebem +2 de Ataque e recuperam 2 pontos de Vida.",
+    "espirito": 1,
+    "ataque": 5,
+    "defesa": 2,
+    "vidaMaxima": 15,
+    "vidaAtual": 15,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Transformador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000021",
+    "cardName": "Behemoth-29A",
+    "cardType": "HERO",
+    "color": "GREEN",
+    "descricao": "Início do Combate: Sofre 3 de Dano Direto para Curar Kael, Domador de Feras, em 3 pontos.",
+    "espirito": 0,
+    "ataque": 4,
+    "defesa": 4,
+    "vidaMaxima": 17,
+    "vidaAtual": 17,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Constructo"
+    ],
+    "afinidades": [
+      "Terra"
+    ],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000022",
+    "cardName": "Rapinária-7B3",
+    "cardType": "HERO",
+    "color": "GREEN",
+    "descricao": "Início do Combate: Invocar: Vendaval Arcano\nInvocar: Barreira de Gelo.",
+    "espirito": 0,
+    "ataque": 4,
+    "defesa": 0,
+    "vidaMaxima": 12,
+    "vidaAtual": 12,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Constructo"
+    ],
+    "afinidades": [
+      "Ar",
+      "Agua"
+    ],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000023",
+    "cardName": "Kael, Cavaleiro Bestial",
+    "cardType": "HERO",
+    "color": "GREEN",
+    "descricao": "Início do Combate: Seus Constructos recebem +2 de Ataque e recuperam 2 pontos de Vida.\nFinal do Combate: Cause 2 de Dano Direto aos Heróis Inimigos.",
+    "espirito": 1,
+    "ataque": 10,
+    "defesa": 2,
+    "vidaMaxima": 16,
+    "vidaAtual": 16,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Constructo"
+    ],
+    "afinidades": [
+      "Agua",
+      "Ar",
+      "Terra"
+    ],
+    "ordem": [],
+    "classe": [
+      "Transformador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000024",
+    "cardName": "Hati, Constructo Gélido",
+    "cardType": "HERO",
+    "color": "GREEN",
+    "descricao": "Aura: Recebe +3 de Ataque contra Emissores.\nAura: Quando um Herói Inimigo morre, transfere sua Vulnerabilidade para outro Herói Inimigo.",
+    "espirito": 1,
+    "ataque": 6,
+    "defesa": 1,
+    "vidaMaxima": 14,
+    "vidaAtual": 14,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Constructo"
+    ],
+    "afinidades": [
+      "Agua"
+    ],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000025",
+    "cardName": "Skoll, Espreitador Solar",
+    "cardType": "HERO",
+    "color": "GREEN",
+    "descricao": "Início do Combate: Aumente a Vulnerabilidade de um Herói Inimigo em 1.\nInício do Combate: Recebe +X de Ataque, onde X é a Vulnerabilidade do Herói Inimigo.",
+    "espirito": 0,
+    "ataque": 7,
+    "defesa": 2,
+    "vidaMaxima": 13,
+    "vidaAtual": 13,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Constructo"
+    ],
+    "afinidades": [
+      "Agua"
+    ],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000026",
+    "cardName": "Fenrir, o Grande Devorador",
+    "cardType": "HERO",
+    "color": "GREEN",
+    "descricao": "Início da Partida: Seus Constructos recebem +2 de Ataque e +1 de Defesa.\nInício do Combate: Recebe Ataque Duplo se a Vulnerabilidade do Herói Inimigo for maior que 5.",
+    "espirito": 2,
+    "ataque": 7,
+    "defesa": 1,
+    "vidaMaxima": 15,
+    "vidaAtual": 15,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Constructo"
+    ],
+    "afinidades": [
+      "Agua"
+    ],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000027",
+    "cardName": "Oráculo Real",
+    "cardType": "HERO",
+    "color": "YELLOW",
+    "descricao": "Aura: Seus Guardiões do Trono recebem +2 de Ataque e +1 de Defesa.\nInício do Combate: Invocar: Fortaleça sua Fé.",
+    "espirito": 1,
+    "ataque": 6,
+    "defesa": 0,
+    "vidaMaxima": 18,
+    "vidaAtual": 18,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Guardião do Trono"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Transformador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000028",
+    "cardName": "Portador da Chama",
+    "cardType": "HERO",
+    "color": "YELLOW",
+    "descricao": "Início do Combate: Recupere 2 de Vida e adicione até duas cartas do seu descarte para sua mão.",
+    "espirito": 0,
+    "ataque": 5,
+    "defesa": 0,
+    "vidaMaxima": 16,
+    "vidaAtual": 16,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Guardião do Trono"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Transformador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000029",
+    "cardName": "Constructo Fantasmagórico Guardião Perpétuo",
+    "cardType": "HERO",
+    "color": "YELLOW",
+    "descricao": "Empunhadura Quádrupla.\nAo jogar Arma: Recebe +2 de Ataque até o Final do Combate e recupere 2 pontos de Vida.",
+    "espirito": 0,
+    "ataque": 6,
+    "defesa": 0,
+    "vidaMaxima": 17,
+    "vidaAtual": 17,
+    "maxWeaponSlots": 4,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Guardião do Trono",
+      "Constructo"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Transformador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000030",
+    "cardName": "Xia, Caçador de Bestas",
+    "cardType": "HERO",
+    "color": "RED",
+    "descricao": "Início do Combate: Jogue a próxima Ferramenta do seu baralho.",
+    "espirito": 1,
+    "ataque": 7,
+    "defesa": 2,
+    "vidaMaxima": 16,
+    "vidaAtual": 16,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Humano"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Criador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000031",
+    "cardName": "Asahum, Caçadora de Bestas",
+    "cardType": "HERO",
+    "color": "RED",
+    "descricao": "Final do Combate: As Jóias e Ferramentas anexadas em Asahum, Caçadora de Bestas retornam para o baralho.",
+    "espirito": 2,
+    "ataque": 8,
+    "defesa": 1,
+    "vidaMaxima": 16,
+    "vidaAtual": 16,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Humano"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Criador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000032",
+    "cardName": "Constructo de Combate, Arsenal Vivo",
+    "cardType": "HERO",
+    "color": "RED",
+    "descricao": "Empunhadura Quádrupla.\nInício do Combate: Desequipe uma Arma Aliada e Equipe-a em Constructo de Combate, Arsenal Vivo.",
+    "espirito": 1,
+    "ataque": 6,
+    "defesa": 3,
+    "vidaMaxima": 15,
+    "vidaAtual": 15,
+    "maxWeaponSlots": 4,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Constructo"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000033",
+    "cardName": "Xamã das cinzas",
+    "cardType": "HERO",
+    "color": "RED",
+    "descricao": "Aura: Seus Heróis recebem +1 de Dano Bônus.\nInício do Combate: Invocar: Bola de Fogo.",
+    "espirito": 3,
+    "ataque": 4,
+    "defesa": 2,
+    "vidaMaxima": 15,
+    "vidaAtual": 15,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Humano"
+    ],
+    "afinidades": [
+      "Fogo"
+    ],
+    "ordem": [],
+    "classe": [
+      "Criador",
+      "Emissor"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000034",
+    "cardName": "Alix, Dragão Flamejante",
+    "cardType": "HERO",
+    "color": "RED",
+    "descricao": "Final do Combate: Cause 3 de Dano Mágico ao Herói Inimigo.\nAo jogar Armadura: Invocar: Bola de Fogo.",
+    "espirito": 2,
+    "ataque": 5,
+    "defesa": 2,
+    "vidaMaxima": 14,
+    "vidaAtual": 14,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Humano"
+    ],
+    "afinidades": [
+      "Fogo"
+    ],
+    "ordem": [],
+    "classe": [
+      "Criador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000035",
+    "cardName": "Constructo das Chamas, Sif",
+    "cardType": "HERO",
+    "color": "RED",
+    "descricao": "Início da Partida: Adicione dois Feitiços Fogo de seu baralho para seu descarte.\nInício do Combate: Adicione dois Feitiços Fogo do descarte para sua mão.",
+    "espirito": 2,
+    "ataque": 7,
+    "defesa": 2,
+    "vidaMaxima": 15,
+    "vidaAtual": 15,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Constructo"
+    ],
+    "afinidades": [
+      "Fogo"
+    ],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  }
+]

@@ -1,0 +1,51 @@
+[ {
+  "id" : "024fe5d3-92cf-4273-9d7c-a7a117027b1c",
+  "name" : "alka",
+  "decks" : [ {
+    "id" : "5b300b5e-a2ac-4ed3-9a64-b5d474f285b6",
+    "name" : "Baralho Padrão",
+    "heroCardNames" : [ "Isenora, Santa das Laminas", "Alka, Lutador do Grupo dos Heróis", "Alka, Lutador do Grupo dos Heróis" ],
+    "deckCardNames" : [ "Rapieira de Cristal", "Contra Ataque", "Ração de emergencia", "Massacre Cristalino", "Broche de Cristal" ],
+    "extraDeckCardNames" : [ ]
+  }, {
+    "id" : null,
+    "name" : "fogos",
+    "heroCardNames" : [ "Constructo das Chamas, Sif", "Alix, Dragão Flamejante", "Xamã das cinzas" ],
+    "deckCardNames" : [ "Escudo ardente", "Escudo ardente", "Escudo ardente", "Peitoral de brasas", "Peitoral de brasas", "Peitoral de brasas", "Tesouro Cristalino dos Caçadores", "Tesouro Cristalino dos Caçadores", "Tesouro Cristalino dos Caçadores", "Bomba de fumaça", "Bomba de fumaça", "Bomba de fumaça", "Arpão terrestre", "Arpão terrestre", "Arpão terrestre", "Sino do Caçador", "Sino do Caçador", "Sino do Caçador", "Sica", "Sica", "Sica", "Cauterizar", "Cauterizar", "Cauterizar", "Muralha de Fogo", "Muralha de Fogo", "Muralha de Fogo", "Auto Defesa Magica", "Auto Defesa Magica", "Auto Defesa Magica" ],
+    "extraDeckCardNames" : [ ]
+  }, {
+    "id" : "381947fb-683a-432b-95cd-04cc832f1de5",
+    "name" : "fogos2",
+    "heroCardNames" : [ "Constructo das Chamas, Sif", "Alix, Dragão Flamejante", "Xamã das cinzas" ],
+    "deckCardNames" : [ "Bola de fogo", "Bola de fogo", "Bola de fogo", "Maestria com Chamas", "Cauterizar", "Cauterizar", "Cauterizar", "Muralha de Fogo", "Muralha de Fogo", "Muralha de Fogo", "Escudo ardente", "Escudo ardente", "Escudo ardente", "Peitoral de brasas", "Peitoral de brasas", "Peitoral de brasas", "Tesouro Cristalino dos Caçadores", "Tesouro Cristalino dos Caçadores", "Tesouro Cristalino dos Caçadores", "Sino do Caçador", "Sino do Caçador", "Sino do Caçador", "Bomba de fumaça", "Bomba de fumaça", "Bomba de fumaça", "Ração de emergencia", "Ração de emergencia", "Ração de emergencia", "Mirar na cabeça", "Mirar na cabeça" ],
+    "extraDeckCardNames" : [ ]
+  }, {
+    "id" : "5a352e16-e867-4f70-9580-e273f780f609",
+    "name" : "laminas",
+    "heroCardNames" : [ "Isenora, Santa das Laminas", "Moyra, Aprendiz da Santa", "Naelis, Grande Artesã de Cristais" ],
+    "deckCardNames" : [ "Impulso de Poder", "Impulso de Poder", "Impulso de Poder", "Determinação Cristalina", "Determinação Cristalina", "Determinação Cristalina", "Massacre Cristalino", "Massacre Cristalino", "Massacre Cristalino", "Lamina de Cristal", "Lamina de Cristal", "Lamina de Cristal", "Dragão de Cristal", "Dragão de Cristal", "Dragão de Cristal", "Rapieira de Cristal", "Rapieira de Cristal", "Rapieira de Cristal", "Broche de Cristal", "Broche de Cristal", "Broche de Cristal", "Ração de emergencia", "Ração de emergencia", "Ração de emergencia", "Banir!", "Mirar na cabeça", "Mirar na cabeça", "Mirar na cabeça", "Ataque Mágico", "Ataque Mágico" ],
+    "extraDeckCardNames" : [ ]
+  } ]
+}, {
+  "id" : "37dae3e4-2805-4ff6-a72f-85dec46b604a",
+  "name" : "alka2",
+  "decks" : [ {
+    "id" : "475c403d-eb02-40f6-a633-716386f0245a",
+    "name" : "Baralho Padrão",
+    "heroCardNames" : [ "Isenora, Santa das Laminas", "Alka, Lutador do Grupo dos Heróis", "Alka, Lutador do Grupo dos Heróis" ],
+    "deckCardNames" : [ "Rapieira de Cristal", "Contra Ataque", "Ração de emergencia", "Massacre Cristalino", "Broche de Cristal" ],
+    "extraDeckCardNames" : [ ]
+  }, {
+    "id" : "f8a9a4c0-0000-0000-0000-000000000001",
+    "name" : "caçadores",
+    "heroCardNames" : [ "Constructo de Combate, Arsenal Vivo", "Asahum, Caçadora de Bestas", "Xia, Caçador de Bestas" ],
+    "deckCardNames" : [ "Tesouro Cristalino dos Caçadores", "Tesouro Cristalino dos Caçadores", "Tesouro Cristalino dos Caçadores", "Bomba de fumaça", "Bomba de fumaça", "Bomba de fumaça", "Arpão terrestre", "Arpão terrestre", "Arpão terrestre", "Sino do Caçador", "Sino do Caçador", "Sino do Caçador", "Sica", "Sica", "Sica", "Corte seus Pescoços", "Corte seus Pescoços", "Corte seus Pescoços", "Estilo Secreto do Caçador", "Estilo Secreto do Caçador", "Estilo Secreto do Caçador", "Afie suas Lâminas", "Afie suas Lâminas", "Afie suas Lâminas", "Ração de emergencia", "Ração de emergencia", "Ração de emergencia", "Mirar na cabeça", "Mirar na cabeça", "Mirar na cabeça" ],
+    "extraDeckCardNames" : [ ]
+  }, {
+    "id" : "94e1d404-d8a5-4ec1-b93e-ee3f22d18676",
+    "name" : "cavaleiros",
+    "heroCardNames" : [ "Cavaleiro Onear", "Ageus, Constructo Cristalino", "Enamor,O Grande Cavaleiro" ],
+    "deckCardNames" : [ "Quimera", "Quimera", "Quimera", "Dragão de Cristal", "Dragão de Cristal", "Dragão de Cristal", "Dragast", "Fragmento Afiado", "Fragmento Afiado", "Fragmento Afiado", "Contra Ataque", "Contra Ataque", "Contra Ataque", "Ataque Mágico", "Ataque Mágico", "Ataque Mágico", "Golpes Pesados", "Golpes Pesados", "Golpes Pesados", "Ponto Final", "Determinação Cristalina", "Determinação Cristalina", "Determinação Cristalina", "Auto Defesa Magica", "Auto Defesa Magica", "Auto Defesa Magica", "Ração de emergencia", "Ração de emergencia", "Ração de emergencia", "Banir!" ],
+    "extraDeckCardNames" : [ ]
+  } ]
+} ]

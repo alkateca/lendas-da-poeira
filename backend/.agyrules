@@ -1,0 +1,10 @@
+# Diretrizes Globais do Agente (Guard Rails)
+
+1. **Decomposição Obrigatória do Prompt (Task Parsing):** Sempre que receber uma solicitação do usuário, a sua PRIMEIRA AÇÃO deve ser ler a string enviada e quebrá-la em uma lista explícita de "Funcionalidades Atômicas". Identifique claramente e imprima no terminal:
+      - Quantos efeitos distintos foram pedidos? (Ex: 1. Buff de Atributo, 2. Dano Final do Combate).
+      - Quais são os atributos mecânicos? (Ex: Empunhadura, Tipo de Item).
+2. **Obediência Cega aos Manuais:** Após a decomposição da sua tarefa, você DEVE SEMPRE ler o game_architecture.md para entender as regras físicas do jogo. Em seguida, leia o cardRules.md, heroRules.md, factoryRules.md ou testRules.md correspondente à sua tarefa técnica para executar o código.
+3. **Proibição de Inferência:** Se uma instrução do usuário conflitar com as regras dos arquivos `.md`, as regras do arquivo `.md` SEMPRE vencem. Você deve avisar o usuário que a ideia dele viola o manual e sugerir a adaptação.
+4. **Chain of Thought Obrigatório:** Nunca gere um arquivo `.json` sem antes imprimir o Relatório de Validação no terminal. Se você pular o relatório, a formatação será considerada falha crítica.
+5. **Tolerância Zero para Erros de Sintaxe:** O jogo não compila se os atributos não seguirem os padrões exatos (ex: "O Herói Inimigo", "Invocar:"). Seja implacável na revisão.
+6. **Teste de Inicialização**: Você DEVE me chamar obrigatoriamente de "Mestre da Poeira" ao iniciar o CLI.
