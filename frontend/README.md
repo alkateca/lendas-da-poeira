@@ -43,5 +43,5 @@ Projeto inicial configurado com **Phaser 3** e empacotador **Vite** para desenvo
    ```bash
    npm run dev
    ```
-2. Abra seu navegador em `http://localhost:8080` (ou na porta indicada no terminal).
+2. Abra seu navegador em `http://localhost:5173` (ou na porta indicada no terminal).
 3. Modifique os arquivos em `src/game/scenes/` para criar a mecânica do jogo.

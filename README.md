@@ -18,6 +18,30 @@ lendas-da-poeira/
 
 ## 🚀 Como Executar
 
+### Forma Rápida (Script Unificado)
+
+Basta rodar o script na raiz do repositório:
+
+```bash
+# Inicia ou reinicia ambos os serviços automaticamente
+./start.sh
+```
+
+Comandos adicionais do script:
+```bash
+./start.sh restart  # Força reinicialização do backend e frontend
+./start.sh status   # Exibe o status e portas dos serviços
+./start.sh logs     # Acompanha os logs em tempo real
+./start.sh stop     # Para todos os serviços
+```
+
+* **Frontend:** http://localhost:5173
+* **Backend:**  http://localhost:8080
+
+---
+
+### Execução Individual Manual
+
 ### 1. Backend (Java / Spring Boot)
 Pré-requisitos: JDK 17+ instalado.
 
