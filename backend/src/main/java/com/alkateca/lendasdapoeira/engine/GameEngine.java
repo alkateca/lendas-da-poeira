@@ -64,23 +64,7 @@ public class GameEngine {
     }
 
     private void drawInitialHand(Player player) {
-        int drawn = 0;
-
-        while (drawn < 5) {
-            Card cardToDraw = player.getCurrentDeck().getCardList().stream()
-                    .filter(c -> c.getZoneId() == ZoneId.DECK)
-                    .findFirst()
-                    .orElse(null);
-
-            if (cardToDraw != null) {
-                cardToDraw.setZoneId(ZoneId.HAND);
-                drawn++;
-            } else {
-                return;
-            }
-        }
-
-        System.out.println("Jogador " + player.getName() + " comprou " + drawn + " carta(s).");
+        refillHandToFive(player);
     }
 
     public void startGame() {
@@ -398,10 +382,6 @@ public class GameEngine {
 
         this.isPlayer1Ready = false;
         this.isPlayer2Ready = false;
-
-        // Compra até 5 cartas no início da preparação/escolha
-        drawInitialHand(player1);
-        drawInitialHand(player2);
 
         choice(); // Avança para TurnPhase.PREPARATION e tira a foto
     }

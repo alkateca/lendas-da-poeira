@@ -142,7 +142,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
                          this.scene.selectionManager.selectedEnemyHeroId === this.uuid;
 
         if (this.heroData.estaVivo === false) {
-            return { angle: 90, scaleX: 1.0, scaleY: 0.76 };
+            return { angle: 0, scaleX: 1.0, scaleY: 1.0 };
         }
         if (!inBattle && this.heroData.estaAtivo === false) {
             return { angle: 12, scaleX: 1.0, scaleY: 1.0 };
@@ -314,9 +314,13 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             this.deadOverlayText.setVisible(true);
             this.sleepStatusIcon.setVisible(false);
             this.setAlpha(0.75);
+            this.frameImage.setTint(0x555555);
+            if (this.artSprite) this.artSprite.setTint(0x555555);
         } else {
             this.deadOverlayBg.setVisible(false);
             this.deadOverlayText.setVisible(false);
+            this.frameImage.clearTint();
+            if (this.artSprite) this.artSprite.clearTint();
             const inBattle = newHeroDto.zoneId === 'BATTLE';
             this.sleepStatusIcon.setVisible(!inBattle && newHeroDto.estaAtivo === false);
             this.setAlpha(newHeroDto.estaAtivo ? 1.0 : 0.88);

@@ -1,4 +1,4 @@
-# Diretrizes Globais do Agente (Guard Rails)
+# Diretrizes Globais do Agente (Guard Rails) - Backend
 
 1. **Decomposição Obrigatória do Prompt (Task Parsing):** Sempre que receber uma solicitação do usuário, a sua PRIMEIRA AÇÃO deve ser ler a string enviada e quebrá-la em uma lista explícita de "Funcionalidades Atômicas". Identifique claramente e imprima no terminal:
       - Quantos efeitos distintos foram pedidos? (Ex: 1. Buff de Atributo, 2. Dano Final do Combate).
