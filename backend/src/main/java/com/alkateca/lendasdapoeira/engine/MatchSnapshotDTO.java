@@ -28,10 +28,12 @@ public class MatchSnapshotDTO {
     private UUID winnerPlayerId;
     private UUID forfeitedByPlayerId;
     private String winReason; // "ELIMINATION" ou "FORFEIT"
+    private MatchResultSummaryDTO matchResult;
 
 
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
@@ -117,5 +119,37 @@ public class MatchSnapshotDTO {
         private String descricao;
         private String zoneId;
         private boolean faceUp;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    public static class MatchResultSummaryDTO {
+        private UUID winnerPlayerId;
+        private String winnerName;
+        private String winReason; // "ELIMINATION" ou "FORFEIT"
+        private int turnsElapsed;
+        private PlayerMatchStatsDTO player1Stats;
+        private PlayerMatchStatsDTO player2Stats;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    public static class PlayerMatchStatsDTO {
+        private UUID playerId;
+        private String playerName;
+        private boolean winner;
+        private int totalDamageDealt;
+        private int totalDamageTaken;
+        private int totalHealingDone;
+        private int cardsPlayed;
+        private int heroesDefeated;
+        private int heroesAlive;
+        private int matchScore;
     }
 }

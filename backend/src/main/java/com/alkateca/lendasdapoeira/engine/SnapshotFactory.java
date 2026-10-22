@@ -59,6 +59,9 @@ public class SnapshotFactory {
         snapshot.setWinnerPlayerId(engine.getWinnerPlayerId());
         snapshot.setForfeitedByPlayerId(engine.getForfeitedByPlayerId());
         snapshot.setWinReason(engine.getWinReason());
+        if (engine.getTurnPhase() == TurnPhase.GAME_OVER) {
+            snapshot.setMatchResult(engine.buildMatchResultSummary());
+        }
 
         // Guarda o pedido de escolha pendente (se a ResolutionQueue tiver pausado aguardando input do jogador)
         snapshot.setPendingChoice(engine.getGameState().getPendingChoice());
@@ -275,6 +278,7 @@ public class SnapshotFactory {
         adapted.setWinnerPlayerId(original.getWinnerPlayerId());
         adapted.setForfeitedByPlayerId(original.getForfeitedByPlayerId());
         adapted.setWinReason(original.getWinReason());
+        adapted.setMatchResult(original.getMatchResult());
 
         boolean isP1Viewer = original.getLocalPlayer().getPlayerId().equals(viewerPlayerId);
         MatchSnapshotDTO.PlayerViewDTO myView = clonePlayerView(isP1Viewer ? original.getLocalPlayer() : original.getOpponentPlayer(), true);

@@ -10,8 +10,10 @@ export default class MainMenuScene extends Phaser.Scene {
     }
 
     init(data) {
-        this.player = data.player || JSON.parse(localStorage.getItem('lendas_player'));
+        this.player = data?.player || JSON.parse(localStorage.getItem('lendas_player'));
         if (!this.player.decks) this.player.decks = [];
+        this.autoStartPve = !!data?.autoStartPve;
+        this.autoSearchPvp = !!data?.autoSearchPvp;
     }
 
     create() {
@@ -69,6 +71,12 @@ export default class MainMenuScene extends Phaser.Scene {
         this.createButton(width / 2, height / 2 + 160, '🃏 MONTAR BARALHO (DECKBUILDER)', 0xca8a04, () => {
             this.scene.start('DeckBuilderScene', { player: this.player });
         });
+
+        if (this.autoStartPve) {
+            this.time.delayedCall(200, () => this.startMatchAgainstMachine());
+        } else if (this.autoSearchPvp) {
+            this.time.delayedCall(200, () => this.onPvpButtonClicked());
+        }
     }
 
     refreshSelectedDeckLabel() {
