@@ -1640,7 +1640,7 @@ export default class MatchScene extends Phaser.Scene {
             cardsPlayed: 0,
             heroesDefeated: 0,
             heroesAlive: (snapshot.localPlayer?.heroes || []).filter(h => h.estaVivo).length,
-            matchScore: isLocalWinner ? 500 : 100
+            matchScore: 0
         };
 
         const oppStats = result.player2Stats || {
@@ -1652,7 +1652,7 @@ export default class MatchScene extends Phaser.Scene {
             cardsPlayed: 0,
             heroesDefeated: 0,
             heroesAlive: (snapshot.opponentPlayer?.heroes || []).filter(h => h.estaVivo).length,
-            matchScore: !isLocalWinner ? 500 : 100
+            matchScore: 0
         };
 
         this.goStatsCardsGroup.removeAll(true);
