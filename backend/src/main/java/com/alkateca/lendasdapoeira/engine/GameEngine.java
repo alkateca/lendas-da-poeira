@@ -810,15 +810,36 @@ public class GameEngine {
         }
     }
 
+    public void captureSpawnSnapshot(
+            Card invokerCard,
+            Card spawnedCard,
+            com.alkateca.lendasdapoeira.effects.Effect effect,
+            String eventType,
+            UUID targetHeroId,
+            String targetZone,
+            Integer targetSlotIndex,
+            boolean tokenCreated,
+            boolean zoneFull,
+            String customLogMessage) {
+        MatchSnapshotDTO snapshot = SnapshotFactory.createSpawnSnapshot(
+                this, invokerCard, spawnedCard, effect, eventType,
+                targetHeroId, targetZone, targetSlotIndex, tokenCreated, zoneFull, customLogMessage
+        );
+        this.snapshotHistory.add(snapshot);
+    }
+
     /**
-     * Invoca uma carta pelo nome (de qualquer zona do baralho ou criando uma nova instância se não existir no deck),
-     * resolve seus efeitos de entrada (RESOLUTION) imediatamente na fila atual e a move para a zona de destino (ex: ATTACHED).
+     * Invoca uma carta pelo nome (do baralho ou criando um token dinâmico se não existir no deck),
+     * valida limites de zona/slots, dispara o evento explícito CARD_SPAWNED / TOKEN_SUMMONED
+     * e resolve seus efeitos de entrada (RESOLUTION) imediatamente.
      */
     public Card invokeCard(Player owner, HeroCard targetHero, String cardName) {
         if (owner == null || cardName == null) return null;
 
-        // 1. Procura a carta priorizando DECK primeiro (para não remover cartas da mão ou da fila de resolução)
+        // 1. Procura a carta priorizando DECK primeiro
         Card invokedCard = null;
+        boolean isDynamicToken = false;
+
         if (owner.getCurrentDeck() != null && owner.getCurrentDeck().getCardList() != null) {
             invokedCard = owner.getCurrentDeck().getCardList().stream()
                     .filter(c -> cardName.equalsIgnoreCase(c.getCardName()) && c.getZoneId() == ZoneId.DECK)
@@ -826,8 +847,9 @@ public class GameEngine {
                     .orElse(null);
         }
 
-        // 2. Se a carta não estiver no DECK, instancia a carta, injeta os efeitos via CardFactory e registra no deck do jogador!
+        // 2. Se a carta não estiver no DECK, instancia um Token dinâmico e injeta a lógica via CardFactory
         if (invokedCard == null) {
+            isDynamicToken = true;
             Card templateInDeck = null;
             if (owner.getCurrentDeck() != null && owner.getCurrentDeck().getCardList() != null) {
                 templateInDeck = owner.getCurrentDeck().getCardList().stream()
@@ -854,6 +876,7 @@ public class GameEngine {
             }
 
             CardFactory.buildCardLogic(invokedCard);
+
             boolean hasEquipEffect = invokedCard.getEffects() != null && invokedCard.getEffects().stream()
                     .anyMatch(e -> e.getClass().getSimpleName().startsWith("Equip"));
             if (hasEquipEffect && invokedCard.getCardType() == null) {
@@ -866,11 +889,15 @@ public class GameEngine {
                 invokedCard.setCardType(com.alkateca.lendasdapoeira.enums.CardType.SPELL);
             }
 
-            if ("Bola de fogo".equalsIgnoreCase(cardName)) {
+            if ("Rapieira de Cristal".equalsIgnoreCase(cardName) && invokedCard.getDescricao() == null) {
+                invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.WHITE);
+                invokedCard.setDescricao("Equipar: +3 de Ataque.\nFinal do Combate: Causa 5 de Dano Mágico.");
+            } else if ("Dragast".equalsIgnoreCase(cardName) && invokedCard.getDescricao() == null) {
+                invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.WHITE);
+                invokedCard.setDescricao("Equipar: +2 de Espírito e +2 de Ataque.\nFinal do Combate: Cura 2 de Vida.");
+            } else if ("Bola de fogo".equalsIgnoreCase(cardName)) {
                 invokedCard.setCardType(com.alkateca.lendasdapoeira.enums.CardType.SPELL);
-                if (invokedCard.getColor() == null) {
-                    invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.NEUTRAL);
-                }
+                if (invokedCard.getColor() == null) invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.NEUTRAL);
                 if (invokedCard.getAfinidades() == null || invokedCard.getAfinidades().isEmpty()) {
                     invokedCard.setAfinidades(new ArrayList<>(List.of(com.alkateca.lendasdapoeira.enums.Afinidade.FOGO)));
                 }
@@ -879,9 +906,7 @@ public class GameEngine {
                 }
             } else if ("Fortaleça sua Fé".equalsIgnoreCase(cardName)) {
                 invokedCard.setCardType(com.alkateca.lendasdapoeira.enums.CardType.THEURGY);
-                if (invokedCard.getColor() == null) {
-                    invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.YELLOW);
-                }
+                if (invokedCard.getColor() == null) invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.YELLOW);
                 if (invokedCard.getOrdem() == null || invokedCard.getOrdem().isEmpty()) {
                     invokedCard.setOrdem(new ArrayList<>(List.of(com.alkateca.lendasdapoeira.enums.Ordem.GUARDAO_DO_TRONO)));
                 }
@@ -890,14 +915,24 @@ public class GameEngine {
                 }
             } else if ("Estatica".equalsIgnoreCase(cardName)) {
                 invokedCard.setCardType(com.alkateca.lendasdapoeira.enums.CardType.SPELL);
-                if (invokedCard.getColor() == null) {
-                    invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.NEUTRAL);
-                }
+                if (invokedCard.getColor() == null) invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.NEUTRAL);
                 if (invokedCard.getAfinidades() == null || invokedCard.getAfinidades().isEmpty()) {
                     invokedCard.setAfinidades(new ArrayList<>(List.of(com.alkateca.lendasdapoeira.enums.Afinidade.AR)));
                 }
                 if (invokedCard.getDescricao() == null) {
                     invokedCard.setDescricao("Afinidade Ar\nO Herói Inimigo Sofre 3 mais seu Espírito de Dano Mágico. Invocar: Estatica.");
+                }
+            } else if ("Ritos Fúnebres".equalsIgnoreCase(cardName)) {
+                invokedCard.setCardType(com.alkateca.lendasdapoeira.enums.CardType.ACTION);
+                if (invokedCard.getColor() == null) invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.BLACK);
+                if (invokedCard.getDescricao() == null) {
+                    invokedCard.setDescricao("Ação Necromântica invocada em combate.");
+                }
+            } else if ("Tristeza".equalsIgnoreCase(cardName)) {
+                invokedCard.setCardType(com.alkateca.lendasdapoeira.enums.CardType.ACTION);
+                if (invokedCard.getColor() == null) invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.NEUTRAL);
+                if (invokedCard.getDescricao() == null) {
+                    invokedCard.setDescricao("Exilar.");
                 }
             }
 
@@ -906,12 +941,35 @@ public class GameEngine {
             }
         }
 
-        // 3. Coloca na zona RESOLVE temporariamente e executa seus efeitos de resolução IMEDIATAMENTE
-        invokedCard.setZoneId(ZoneId.RESOLVE);
-        invokedCardIdsInCurrentCombat.add(invokedCard.getUuid());
+        // 3. Verifica limites físicos da zona/slot para armas (ItemType.ARMA)
         if (targetHero != null && invokedCard.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM) {
+            if (invokedCard.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMA) {
+                int usedSlots = getUsedWeaponSlotsForHero(targetHero.getUuid());
+                int requiredSlots = Math.max(1, invokedCard.getEmpunhadura());
+                if (usedSlots + requiredSlots > targetHero.getMaxWeaponSlots()) {
+                    invokedCard.setAttachedToCardId(null);
+                    invokedCard.setZoneId(ZoneId.DISCARD);
+                    captureSpawnSnapshot(
+                            targetHero,
+                            invokedCard,
+                            null,
+                            "SPAWN_FAILED_ZONE_FULL",
+                            targetHero.getUuid(),
+                            ZoneId.DISCARD.name(),
+                            -1,
+                            isDynamicToken,
+                            true,
+                            "⚠️ Limite de empunhadura atingido em " + targetHero.getCardName() + "! " + invokedCard.getCardName() + " foi para o Descarte."
+                    );
+                    return invokedCard;
+                }
+            }
             invokedCard.setAttachedToCardId(targetHero.getUuid());
         }
+
+        // 4. Aloca na zona RESOLVE e calcula o slot visual correspondente
+        invokedCard.setZoneId(ZoneId.RESOLVE);
+        invokedCardIdsInCurrentCombat.add(invokedCard.getUuid());
 
         boolean isP1Owner = owner.getUuid().equals(player1.getUuid());
         List<Card> ownerPlayedList = isP1Owner
@@ -923,27 +981,41 @@ public class GameEngine {
             addedTempToPlayed = true;
         }
 
-        boolean capturedAnyEffectSnapshot = false;
+        int slotIndex = ownerPlayedList != null ? Math.max(0, ownerPlayedList.indexOf(invokedCard)) : 0;
+        String spawnEventType = isDynamicToken ? "TOKEN_SUMMONED" : "CARD_SPAWNED";
+        String destinationZone = (invokedCard.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM && targetHero != null)
+                ? ZoneId.ATTACHED.name()
+                : ZoneId.RESOLVE.name();
+
+        // Dispara o evento explícito de invocação com a carta visível em RESOLVE
+        captureSpawnSnapshot(
+                targetHero,
+                invokedCard,
+                null,
+                spawnEventType,
+                targetHero != null ? targetHero.getUuid() : null,
+                destinationZone,
+                slotIndex,
+                isDynamicToken,
+                false,
+                "✨ Invocado: " + invokedCard.getCardName() + (targetHero != null ? " (" + targetHero.getCardName() + ")" : "")
+        );
+
+        // 5. Resolve imediatamente os efeitos de entrada (TurnPhase.RESOLUTION) da carta invocada
         if (invokedCard.getEffects() != null) {
             for (com.alkateca.lendasdapoeira.effects.Effect effect : invokedCard.getEffects()) {
-                // Mesmo que a partida esteja em COMBAT_START ou GAME_START,
-                // ao "Invocar" uma carta nós disparamos os efeitos de "Ao Jogar/Equipar" (TurnPhase.RESOLUTION) dela!
                 if (effect.predicate(invokedCard, TurnPhase.RESOLUTION)) {
                     effect.resolve(this, invokedCard);
                     captureSnapshot(invokedCard, effect, "EFFECT_RESOLVED");
-                    capturedAnyEffectSnapshot = true;
                 }
             }
-        }
-        if (!capturedAnyEffectSnapshot) {
-            captureSnapshot(invokedCard, null, "EFFECT_RESOLVED");
         }
 
         if (addedTempToPlayed && this.turnPhase != TurnPhase.RESOLUTION) {
             ownerPlayedList.remove(invokedCard);
         }
 
-        // 4. Move a carta invocada para o destino final (ATTACHED no Herói se for Item/Anexo, ou DISCARD/EXILE)
+        // 6. Move a carta invocada para a zona final (ATTACHED, EXILE ou DISCARD)
         if (invokedCard.getAttachedToCardId() != null) {
             invokedCard.setZoneId(ZoneId.ATTACHED);
         } else if (invokedCard.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM && targetHero != null) {
@@ -1039,6 +1111,23 @@ public class GameEngine {
         if (!ownerPlayedList.contains(cardToPlay)) {
             ownerPlayedList.add(cardToPlay);
         }
+
+        int slotIndex = Math.max(0, ownerPlayedList.indexOf(cardToPlay));
+        UUID activeHeroId = isP1 ? gameState.getActiveHeroPlayer1Id() : gameState.getActiveHeroPlayer2Id();
+        HeroCard activeHero = findHeroById(activeHeroId);
+
+        captureSpawnSnapshot(
+                activeHero,
+                cardToPlay,
+                null,
+                "CARD_SPAWNED",
+                activeHeroId,
+                ZoneId.RESOLVE.name(),
+                slotIndex,
+                false,
+                false,
+                "✨ Carta colocada em resolução: " + cardToPlay.getCardName()
+        );
 
         enqueueCardAndHeroOnPlayResolution(cardToPlay, true);
     }

@@ -13,6 +13,7 @@ export default class MatchScene extends Phaser.Scene {
         this.currentSnapshot = null;
 
         this.heroPrefabs = new Map();
+        this.spawnedCardPrefabs = new Map();
         this.handCardPrefabs = [];
         this.opponentHandDummies = [];
         this.resolveCardPrefabs = [];
@@ -45,6 +46,7 @@ export default class MatchScene extends Phaser.Scene {
 
     create() {
         this.heroPrefabs.clear();
+        this.spawnedCardPrefabs = new Map();
         this.handCardPrefabs = [];
         this.opponentHandDummies = [];
         this.resolveCardPrefabs = [];
@@ -569,7 +571,12 @@ export default class MatchScene extends Phaser.Scene {
             localHasInitiative
         );
 
-        if (snapshot.triggerContext?.eventType === 'EFFECT_RESOLVED' && snapshot.triggerContext.sourceCardUuid) {
+        const eventType = snapshot.triggerContext?.eventType;
+        if (eventType === 'CARD_SPAWNED' || eventType === 'TOKEN_SUMMONED') {
+            this.handleCardSpawnEvent(snapshot.triggerContext, localHasInitiative);
+        } else if (eventType === 'SPAWN_FAILED_ZONE_FULL') {
+            this.handleSpawnFailedZoneFull(snapshot.triggerContext);
+        } else if (eventType === 'EFFECT_RESOLVED' && snapshot.triggerContext?.sourceCardUuid) {
             this.highlightSourceCard(snapshot.triggerContext.sourceCardUuid);
         }
 
@@ -858,15 +865,39 @@ export default class MatchScene extends Phaser.Scene {
 
         const hasExtraTutoredCards = firstPlayerCards.length > 2 || secondPlayerCards.length > 2;
 
+        // Identifica se este snapshot está invocando dinamicamente uma carta específica
+        const trigger = this.currentSnapshot?.triggerContext;
+        const isSpawnSnapshot = trigger && (
+            trigger.eventType === 'CARD_SPAWNED' ||
+            trigger.eventType === 'TOKEN_SUMMONED'
+        );
+        const currentSpawnedUuid = isSpawnSnapshot ? trigger.spawnedCardUuid : null;
+
         const placeOrReuseResolveCard = (cardDto, targetX, targetY) => {
             const existing = cardDto.uuid ? existingByUuid.get(cardDto.uuid) : null;
+
             if (existing) {
                 existingByUuid.delete(cardDto.uuid);
+                existing.targetPos = { x: targetX, y: targetY };
                 existing.updateCardVisuals(cardDto);
                 existing.snapToPosition(targetX, targetY, null, 0, 'MEDIUM');
                 nextResolvePrefabs.push(existing);
-            } else {
-                const prefab = new PlayableCardPrefab(this, targetX, targetY - 24, cardDto, false, 'MEDIUM', 0);
+                return;
+            }
+
+            const isJustSpawned = Boolean(currentSpawnedUuid && cardDto.uuid === currentSpawnedUuid);
+            const initialY = isJustSpawned ? targetY : (targetY - 24);
+
+            const prefab = new PlayableCardPrefab(this, targetX, initialY, cardDto, false, 'MEDIUM', 0);
+            prefab.targetPos = { x: targetX, y: targetY };
+
+            if (this.spawnedCardPrefabs && cardDto.uuid) {
+                this.spawnedCardPrefabs.set(cardDto.uuid, prefab);
+            }
+
+            // Se for a carta recém-invocada, handleCardSpawnEvent assumirá a animação partindo do invocador;
+            // caso contrário, executa o fade-in padrão do slot de resolução.
+            if (!isJustSpawned) {
                 prefab.setAlpha(0);
                 this.tweens.add({
                     targets: prefab,
@@ -875,8 +906,9 @@ export default class MatchScene extends Phaser.Scene {
                     duration: 240,
                     ease: 'Power2'
                 });
-                nextResolvePrefabs.push(prefab);
             }
+
+            nextResolvePrefabs.push(prefab);
         };
 
         if (!hasExtraTutoredCards) {
@@ -911,8 +943,129 @@ export default class MatchScene extends Phaser.Scene {
             });
         }
 
-        existingByUuid.forEach(leftover => leftover.destroy());
+        existingByUuid.forEach(leftover => {
+            if (this.spawnedCardPrefabs && leftover.uuid) {
+                this.spawnedCardPrefabs.delete(leftover.uuid);
+            }
+            leftover.destroy();
+        });
         this.resolveCardPrefabs = nextResolvePrefabs;
+    }
+
+    handleCardSpawnEvent(triggerContext, localHasInitiative) {
+        if (!triggerContext) return;
+
+        const {
+            sourceCardUuid,
+            spawnedCardUuid,
+            spawnedCardData,
+            targetHeroId,
+            targetZone
+        } = triggerContext;
+
+        // 1. Destaca a carta ou Herói invocador (se existir)
+        let originX = BOARD_LAYOUT.ARENA_CIRCLE.x;
+        let originY = BOARD_LAYOUT.ARENA_CIRCLE.y;
+
+        if (sourceCardUuid) {
+            this.highlightSourceCard(sourceCardUuid);
+            const sourceHero = this.heroPrefabs.get(sourceCardUuid);
+            const sourceResolveCard = this.resolveCardPrefabs.find(c => c.uuid === sourceCardUuid);
+            const sourceObj = sourceHero || sourceResolveCard;
+            if (sourceObj) {
+                originX = sourceObj.x;
+                originY = sourceObj.y;
+            }
+        }
+
+        // 2. Verifica se a carta invocada já está nos slots de resolução (resolveCardPrefabs)
+        let spawnedPrefab = this.resolveCardPrefabs.find(c => c.uuid === spawnedCardUuid);
+
+        // 3. Caso a carta tenha ido direto para ATTACHED ou não esteja nos 4 slots, instancia dinamicamente e registra!
+        if (!spawnedPrefab && spawnedCardData) {
+            const targetHeroPrefab = targetHeroId ? this.heroPrefabs.get(targetHeroId) : null;
+            const destX = targetHeroPrefab ? targetHeroPrefab.x : BOARD_LAYOUT.ARENA_CIRCLE.x;
+            const destY = targetHeroPrefab ? targetHeroPrefab.y : BOARD_LAYOUT.ARENA_CIRCLE.y;
+
+            spawnedPrefab = new PlayableCardPrefab(
+                this,
+                originX,
+                originY,
+                { ...spawnedCardData, faceUp: true },
+                false,
+                'MEDIUM',
+                0
+            );
+            spawnedPrefab.setDepth(145);
+            this.spawnedCardPrefabs.set(spawnedPrefab.uuid, spawnedPrefab);
+            this.resolveCardPrefabs.push(spawnedPrefab);
+
+            spawnedPrefab.setScale(0.25).setAlpha(0);
+            this.tweens.add({
+                targets: spawnedPrefab,
+                x: destX,
+                y: destY,
+                scaleX: 1.05,
+                scaleY: 1.05,
+                alpha: 1,
+                duration: 380,
+                ease: 'Back.easeOut',
+                onComplete: () => {
+                    if (targetZone === 'ATTACHED' && targetHeroPrefab) {
+                        this.tweens.add({
+                            targets: spawnedPrefab,
+                            scaleX: 0.35,
+                            scaleY: 0.35,
+                            alpha: 0,
+                            delay: 320,
+                            duration: 240,
+                            ease: 'Cubic.easeIn'
+                        });
+                    }
+                }
+            });
+            return;
+        }
+
+        // 4. Se a carta está no slot de resolução, anima seu surgimento a partir do invocador (ou do nada) até o slot!
+        if (spawnedPrefab) {
+            const finalX = spawnedPrefab.targetPos ? spawnedPrefab.targetPos.x : spawnedPrefab.x;
+            const finalY = spawnedPrefab.targetPos ? spawnedPrefab.targetPos.y : spawnedPrefab.y;
+
+            this.spawnedCardPrefabs.set(spawnedPrefab.uuid, spawnedPrefab);
+            this.tweens.killTweensOf(spawnedPrefab);
+
+            spawnedPrefab.setPosition(originX, originY);
+            spawnedPrefab.setScale(0.25);
+            spawnedPrefab.setAlpha(0);
+            spawnedPrefab.setDepth(145);
+            spawnedPrefab.bg.setStrokeStyle(4, 0x38bdf8);
+
+            this.tweens.add({
+                targets: spawnedPrefab,
+                x: finalX,
+                y: finalY,
+                scaleX: 1.0,
+                scaleY: 1.0,
+                alpha: 1,
+                duration: 420,
+                ease: 'Back.easeOut',
+                onComplete: () => {
+                    spawnedPrefab.setDepth(25);
+                }
+            });
+        }
+    }
+
+    handleSpawnFailedZoneFull(triggerContext) {
+        const msg = triggerContext?.logMessage || 'Zona cheia! A carta invocada foi enviada ao Descarte.';
+        this.showToast(msg);
+        if (triggerContext?.targetHeroId) {
+            const hero = this.heroPrefabs.get(triggerContext.targetHeroId);
+            if (hero) {
+                hero.showFloatingNumber('SLOTS CHEIOS!', '#ef4444');
+            }
+        }
     }
 
     highlightSourceCard(sourceUuid) {

@@ -44,11 +44,22 @@ public class MatchSnapshotDTO {
 
     @Data
     public static class TriggerContextDTO {
-        private String eventType; // "PHASE_CHANGE", "EFFECT_RESOLVED", "PHYSICAL_COMBAT_EXCHANGE"
+        private String eventType; // "PHASE_CHANGE", "EFFECT_RESOLVED", "PHYSICAL_COMBAT_EXCHANGE", "CARD_SPAWNED", "TOKEN_SUMMONED", "SPAWN_FAILED_ZONE_FULL"
         private UUID sourceCardUuid;
         private String sourceCardName;
         private String effectClassName;
         private String logMessage;
+
+        // Metadados explícitos para invocação (CARD_SPAWNED / TOKEN_SUMMONED)
+        private UUID spawnedCardUuid;
+        private String spawnedCardName;
+        private UUID ownerPlayerId;
+        private UUID targetHeroId;
+        private String targetZone;     // "RESOLVE", "ATTACHED", "BENCH", "BATTLE", "DISCARD"
+        private Integer targetSlotIndex;
+        private boolean tokenCreated;  // true se foi instanciado dinamicamente fora do deck
+        private boolean zoneFull;      // true se a zona/slots de arma ou bancada estavam cheios
+        private CardSnapshotDTO spawnedCardData;
     }
 
     @Data

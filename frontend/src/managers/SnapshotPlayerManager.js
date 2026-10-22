@@ -102,9 +102,14 @@ export default class SnapshotPlayerManager {
         }
 
         const eventType = currentSnapshot?.triggerContext?.eventType;
-        const delay = (eventType === 'EFFECT_RESOLVED' || eventType === 'PHYSICAL_COMBAT_EXCHANGE')
-            ? 900
-            : 450;
+        const isActionEvent = [
+            'EFFECT_RESOLVED',
+            'PHYSICAL_COMBAT_EXCHANGE',
+            'CARD_SPAWNED',
+            'TOKEN_SUMMONED',
+            'SPAWN_FAILED_ZONE_FULL'
+        ].includes(eventType);
+        const delay = isActionEvent ? 950 : 450;
 
         this.activeTimer = this.scene.time.delayedCall(delay, () => {
             this.activeTimer = null;

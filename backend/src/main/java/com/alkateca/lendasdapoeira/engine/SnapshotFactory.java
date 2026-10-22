@@ -60,6 +60,41 @@ public class SnapshotFactory {
         return snapshot;
     }
 
+    public static MatchSnapshotDTO createSpawnSnapshot(
+            GameEngine engine,
+            Card invokerCard,
+            Card spawnedCard,
+            Effect effect,
+            String eventType,
+            UUID targetHeroId,
+            String targetZone,
+            Integer targetSlotIndex,
+            boolean tokenCreated,
+            boolean zoneFull,
+            String customLogMessage) {
+
+        MatchSnapshotDTO snapshot = createSnapshot(engine, invokerCard, effect, eventType);
+        MatchSnapshotDTO.TriggerContextDTO trigger = snapshot.getTriggerContext();
+
+        if (spawnedCard != null) {
+            trigger.setSpawnedCardUuid(spawnedCard.getUuid());
+            trigger.setSpawnedCardName(spawnedCard.getCardName());
+            trigger.setOwnerPlayerId(spawnedCard.getOwnerId());
+            trigger.setSpawnedCardData(toCardDTO(spawnedCard));
+        }
+        trigger.setTargetHeroId(targetHeroId);
+        trigger.setTargetZone(targetZone);
+        trigger.setTargetSlotIndex(targetSlotIndex);
+        trigger.setTokenCreated(tokenCreated);
+        trigger.setZoneFull(zoneFull);
+
+        if (customLogMessage != null && !customLogMessage.isBlank()) {
+            trigger.setLogMessage(customLogMessage);
+        }
+
+        return snapshot;
+    }
+
     private static MatchSnapshotDTO.PlayerViewDTO buildPlayerView(Player player, GameEngine engine) {
         MatchSnapshotDTO.PlayerViewDTO view = new MatchSnapshotDTO.PlayerViewDTO();
         view.setPlayerId(player.getUuid());
@@ -123,7 +158,8 @@ public class SnapshotFactory {
     }
 
     private static boolean isResolutionPhase(TurnPhase phase) {
-        return phase == TurnPhase.COMBAT_START ||
+        return phase == TurnPhase.GAME_START ||
+                phase == TurnPhase.COMBAT_START ||
                 phase == TurnPhase.RESOLUTION ||
                 phase == TurnPhase.COMBAT ||
                 phase == TurnPhase.COMBAT_END;
