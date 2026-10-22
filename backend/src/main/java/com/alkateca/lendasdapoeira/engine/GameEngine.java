@@ -35,6 +35,11 @@ public class GameEngine {
 
     // Histórico de snapshots para a timeline do Front-End
     private List<MatchSnapshotDTO> snapshotHistory = new ArrayList<>();
+    private long snapshotSequenceCounter = 0L;
+
+    public long nextSnapshotSequence() {
+        return ++this.snapshotSequenceCounter;
+    }
 
     // Ações de limpeza de buffs/debuffs temporários que expiram ao final do combate
     private List<Runnable> combatEndCleanupActions = new ArrayList<>();
