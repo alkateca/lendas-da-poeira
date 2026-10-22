@@ -104,12 +104,19 @@ public class MatchController {
         }
     }
 
-    @PostMapping("/matches/{matchId}/leave")
-    public ResponseEntity<Void> leaveMatch(
+    @PostMapping({"/matches/{matchId}/forfeit", "/matches/{matchId}/leave"})
+    public ResponseEntity<java.util.Map<String, Object>> forfeitOrLeaveMatch(
             @PathVariable UUID matchId,
-            @RequestParam(required = false) UUID playerId) {
-        matchmakingService.removeMatch(matchId);
-        return ResponseEntity.ok().build();
+            @RequestParam(required = false) UUID playerId,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+
+        UUID resolvedPlayerId = playerId;
+        if (resolvedPlayerId == null && body != null && body.get("playerId") != null) {
+            resolvedPlayerId = UUID.fromString(body.get("playerId"));
+        }
+
+        java.util.Map<String, Object> result = matchmakingService.forfeitOrLeaveMatch(matchId, resolvedPlayerId);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/matches/{matchId}/state")

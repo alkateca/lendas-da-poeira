@@ -110,6 +110,52 @@ public class MatchmakingService {
         System.out.println("🚪 Jogador cancelou a busca e saiu do pool.");
     }
 
+    public Map<String, Object> forfeitOrLeaveMatch(UUID matchId, UUID playerId) {
+        Match match = activeMatches.get(matchId);
+        if (match == null) {
+            if (playerId != null) {
+                playerToMatchMap.remove(playerId);
+            }
+            return Map.of("status", "ALREADY_CLOSED", "matchId", matchId);
+        }
+
+        // Caso 1: Partida PvE -> Destruição imediata da instância do GameEngine e limpeza total
+        if (match.getMode() == MatchMode.PVE) {
+            match.executeLocked(() -> {
+                match.getGameEngine().gameOver();
+                match.setStatus(MatchStatus.FINISHED);
+                return null;
+            });
+            removeMatch(matchId);
+            System.out.println("🏳️ Partida PvE " + matchId + " encerrada e destruída pelo jogador " + playerId);
+            return Map.of(
+                    "status", "PVE_DESTROYED",
+                    "matchId", matchId,
+                    "mode", "PVE"
+            );
+        }
+
+        // Caso 2: Partida PvP -> Declara derrota por W.O., gera snapshot para o oponente e encerra a sessão
+        return match.executeLocked(() -> {
+            GameEngine engine = match.getGameEngine();
+            if (match.getStatus() != MatchStatus.FINISHED && engine.getTurnPhase() != TurnPhase.GAME_OVER) {
+                engine.forfeitMatch(playerId);
+                match.syncStatusWithEngine();
+            }
+            releasePlayersFromMatch(match);
+
+            System.out.println("🏳️ Partida PvP " + matchId + ": Jogador " + playerId
+                    + " desistiu. Vitória por W.O. concedida ao oponente (" + engine.getWinnerPlayerId() + ").");
+
+            return Map.of(
+                    "status", "PVP_FORFEITED",
+                    "matchId", matchId,
+                    "mode", "PVP",
+                    "winnerPlayerId", engine.getWinnerPlayerId() != null ? engine.getWinnerPlayerId() : ""
+            );
+        });
+    }
+
     /**
      * Roteamento thread-safe por matchId (não bloqueia outras partidas em andamento).
      */
