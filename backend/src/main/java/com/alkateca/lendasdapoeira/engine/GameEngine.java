@@ -92,6 +92,154 @@ public class GameEngine {
         this.invokedCardIdsInCurrentCombat.clear();
     }
 
+    // =========================================================================
+    // MÉTRICAS E ESTATÍSTICAS ACUMULADAS DA PARTIDA
+    // =========================================================================
+    private int turnsElapsed = 1;
+    private final Map<UUID, Integer> lastRecordedHeroHp = new HashMap<>();
+    private final Map<UUID, MatchSnapshotDTO.PlayerMatchStatsDTO> playerStatsMap = new HashMap<>();
+
+    private void initMatchMetrics() {
+        this.turnsElapsed = 1;
+        this.lastRecordedHeroHp.clear();
+        this.playerStatsMap.clear();
+
+        if (player1 != null) {
+            playerStatsMap.put(player1.getUuid(), new MatchSnapshotDTO.PlayerMatchStatsDTO(
+                    player1.getUuid(), player1.getName(), false, 0, 0, 0, 0, 0, 0, 0
+            ));
+            recordInitialHeroesHp(player1);
+        }
+        if (player2 != null) {
+            playerStatsMap.put(player2.getUuid(), new MatchSnapshotDTO.PlayerMatchStatsDTO(
+                    player2.getUuid(), player2.getName(), false, 0, 0, 0, 0, 0, 0, 0
+            ));
+            recordInitialHeroesHp(player2);
+        }
+    }
+
+    private void recordInitialHeroesHp(Player player) {
+        if (player.getCurrentDeck() == null || player.getCurrentDeck().getHeroList() == null) return;
+        for (HeroCard hero : player.getCurrentDeck().getHeroList()) {
+            if (hero != null) {
+                lastRecordedHeroHp.put(hero.getUuid(), hero.getVidaAtual());
+            }
+        }
+    }
+
+    /**
+     * Atualiza automaticamente Dano Causado, Dano Sofrido e Cura Realizada comparando o HP atual
+     * dos Heróis com o estado anterior a cada snapshot.
+     */
+    public void updateCombatMetricsFromBoardState(Card sourceCard) {
+        if (player1 == null || player2 == null) return;
+        if (playerStatsMap.isEmpty()) {
+            initMatchMetrics();
+        }
+
+        updateHeroHpDeltasForPlayer(player1, player2, sourceCard);
+        updateHeroHpDeltasForPlayer(player2, player1, sourceCard);
+    }
+
+    private void updateHeroHpDeltasForPlayer(Player owner, Player opponent, Card sourceCard) {
+        if (owner.getCurrentDeck() == null || owner.getCurrentDeck().getHeroList() == null) return;
+
+        MatchSnapshotDTO.PlayerMatchStatsDTO ownerStats = playerStatsMap.get(owner.getUuid());
+        MatchSnapshotDTO.PlayerMatchStatsDTO opponentStats = playerStatsMap.get(opponent.getUuid());
+        if (ownerStats == null || opponentStats == null) return;
+
+        for (HeroCard hero : owner.getCurrentDeck().getHeroList()) {
+            if (hero == null) continue;
+
+            int currentHp = hero.getVidaAtual();
+            int previousHp = lastRecordedHeroHp.getOrDefault(hero.getUuid(), hero.getVidaMaxima());
+            int delta = currentHp - previousHp;
+
+            if (delta < 0) {
+                int dmg = Math.abs(delta);
+                ownerStats.setTotalDamageTaken(ownerStats.getTotalDamageTaken() + dmg);
+
+                // Se foi auto-dano explícito de uma carta de Ação/Item do próprio jogador (e não troca física)
+                boolean isSelfInflicted = sourceCard != null
+                        && !(sourceCard instanceof HeroCard)
+                        && owner.getUuid().equals(sourceCard.getOwnerId());
+
+                if (isSelfInflicted) {
+                    ownerStats.setTotalDamageDealt(ownerStats.getTotalDamageDealt() + dmg);
+                } else {
+                    opponentStats.setTotalDamageDealt(opponentStats.getTotalDamageDealt() + dmg);
+                }
+            } else if (delta > 0) {
+                ownerStats.setTotalHealingDone(ownerStats.getTotalHealingDone() + delta);
+            }
+
+            lastRecordedHeroHp.put(hero.getUuid(), currentHp);
+        }
+    }
+
+    public void incrementCardsPlayed(UUID playerId, int count) {
+        if (playerId == null || count <= 0) return;
+        MatchSnapshotDTO.PlayerMatchStatsDTO stats = playerStatsMap.get(playerId);
+        if (stats != null) {
+            stats.setCardsPlayed(stats.getCardsPlayed() + count);
+        }
+    }
+
+    public MatchSnapshotDTO.MatchResultSummaryDTO buildMatchResultSummary() {
+        if (player1 == null || player2 == null) return null;
+        if (playerStatsMap.isEmpty()) initMatchMetrics();
+
+        finalizePlayerScore(player1, player2);
+        finalizePlayerScore(player2, player1);
+
+        MatchSnapshotDTO.PlayerMatchStatsDTO p1Stats = playerStatsMap.get(player1.getUuid());
+        MatchSnapshotDTO.PlayerMatchStatsDTO p2Stats = playerStatsMap.get(player2.getUuid());
+
+        String winnerName = null;
+        if (winnerPlayerId != null) {
+            winnerName = winnerPlayerId.equals(player1.getUuid()) ? player1.getName() : player2.getName();
+        }
+
+        return new MatchSnapshotDTO.MatchResultSummaryDTO(
+                this.winnerPlayerId,
+                winnerName,
+                this.winReason != null ? this.winReason : "ELIMINATION",
+                this.turnsElapsed,
+                p1Stats,
+                p2Stats
+        );
+    }
+
+    private void finalizePlayerScore(Player player, Player opponent) {
+        MatchSnapshotDTO.PlayerMatchStatsDTO stats = playerStatsMap.get(player.getUuid());
+        if (stats == null) return;
+
+        boolean isWin = this.winnerPlayerId != null && this.winnerPlayerId.equals(player.getUuid());
+        stats.setWinner(isWin);
+
+        int alive = (int) player.getCurrentDeck().getHeroList().stream()
+                .filter(h -> h != null && Boolean.TRUE.equals(h.getEstaVivo()))
+                .count();
+        int defeatedEnemyHeroes = (int) opponent.getCurrentDeck().getHeroList().stream()
+                .filter(h -> h != null && !Boolean.TRUE.equals(h.getEstaVivo()))
+                .count();
+
+        stats.setHeroesAlive(alive);
+        stats.setHeroesDefeated(defeatedEnemyHeroes);
+
+        // Cálculo de Pontuação: Base de Vitória (500) + Dano (x15) + Cura (x10) + Abates (x120) + Vivos (x80) + Bônus de Velocidade
+        int victoryBonus = isWin ? 500 : 100;
+        int speedBonus = isWin ? Math.max(0, (12 - this.turnsElapsed) * 25) : 0;
+        int score = victoryBonus
+                + (stats.getTotalDamageDealt() * 15)
+                + (stats.getTotalHealingDone() * 10)
+                + (defeatedEnemyHeroes * 120)
+                + (alive * 80)
+                + speedBonus;
+
+        stats.setMatchScore(score);
+    }
+
     public GameEngine(Player player1, Player player2) {
         this.player1 = player1;
         this.player2 = player2;
@@ -100,6 +248,7 @@ public class GameEngine {
         this.gameState = new GameState();
         this.gameState.setPlayer1(player1);
         this.gameState.setPlayer2(player2);
+        initMatchMetrics();
     }
 
     private void drawInitialHand(Player player) {
@@ -108,6 +257,7 @@ public class GameEngine {
 
     public void startGame() {
         System.out.println("--- INICIANDO A PARTIDA ---");
+        initMatchMetrics();
 
         Random random = new Random();
         boolean player1Starts = random.nextBoolean();
@@ -199,6 +349,7 @@ public class GameEngine {
             gameState.setActiveTurnPlayerId(gameState.getPlayer1().getUuid());
         }
 
+        this.turnsElapsed++;
         changePhase(TurnPhase.CHOICE);
     }
 
@@ -414,6 +565,7 @@ public class GameEngine {
     }
 
     public void captureSnapshot(Card sourceCard, com.alkateca.lendasdapoeira.effects.Effect effect, String eventType) {
+        updateCombatMetricsFromBoardState(sourceCard);
         MatchSnapshotDTO snapshot = SnapshotFactory.createSnapshot(this, sourceCard, effect, eventType);
         this.snapshotHistory.add(snapshot);
     }
@@ -489,6 +641,7 @@ public class GameEngine {
                 cardInHand.setZoneId(ZoneId.RESOLVE);
                 targetPlayedList.add(cardInHand);
             }
+            incrementCardsPlayed(playerId, playedCardUuids.size());
         }
 
         if (isP1) {
