@@ -276,7 +276,6 @@ public class SnapshotFactory {
         adapted.setWinnerPlayerId(original.getWinnerPlayerId());
         adapted.setForfeitedByPlayerId(original.getForfeitedByPlayerId());
         adapted.setWinReason(original.getWinReason());
-        adapted.setMatchResult(original.getMatchResult());
 
         boolean isP1Viewer = original.getLocalPlayer().getPlayerId().equals(viewerPlayerId);
         MatchSnapshotDTO.PlayerViewDTO myView = clonePlayerView(isP1Viewer ? original.getLocalPlayer() : original.getOpponentPlayer(), true);
@@ -284,6 +283,21 @@ public class SnapshotFactory {
 
         adapted.setLocalPlayer(myView);
         adapted.setOpponentPlayer(oppView);
+
+        if (original.getMatchResult() != null) {
+            MatchSnapshotDTO.MatchResultSummaryDTO srcRes = original.getMatchResult();
+            MatchSnapshotDTO.MatchResultSummaryDTO adaptedRes = new MatchSnapshotDTO.MatchResultSummaryDTO();
+            adaptedRes.setWinnerPlayerId(srcRes.getWinnerPlayerId());
+            adaptedRes.setWinnerName(srcRes.getWinnerName());
+            adaptedRes.setWinReason(srcRes.getWinReason());
+            adaptedRes.setTurnsElapsed(srcRes.getTurnsElapsed());
+
+            // Garante que player1Stats = Jogador Local e player2Stats = Oponente na tela de quem visualiza
+            adaptedRes.setPlayer1Stats(isP1Viewer ? srcRes.getPlayer1Stats() : srcRes.getPlayer2Stats());
+            adaptedRes.setPlayer2Stats(isP1Viewer ? srcRes.getPlayer2Stats() : srcRes.getPlayer1Stats());
+            adapted.setMatchResult(adaptedRes);
+        }
+
         return adapted;
     }
 
