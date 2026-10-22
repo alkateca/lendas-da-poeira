@@ -48,7 +48,7 @@ public class StartOfCombatInvokeCardEffect implements Effect {
         if (myHero != null) {
             System.out.println("-> Invocando: " + cardName + " para " + myHero.getCardName() + "!");
             gameEngine.captureSnapshot(sourceCard, this, "EFFECT_RESOLVED");
-            gameEngine.invokeCard(myPlayer, myHero, cardName);
+            gameEngine.invokeCard(myPlayer, sourceCard, myHero, cardName);
         }
     }
 }

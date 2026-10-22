@@ -45,6 +45,21 @@ export default class MatchScene extends Phaser.Scene {
         if (!this.textures.exists('card_frame_hero')) {
             this.load.image('card_frame_hero', 'modeloAlfa.jpeg');
         }
+
+        const cardKeys = [
+            'ataqueMagico', 'atmosferaPesada', 'autoDefesaMagica', 'banir', 'barreiraDeGelo',
+            'bolaDeFogo', 'brocheCristal', 'convocacao', 'determinacaoCristalina', 'dragaoCristal',
+            'dragast', 'estatica', 'exumacao', 'fragmentoAfiado', 'garraEspectral',
+            'golpesPesados', 'grandeMachadoSombrio', 'homunculoCarniceiro', 'laminaDeCristal',
+            'maestriaComChamas', 'massacreCristalino', 'mirarNaCabeca', 'paraRaios', 'pontoFinal',
+            'quebra', 'quimera', 'quimeraNegra', 'racaoDeEmergencia', 'rapieiraDeCristal',
+            'risadaSarcastica', 'ritosFunebres', 'tristeza', 'vendavalArcano'
+        ];
+        cardKeys.forEach(key => {
+            if (!this.textures.exists(key)) {
+                this.load.image(key, `images/cartas/${key}.png`);
+            }
+        });
     }
 
     create() {
@@ -308,10 +323,27 @@ export default class MatchScene extends Phaser.Scene {
 
         if (isHero) {
             this.lpArtLabel.setText('⚔ ARTE DO HERÓI');
-            this.lpTypeLine.setPosition(-width * 0.12, height * 0.19).setText(`HERÓI • ${cardOrHeroDto.color}`);
+
+            const weaponSlotsTxt = ` • Armas: ${cardOrHeroDto.usedWeaponSlots ?? 0}/${cardOrHeroDto.maxWeaponSlots ?? 2}`;
+            this.lpTypeLine.setPosition(-width * 0.12, height * 0.19).setText(`HERÓI • ${cardOrHeroDto.color}${weaponSlotsTxt}`);
+
+            let fullDesc = cardOrHeroDto.descricao || '';
+            const attached = cardOrHeroDto.attachedCards || [];
+            if (attached.length > 0) {
+                const attachedLines = attached.map(item => {
+                    const emp = (item.itemType === 'ARMA' && item.empunhadura > 0) ? ` [Emp: ${item.empunhadura}]` : '';
+                    const desc = item.descricao ? `\n   ${item.descricao.replace(/\n/g, ' ')}` : '';
+                    return `🗡️ ${item.cardName}${emp}${desc}`;
+                }).join('\n');
+
+                fullDesc += (fullDesc ? '\n\n' : '') + `✦ ITENS EQUIPADOS (${attached.length}):\n${attachedLines}`;
+            }
+
+            const fontSize = fullDesc.length > 170 ? '9.5px' : '11px';
             this.lpDesc.setPosition(-width * 0.12, height * 0.31)
-                .setStyle({ fontSize: '11px', color: '#000000', fontFamily: 'monospace', align: 'left', wordWrap: { width: width * 0.64 } })
-                .setText(cardOrHeroDto.descricao || '');
+                .setStyle({ fontSize, color: '#000000', fontFamily: 'monospace', align: 'left', wordWrap: { width: width * 0.64 } })
+                .setText(fullDesc);
+
             this.lpFooterStats.setText(
                 `ESP:${cardOrHeroDto.espirito} | ATQ:${cardOrHeroDto.ataque} | DEF:${cardOrHeroDto.defesa} | HP:${cardOrHeroDto.vidaAtual}/${cardOrHeroDto.vidaMaxima}`
             );
@@ -889,7 +921,10 @@ export default class MatchScene extends Phaser.Scene {
                 existingByUuid.delete(cardDto.uuid);
                 existing.targetPos = { x: targetX, y: targetY };
                 existing.updateCardVisuals(cardDto);
-                existing.snapToPosition(targetX, targetY, null, 0, 'MEDIUM');
+                const isSpawnTweenActive = this.tweens.isTweening(existing);
+                if (!isSpawnTweenActive) {
+                    existing.snapToPosition(targetX, targetY, null, 0, 'MEDIUM');
+                }
                 nextResolvePrefabs.push(existing);
                 return;
             }
@@ -904,10 +939,9 @@ export default class MatchScene extends Phaser.Scene {
                 this.spawnedCardPrefabs.set(cardDto.uuid, prefab);
             }
 
-            // Se for a carta recém-invocada, handleCardSpawnEvent assumirá a animação partindo do invocador;
-            // caso contrário, executa o fade-in padrão do slot de resolução.
+            // Garante alpha: 0 inicial para evitar flash visual no slot antes do tween de spawn
+            prefab.setAlpha(0);
             if (!isJustSpawned) {
-                prefab.setAlpha(0);
                 this.tweens.add({
                     targets: prefab,
                     y: targetY,
@@ -1007,7 +1041,6 @@ export default class MatchScene extends Phaser.Scene {
             );
             spawnedPrefab.setDepth(145);
             this.spawnedCardPrefabs.set(spawnedPrefab.uuid, spawnedPrefab);
-            this.resolveCardPrefabs.push(spawnedPrefab);
 
             spawnedPrefab.setScale(0.25).setAlpha(0);
             this.tweens.add({
@@ -1028,8 +1061,11 @@ export default class MatchScene extends Phaser.Scene {
                             alpha: 0,
                             delay: 320,
                             duration: 240,
-                            ease: 'Cubic.easeIn'
+                            ease: 'Cubic.easeIn',
+                            onComplete: () => spawnedPrefab.destroy()
                         });
+                    } else {
+                        spawnedPrefab.destroy();
                     }
                 }
             });

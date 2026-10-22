@@ -270,7 +270,7 @@ public class SnapshotFactory {
         adapted.setTurnPhase(original.getTurnPhase());
         adapted.setActiveTurnPlayerId(original.getActiveTurnPlayerId());
         adapted.setWaitingForMainButton(original.isWaitingForMainButton());
-        adapted.setTriggerContext(original.getTriggerContext());
+        adapted.setTriggerContext(cloneTriggerContext(original.getTriggerContext()));
         adapted.setPendingChoice(original.getPendingChoice());
 
         adapted.setWinnerPlayerId(original.getWinnerPlayerId());
@@ -331,6 +331,26 @@ public class SnapshotFactory {
             return cardCopy;
         }).collect(Collectors.toList()));
 
+        return copy;
+    }
+
+    private static MatchSnapshotDTO.TriggerContextDTO cloneTriggerContext(MatchSnapshotDTO.TriggerContextDTO src) {
+        if (src == null) return null;
+        MatchSnapshotDTO.TriggerContextDTO copy = new MatchSnapshotDTO.TriggerContextDTO();
+        copy.setEventType(src.getEventType());
+        copy.setSourceCardUuid(src.getSourceCardUuid());
+        copy.setSourceCardName(src.getSourceCardName());
+        copy.setEffectClassName(src.getEffectClassName());
+        copy.setSpawnedCardUuid(src.getSpawnedCardUuid());
+        copy.setSpawnedCardName(src.getSpawnedCardName());
+        copy.setOwnerPlayerId(src.getOwnerPlayerId());
+        copy.setSpawnedCardData(src.getSpawnedCardData());
+        copy.setTargetHeroId(src.getTargetHeroId());
+        copy.setTargetZone(src.getTargetZone());
+        copy.setTargetSlotIndex(src.getTargetSlotIndex());
+        copy.setTokenCreated(src.isTokenCreated());
+        copy.setZoneFull(src.isZoneFull());
+        copy.setLogMessage(src.getLogMessage());
         return copy;
     }
 }

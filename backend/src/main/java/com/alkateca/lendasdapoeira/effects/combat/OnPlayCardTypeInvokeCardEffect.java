@@ -91,7 +91,7 @@ public class OnPlayCardTypeInvokeCardEffect implements Effect {
             for (int i = 0; i < newMatchingCards.size(); i++) {
                 System.out.println("-> Ao jogar " + triggerLabel + ", " + sourceCard.getCardName() +
                         " invocou: " + cardToInvoke + "!");
-                gameEngine.invokeCard(myPlayer, myHero, cardToInvoke);
+                gameEngine.invokeCard(myPlayer, sourceCard, myHero, cardToInvoke);
             }
         }
     }

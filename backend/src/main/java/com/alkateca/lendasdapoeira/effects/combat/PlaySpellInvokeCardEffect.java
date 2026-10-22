@@ -43,7 +43,7 @@ public class PlaySpellInvokeCardEffect implements Effect {
 
         if (myPlayer != null) {
             System.out.println("-> Invocando: " + cardName + "!");
-            gameEngine.invokeCard(myPlayer, myHero, cardName);
+            gameEngine.invokeCard(myPlayer, sourceCard, myHero, cardName);
         }
     }
 }

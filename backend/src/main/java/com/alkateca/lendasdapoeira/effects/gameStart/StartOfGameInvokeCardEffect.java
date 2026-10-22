@@ -41,7 +41,7 @@ public class StartOfGameInvokeCardEffect implements Effect {
             targetHero = gameEngine.findHeroById(myHeroId);
         }
 
-        Card invoked = gameEngine.invokeCard(myPlayer, targetHero, cardName);
+        Card invoked = gameEngine.invokeCard(myPlayer, sourceCard, targetHero, cardName);
         if (invoked != null) {
             System.out.println("-> Invocou " + invoked.getCardName() + " no Início da Partida!");
         }

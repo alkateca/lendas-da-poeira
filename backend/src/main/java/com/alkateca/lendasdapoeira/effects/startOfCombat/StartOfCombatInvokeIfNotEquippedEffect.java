@@ -50,7 +50,7 @@ public class StartOfCombatInvokeIfNotEquippedEffect implements Effect {
 
             if (!alreadyEquipped) {
                 System.out.println("-> " + myHero.getCardName() + " não possui " + cardName + " equipado. Invocando: " + cardName + "!");
-                gameEngine.invokeCard(myPlayer, myHero, cardName);
+                gameEngine.invokeCard(myPlayer, sourceCard, myHero, cardName);
             } else {
                 System.out.println("-> " + myHero.getCardName() + " já possui " + cardName + " equipado.");
             }

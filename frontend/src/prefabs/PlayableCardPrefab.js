@@ -88,10 +88,23 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         scene.add.existing(this);
     }
 
+    toCamelCaseKey(str) {
+        if (!str || str === 'Carta Oculta') return null;
+        return str
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-zA-Z0-9 ]/g, '')
+            .split(' ')
+            .filter(Boolean)
+            .map((w, i) => i === 0 ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+            .join('');
+    }
+
     resolveArtTextureKey(cardDto) {
         if (!cardDto) return null;
         if (cardDto.imagem && this.scene.textures.exists(cardDto.imagem)) return cardDto.imagem;
         if (cardDto.cardName && this.scene.textures.exists(cardDto.cardName)) return cardDto.cardName;
+        const camelKey = this.toCamelCaseKey(cardDto.cardName);
+        if (camelKey && this.scene.textures.exists(camelKey)) return camelKey;
         if (cardDto.uuid && this.scene.textures.exists(cardDto.uuid)) return cardDto.uuid;
         return null;
     }
@@ -291,15 +304,33 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             this.cardBackPattern.setVisible(true);
         } else {
             this.frameImage.setVisible(true);
-            if (this.artSprite) this.artSprite.setVisible(true);
-            this.titleText.setText(cardDto.cardName).setVisible(true);
+
+            // Lazy creation ou atualização dinâmica de textura ao desvirar a carta
+            const artKey = this.resolveArtTextureKey(cardDto);
+            if (artKey) {
+                if (!this.artSprite) {
+                    this.artSprite = this.scene.add.image(0, 0, artKey);
+                    this.artSprite.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+                    const frameIdx = this.getIndex(this.frameImage);
+                    this.addAt(this.artSprite, frameIdx + 1);
+                } else {
+                    this.artSprite.setTexture(artKey);
+                }
+                this.artSprite.setVisible(true);
+            } else if (this.artSprite) {
+                this.artSprite.setVisible(false);
+            }
+
+            this.titleText.setText(cardDto.cardName || '').setVisible(true);
 
             const empInfo = (cardDto.itemType === 'ARMA' && cardDto.empunhadura > 0)
                 ? ` • Emp:${cardDto.empunhadura}`
                 : '';
-            this.typeBadge.setText(`${cardDto.cardType}${empInfo}`);
+            this.typeBadge.setText(`${cardDto.cardType || ''}${empInfo}`);
             this.descText.setText(cardDto.descricao || '');
             this.cardBackPattern.setVisible(false);
+
+            this.applySizeLayout(this.currentMode);
         }
     }
 

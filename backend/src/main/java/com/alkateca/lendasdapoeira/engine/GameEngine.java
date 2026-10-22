@@ -1031,6 +1031,10 @@ public class GameEngine {
      * e resolve seus efeitos de entrada (RESOLUTION) imediatamente.
      */
     public Card invokeCard(Player owner, HeroCard targetHero, String cardName) {
+        return invokeCard(owner, targetHero, targetHero, cardName);
+    }
+
+    public Card invokeCard(Player owner, Card invokerCard, HeroCard targetHero, String cardName) {
         if (owner == null || cardName == null) return null;
 
         // 1. Procura a carta priorizando DECK primeiro
@@ -1185,8 +1189,9 @@ public class GameEngine {
                 : ZoneId.RESOLVE.name();
 
         // Dispara o evento explícito de invocação com a carta visível em RESOLVE
+        Card sourceInvoker = invokerCard != null ? invokerCard : targetHero;
         captureSpawnSnapshot(
-                targetHero,
+                sourceInvoker,
                 invokedCard,
                 null,
                 spawnEventType,
@@ -1198,7 +1203,8 @@ public class GameEngine {
                 "✨ Invocado: " + invokedCard.getCardName() + (targetHero != null ? " (" + targetHero.getCardName() + ")" : "")
         );
 
-        // 5. Resolve imediatamente os efeitos de entrada (TurnPhase.RESOLUTION) da carta invocada
+        // 5. Resolve imediatamente os efeitos de entrada (TurnPhase.RESOLUTION) da carta invocada.
+        // A carta permanece em ownerPlayedList durante toda a resolução e captura dos snapshots EFFECT_RESOLVED.
         if (invokedCard.getEffects() != null) {
             for (com.alkateca.lendasdapoeira.effects.Effect effect : invokedCard.getEffects()) {
                 if (effect.predicate(invokedCard, TurnPhase.RESOLUTION)) {
@@ -1206,10 +1212,6 @@ public class GameEngine {
                     captureSnapshot(invokedCard, effect, "EFFECT_RESOLVED");
                 }
             }
-        }
-
-        if (addedTempToPlayed && this.turnPhase != TurnPhase.RESOLUTION) {
-            ownerPlayedList.remove(invokedCard);
         }
 
         // 6. Move a carta invocada para a zona final (ATTACHED, EXILE ou DISCARD)
@@ -1222,6 +1224,12 @@ public class GameEngine {
             invokedCard.setZoneId(ZoneId.EXILE);
         } else {
             invokedCard.setZoneId(ZoneId.DISCARD);
+        }
+
+        // 7. Remove da lista de cartas jogadas SOMENTE DEPOIS que todos os snapshots
+        // daquela invocação forem emitidos, garantindo integridade visual no Front-End.
+        if (addedTempToPlayed) {
+            ownerPlayedList.remove(invokedCard);
         }
 
         return invokedCard;

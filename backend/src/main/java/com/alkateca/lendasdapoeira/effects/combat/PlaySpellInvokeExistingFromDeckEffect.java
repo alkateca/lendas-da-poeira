@@ -55,6 +55,6 @@ public class PlaySpellInvokeExistingFromDeckEffect implements Effect {
                 .orElse(null);
 
         System.out.println("-> Invocando cópia existente do baralho: " + cardName + "!");
-        gameEngine.invokeCard(myPlayer, myHero, cardName);
+        gameEngine.invokeCard(myPlayer, sourceCard, myHero, cardName);
     }
 }
