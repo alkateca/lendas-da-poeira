@@ -84,6 +84,10 @@ class MatchStatsAccumulationTest {
         assertEquals(0, summary.getPlayer2Stats().getTotalHealingDone());
         assertFalse(summary.getPlayer2Stats().isWinner());
 
-        assertTrue(summary.getPlayer1Stats().getMatchScore() > summary.getPlayer2Stats().getMatchScore());
+        // P1: 5 de dano + 2 de cura = 7 pontos
+        assertEquals(7, summary.getPlayer1Stats().getMatchScore());
+
+        // P2: 2 de dano + 0 de cura = 2 pontos
+        assertEquals(2, summary.getPlayer2Stats().getMatchScore());
     }
 }
