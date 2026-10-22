@@ -257,6 +257,9 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         const prev = this.heroData || newHeroDto;
         this.heroData = newHeroDto;
 
+        this.nameText.setText(newHeroDto.cardName);
+        this.descText.setText(newHeroDto.descricao || '');
+
         this.espBadge.valueText.setText(`${newHeroDto.espirito}`);
         this.atqBadge.valueText.setText(`${newHeroDto.ataque}`);
         this.defBadge.valueText.setText(`${newHeroDto.defesa}`);
