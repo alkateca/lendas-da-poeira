@@ -641,7 +641,7 @@ public class GameEngine {
                 cardInHand.setZoneId(ZoneId.RESOLVE);
                 targetPlayedList.add(cardInHand);
             }
-            incrementCardsPlayed(playerId, playedCardUuids.size());
+            incrementCardsPlayed(playerId, targetPlayedList.size());
         }
 
         if (isP1) {
@@ -1025,6 +1025,7 @@ public class GameEngine {
             boolean tokenCreated,
             boolean zoneFull,
             String customLogMessage) {
+        updateCombatMetricsFromBoardState(invokerCard);
         MatchSnapshotDTO snapshot = SnapshotFactory.createSpawnSnapshot(
                 this, invokerCard, spawnedCard, effect, eventType,
                 targetHeroId, targetZone, targetSlotIndex, tokenCreated, zoneFull, customLogMessage
@@ -1315,6 +1316,8 @@ public class GameEngine {
         if (!ownerPlayedList.contains(cardToPlay)) {
             ownerPlayedList.add(cardToPlay);
         }
+
+        incrementCardsPlayed(cardToPlay.getOwnerId(), 1);
 
         int slotIndex = Math.max(0, ownerPlayedList.indexOf(cardToPlay));
         UUID activeHeroId = isP1 ? gameState.getActiveHeroPlayer1Id() : gameState.getActiveHeroPlayer2Id();
