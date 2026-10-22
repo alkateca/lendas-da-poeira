@@ -15,11 +15,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class SnapshotFactory {
-    private static long sequenceCounter = 0;
 
     public static MatchSnapshotDTO createSnapshot(GameEngine engine, Card sourceCard, Effect effect, String eventType) {
         MatchSnapshotDTO snapshot = new MatchSnapshotDTO();
-        snapshot.setSnapshotSequence(++sequenceCounter);
+        snapshot.setSnapshotSequence(engine.nextSnapshotSequence());
         snapshot.setTurnPhase(engine.getTurnPhase());
         snapshot.setActiveTurnPlayerId(engine.getGameState().getActiveTurnPlayerId());
 

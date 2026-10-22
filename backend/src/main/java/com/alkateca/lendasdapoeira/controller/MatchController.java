@@ -91,12 +91,25 @@ public class MatchController {
             @PathVariable UUID matchId,
             @RequestBody PlayerActionRequestDTO request) {
         try {
+            if (request.getMatchId() != null && !matchId.equals(request.getMatchId())) {
+                return ResponseEntity.badRequest().build();
+            }
+            request.setMatchId(matchId);
             MatchTimelineResponseDTO timeline = matchmakingService.processPlayerAction(matchId, request);
             return ResponseEntity.ok(timeline);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @PostMapping("/matches/{matchId}/leave")
+    public ResponseEntity<Void> leaveMatch(
+            @PathVariable UUID matchId,
+            @RequestParam(required = false) UUID playerId) {
+        matchmakingService.removeMatch(matchId);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/matches/{matchId}/state")
