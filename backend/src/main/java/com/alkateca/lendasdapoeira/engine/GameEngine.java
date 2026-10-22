@@ -25,6 +25,10 @@ public class GameEngine {
     private boolean isPlayer1Ready = false;
     private boolean isPlayer2Ready = false;
 
+    private UUID winnerPlayerId;
+    private UUID forfeitedByPlayerId;
+    private String winReason;
+
     private java.util.function.Consumer<UUID> pendingChoiceCallback;
 
     public boolean isWaitingForPlayerChoice() {
@@ -196,6 +200,44 @@ public class GameEngine {
         }
 
         changePhase(TurnPhase.CHOICE);
+    }
+
+    /**
+     * Processa a desistência (W.O.) de um jogador, declarando o oponente vencedor e encerrando a partida.
+     */
+    public void forfeitMatch(UUID quittingPlayerId) {
+        if (this.turnPhase == TurnPhase.GAME_OVER) {
+            return;
+        }
+
+        boolean isP1Quitting = player1 != null && player1.getUuid().equals(quittingPlayerId);
+        Player quittingPlayer = isP1Quitting ? player1 : player2;
+        Player winnerPlayer = isP1Quitting ? player2 : player1;
+
+        this.forfeitedByPlayerId = quittingPlayer != null ? quittingPlayer.getUuid() : quittingPlayerId;
+        this.winnerPlayerId = winnerPlayer != null ? winnerPlayer.getUuid() : null;
+        this.winReason = "FORFEIT";
+
+        // Limpa qualquer escolha pendente para não travar a tela do oponente
+        if (this.gameState != null) {
+            this.gameState.setPendingChoice(null);
+            this.gameState.setTurnPhase(TurnPhase.GAME_OVER);
+        }
+        this.pendingChoiceCallback = null;
+        this.turnPhase = TurnPhase.GAME_OVER;
+
+        // Marca os heróis do desistente como inativos/derrotados visualmente
+        if (quittingPlayer != null && quittingPlayer.getCurrentDeck() != null && quittingPlayer.getCurrentDeck().getHeroList() != null) {
+            for (Card c : quittingPlayer.getCurrentDeck().getHeroList()) {
+                if (c instanceof HeroCard hero) {
+                    hero.setEstaVivo(false);
+                    hero.setEstaAtivo(false);
+                }
+            }
+        }
+
+        captureSnapshot(null, null, "MATCH_FORFEITED");
+        gameOver();
     }
 
     public void gameOver() {
@@ -765,7 +807,16 @@ public class GameEngine {
                 .filter(c -> c instanceof HeroCard)
                 .noneMatch(c -> Boolean.TRUE.equals(((HeroCard) c).getEstaVivo()));
 
-        return p1AllDead || p2AllDead;
+        if (p1AllDead || p2AllDead) {
+            this.winReason = "ELIMINATION";
+            if (p1AllDead && !p2AllDead) {
+                this.winnerPlayerId = player2.getUuid();
+            } else if (p2AllDead && !p1AllDead) {
+                this.winnerPlayerId = player1.getUuid();
+            }
+            return true;
+        }
+        return false;
     }
 
     /**

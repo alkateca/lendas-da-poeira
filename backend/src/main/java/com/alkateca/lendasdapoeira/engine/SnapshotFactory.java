@@ -45,10 +45,20 @@ public class SnapshotFactory {
             trigger.setLogMessage("🎯 Escolha necessária: " + engine.getGameState().getPendingChoice().getPromptMessage());
         } else if ("PHYSICAL_COMBAT_EXCHANGE".equals(eventType)) {
             trigger.setLogMessage("⚔️ Combate Físico realizado entre os Heróis ativos!");
+        } else if ("MATCH_FORFEITED".equals(eventType)) {
+            Player quitter = (engine.getForfeitedByPlayerId() != null && engine.getForfeitedByPlayerId().equals(engine.getPlayer1().getUuid()))
+                    ? engine.getPlayer1()
+                    : engine.getPlayer2();
+            Player winner = (quitter == engine.getPlayer1()) ? engine.getPlayer2() : engine.getPlayer1();
+            trigger.setLogMessage("🏳️ " + quitter.getName() + " desistiu da partida! Vitória por W.O. para " + winner.getName() + "!");
         } else {
             trigger.setLogMessage("Fase atual: " + engine.getTurnPhase());
         }
         snapshot.setTriggerContext(trigger);
+
+        snapshot.setWinnerPlayerId(engine.getWinnerPlayerId());
+        snapshot.setForfeitedByPlayerId(engine.getForfeitedByPlayerId());
+        snapshot.setWinReason(engine.getWinReason());
 
         // Guarda o pedido de escolha pendente (se a ResolutionQueue tiver pausado aguardando input do jogador)
         snapshot.setPendingChoice(engine.getGameState().getPendingChoice());
@@ -261,6 +271,10 @@ public class SnapshotFactory {
         adapted.setWaitingForMainButton(original.isWaitingForMainButton());
         adapted.setTriggerContext(original.getTriggerContext());
         adapted.setPendingChoice(original.getPendingChoice());
+
+        adapted.setWinnerPlayerId(original.getWinnerPlayerId());
+        adapted.setForfeitedByPlayerId(original.getForfeitedByPlayerId());
+        adapted.setWinReason(original.getWinReason());
 
         boolean isP1Viewer = original.getLocalPlayer().getPlayerId().equals(viewerPlayerId);
         MatchSnapshotDTO.PlayerViewDTO myView = clonePlayerView(isP1Viewer ? original.getLocalPlayer() : original.getOpponentPlayer(), true);

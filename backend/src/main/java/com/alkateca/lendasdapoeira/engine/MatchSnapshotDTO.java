@@ -25,6 +25,10 @@ public class MatchSnapshotDTO {
 
     private MatchDtos.PendingChoiceDTO pendingChoice;
 
+    private UUID winnerPlayerId;
+    private UUID forfeitedByPlayerId;
+    private String winReason; // "ELIMINATION" ou "FORFEIT"
+
 
 
     @Data

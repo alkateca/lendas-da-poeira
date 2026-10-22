@@ -23,6 +23,9 @@ export default class MatchScene extends Phaser.Scene {
         this.isSubmittingAction = false;
         this.isPolling = false;
         this.isChoiceModalActive = false;
+        this.isSettingsModalOpen = false;
+        this.musicVolume = Number(localStorage.getItem('ldp_music_volume') ?? 0.7);
+        this.sfxVolume = Number(localStorage.getItem('ldp_sfx_volume') ?? 0.8);
     }
 
     init(data) {
@@ -64,6 +67,8 @@ export default class MatchScene extends Phaser.Scene {
         this.createPilesPlayerBannersAndMainButton();
         this.createLargeHoverPreviewPanel();
         this.createDiscardInspectionModal();
+        this.createSettingsGearAndModal();
+        this.createGameOverModal();
 
         if (this.initialSnapshots.length > 0) {
             this.snapshotPlayer.enqueueSnapshots(this.initialSnapshots);
@@ -341,13 +346,13 @@ export default class MatchScene extends Phaser.Scene {
     }
 
     canDragHero(heroPrefab) {
-        if (!this.currentSnapshot || this.snapshotPlayer.isPlaying || this.isSubmittingAction) return false;
+        if (this.isSettingsModalOpen || !this.currentSnapshot || this.snapshotPlayer.isPlaying || this.isSubmittingAction) return false;
         const isMyInitiative = String(this.currentSnapshot.activeTurnPlayerId) === String(this.localPlayerId);
         return this.currentSnapshot.turnPhase === 'CHOICE' && isMyInitiative && heroPrefab.heroData.estaVivo;
     }
 
     canDragHandCard() {
-        if (!this.currentSnapshot || this.snapshotPlayer.isPlaying || this.isSubmittingAction) return false;
+        if (this.isSettingsModalOpen || !this.currentSnapshot || this.snapshotPlayer.isPlaying || this.isSubmittingAction) return false;
         const phase = this.currentSnapshot.turnPhase;
         return phase === 'PREPARATION' || phase === 'DISCARD';
     }
@@ -588,6 +593,10 @@ export default class MatchScene extends Phaser.Scene {
         }
 
         this.updateMainButtonState();
+
+        if (snapshot.turnPhase === 'GAME_OVER') {
+            this.showGameOverModal(snapshot);
+        }
     }
 
     checkAndShowPendingChoiceModal(snapshot) {
@@ -1342,6 +1351,270 @@ export default class MatchScene extends Phaser.Scene {
             console.error('Erro ao enviar escolha de alvo:', e);
             this.checkAndShowPendingChoiceModal(this.currentSnapshot);
             this.updateMainButtonState();
+        }
+    }
+
+    createSettingsGearAndModal() {
+        const { COLORS } = BOARD_LAYOUT;
+
+        // 1. Botão de Engrenagem no canto superior direito
+        this.gearBtnContainer = this.add.container(1860, 48).setDepth(210);
+        const gearBg = this.add.rectangle(0, 0, 54, 54, COLORS.ZONE_SURFACE, 0.95)
+            .setStrokeStyle(2, COLORS.GOLD_DUST)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => this.toggleSettingsModal());
+
+        const gearIcon = this.add.text(0, 0, '⚙️', { fontSize: '26px' }).setOrigin(0.5);
+        this.gearBtnContainer.add([gearBg, gearIcon]);
+
+        // 2. Overlay e Container Principal do Modal de Configurações (Pausa Visual)
+        this.settingsModalContainer = this.add.container(960, 540).setDepth(260).setVisible(false);
+
+        const backdrop = this.add.rectangle(0, 0, 1920, 1080, 0x000000, 0.65)
+            .setInteractive(); // Bloqueia cliques nos elementos de baixo sem pausar a rede
+
+        const panel = this.add.rectangle(0, 0, 560, 470, 0x0f172a, 0.98)
+            .setStrokeStyle(3, COLORS.GOLD_DUST);
+
+        const title = this.add.text(0, -185, '⚙️ CONFIGURAÇÕES DA PARTIDA', {
+            fontSize: '22px', color: '#ffd700', fontStyle: 'bold', fontFamily: 'monospace'
+        }).setOrigin(0.5);
+
+        const closeXBtn = this.add.text(245, -185, '✖', {
+            fontSize: '20px', color: '#94a3b8', fontStyle: 'bold'
+        })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => this.toggleSettingsModal(false));
+
+        // 3. Controles de Áudio (Música e Efeitos)
+        const musicControl = this.createVolumeControlRow(-95, '🎵 Volume da Música', this.musicVolume, (newVal) => {
+            this.musicVolume = newVal;
+            localStorage.setItem('ldp_music_volume', String(newVal));
+            this.applyAudioSettings();
+        });
+
+        const sfxControl = this.createVolumeControlRow(-15, '🔊 Efeitos Sonoros (SFX)', this.sfxVolume, (newVal) => {
+            this.sfxVolume = newVal;
+            localStorage.setItem('ldp_sfx_volume', String(newVal));
+            this.applyAudioSettings();
+        });
+
+        // 4. Visão Padrão dos Botões (Continuar / Desistir)
+        this.settingsMainButtonsGroup = this.add.container(0, 105);
+
+        const resumeBtnBg = this.add.rectangle(0, -20, 340, 50, 0x16a34a)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => this.toggleSettingsModal(false));
+        const resumeBtnTxt = this.add.text(0, -20, 'VOLTAR À PARTIDA', {
+            fontSize: '16px', color: '#ffffff', fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        const forfeitBtnBg = this.add.rectangle(0, 50, 340, 50, 0xb91c1c)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => this.showForfeitConfirmation(true));
+        const forfeitBtnTxt = this.add.text(0, 50, '🏳️ SAIR DA PARTIDA / DESISTIR', {
+            fontSize: '16px', color: '#ffffff', fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        this.settingsMainButtonsGroup.add([resumeBtnBg, resumeBtnTxt, forfeitBtnBg, forfeitBtnTxt]);
+
+        // 5. Sub-painel de Confirmação ("Tem certeza que deseja sair?")
+        this.forfeitConfirmGroup = this.add.container(0, 105).setVisible(false);
+
+        const confirmPrompt = this.add.text(0, -32, 'Tem certeza que deseja sair?\nIsso encerrará a partida (derrota por desistência).', {
+            fontSize: '14.5px', color: '#fca5a5', fontStyle: 'bold', align: 'center'
+        }).setOrigin(0.5);
+
+        const confirmYesBg = this.add.rectangle(-95, 42, 165, 48, 0xdc2626)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => this.confirmForfeitAndLeave());
+        const confirmYesTxt = this.add.text(-95, 42, 'SIM, SAIR', {
+            fontSize: '15px', color: '#ffffff', fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        const confirmNoBg = this.add.rectangle(95, 42, 165, 48, 0x475569)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => this.showForfeitConfirmation(false));
+        const confirmNoTxt = this.add.text(95, 42, 'CANCELAR', {
+            fontSize: '15px', color: '#ffffff', fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        this.forfeitConfirmGroup.add([confirmPrompt, confirmYesBg, confirmYesTxt, confirmNoBg, confirmNoTxt]);
+
+        this.settingsModalContainer.add([
+            backdrop, panel, title, closeXBtn,
+            ...musicControl, ...sfxControl,
+            this.settingsMainButtonsGroup,
+            this.forfeitConfirmGroup
+        ]);
+
+        this.applyAudioSettings();
+    }
+
+    createVolumeControlRow(yPos, labelText, initialValue, onChange) {
+        const label = this.add.text(-220, yPos - 18, labelText, {
+            fontSize: '15px', color: '#e2e8f0', fontStyle: 'bold'
+        }).setOrigin(0, 0.5);
+
+        const pctText = this.add.text(220, yPos - 18, `${Math.round(initialValue * 100)}%`, {
+            fontSize: '15px', color: '#ffd700', fontStyle: 'bold'
+        }).setOrigin(1, 0.5);
+
+        const barWidth = 340;
+        const trackBg = this.add.rectangle(0, yPos + 14, barWidth, 14, 0x334155)
+            .setInteractive({ useHandCursor: true });
+
+        const fillRect = this.add.rectangle(-barWidth / 2, yPos + 14, barWidth * initialValue, 14, 0x38bdf8)
+            .setOrigin(0, 0.5);
+
+        let currentValue = initialValue;
+        const updateVisual = (val) => {
+            currentValue = Phaser.Math.Clamp(Math.round(val * 10) / 10, 0, 1);
+            fillRect.width = barWidth * currentValue;
+            pctText.setText(`${Math.round(currentValue * 100)}%`);
+            onChange(currentValue);
+        };
+
+        trackBg.on('pointerdown', (pointer) => {
+            const localX = pointer.x - (960 - barWidth / 2);
+            updateVisual(localX / barWidth);
+        });
+
+        const minusBtn = this.add.text(-205, yPos + 14, '[-]', {
+            fontSize: '16px', color: '#94a3b8', fontStyle: 'bold'
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => updateVisual(currentValue - 0.1));
+
+        const plusBtn = this.add.text(205, yPos + 14, '[+]', {
+            fontSize: '16px', color: '#94a3b8', fontStyle: 'bold'
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => updateVisual(currentValue + 0.1));
+
+        return [label, pctText, trackBg, fillRect, minusBtn, plusBtn];
+    }
+
+    applyAudioSettings() {
+        if (!this.sound) return;
+        this.sound.volume = this.sfxVolume;
+        if (this.sound.sounds) {
+            this.sound.sounds.forEach(snd => {
+                const isMusic = snd.key && snd.key.toLowerCase().includes('music');
+                snd.setVolume(isMusic ? this.musicVolume : this.sfxVolume);
+            });
+        }
+    }
+
+    toggleSettingsModal(forceState) {
+        const nextState = typeof forceState === 'boolean' ? forceState : !this.isSettingsModalOpen;
+        this.isSettingsModalOpen = nextState;
+        this.showForfeitConfirmation(false);
+        this.settingsModalContainer.setVisible(nextState);
+        this.hideLargeCardPreview();
+    }
+
+    showForfeitConfirmation(showConfirm) {
+        if (this.settingsMainButtonsGroup) this.settingsMainButtonsGroup.setVisible(!showConfirm);
+        if (this.forfeitConfirmGroup) this.forfeitConfirmGroup.setVisible(showConfirm);
+    }
+
+    async confirmForfeitAndLeave() {
+        if (this.isSubmittingAction) return;
+        this.isSubmittingAction = true;
+
+        try {
+            if (this.matchId) {
+                await fetch(`http://localhost:8080/api/matches/${this.matchId}/forfeit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        matchId: this.matchId,
+                        playerId: this.localPlayerId
+                    })
+                });
+            }
+        } catch (err) {
+            console.warn('Aviso ao notificar saída da partida:', err);
+        } finally {
+            this.isSubmittingAction = false;
+            this.cleanupAndReturnToMenu();
+        }
+    }
+
+    createGameOverModal() {
+        this.gameOverModalContainer = this.add.container(960, 540).setDepth(270).setVisible(false);
+
+        const overlay = this.add.rectangle(0, 0, 1920, 1080, 0x000000, 0.78).setInteractive();
+        const box = this.add.rectangle(0, 0, 620, 360, 0x0f172a, 0.98)
+            .setStrokeStyle(4, BOARD_LAYOUT.COLORS.GOLD_DUST);
+
+        this.gameOverTitleText = this.add.text(0, -90, 'FIM DE PARTIDA', {
+            fontSize: '32px', color: '#ffd700', fontStyle: 'bold', fontFamily: 'monospace'
+        }).setOrigin(0.5);
+
+        this.gameOverSubtitleText = this.add.text(0, -15, '', {
+            fontSize: '18px', color: '#e2e8f0', align: 'center', wordWrap: { width: 540 }
+        }).setOrigin(0.5);
+
+        const returnBtnBg = this.add.rectangle(0, 95, 280, 56, 0x16a34a)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => this.cleanupAndReturnToMenu());
+
+        const returnBtnTxt = this.add.text(0, 95, 'VOLTAR AO MENU', {
+            fontSize: '18px', color: '#ffffff', fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        this.gameOverModalContainer.add([
+            overlay, box, this.gameOverTitleText, this.gameOverSubtitleText, returnBtnBg, returnBtnTxt
+        ]);
+    }
+
+    showGameOverModal(snapshot) {
+        if (!this.gameOverModalContainer) return;
+
+        this.isSettingsModalOpen = false;
+        if (this.settingsModalContainer) this.settingsModalContainer.setVisible(false);
+
+        const winnerId = snapshot.winnerPlayerId;
+        const isLocalWinner = winnerId && String(winnerId) === String(this.localPlayerId);
+        const isForfeit = snapshot.winReason === 'FORFEIT' || snapshot.triggerContext?.eventType === 'MATCH_FORFEITED';
+
+        if (isLocalWinner) {
+            this.gameOverTitleText.setText('🏆 VITÓRIA!').setColor('#4ade80');
+            this.gameOverSubtitleText.setText(
+                isForfeit
+                    ? 'Seu oponente desistiu da partida (Vitória por W.O.)!'
+                    : 'Você derrotou todos os Heróis inimigos!'
+            );
+        } else {
+            this.gameOverTitleText.setText('💀 DERROTA').setColor('#f87171');
+            this.gameOverSubtitleText.setText(
+                isForfeit
+                    ? 'A partida foi encerrada por desistência.'
+                    : 'Todos os seus Heróis foram derrotados.'
+            );
+        }
+
+        this.gameOverModalContainer.setVisible(true);
+    }
+
+    cleanupAndReturnToMenu() {
+        if (this.snapshotPlayer) {
+            this.snapshotPlayer.clearQueue();
+        }
+        this.isSettingsModalOpen = false;
+        this.isChoiceModalActive = false;
+        sessionStorage.removeItem('ldp_matchId');
+
+        // Procura pela cena de Menu/Lobby registrada no Phaser; se não houver, reinicia para a tela inicial
+        const menuKeys = ['MenuScene', 'MainMenu', 'LobbyScene', 'HomeScene', 'Preloader'];
+        const registeredScenes = this.scene.manager.keys;
+        const targetMenuKey = menuKeys.find(k => registeredScenes[k]);
+
+        if (targetMenuKey) {
+            this.scene.start(targetMenuKey);
+        } else {
+            window.location.href = '/';
         }
     }
 }
