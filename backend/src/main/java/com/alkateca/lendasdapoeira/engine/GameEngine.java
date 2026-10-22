@@ -227,16 +227,8 @@ public class GameEngine {
         stats.setHeroesAlive(alive);
         stats.setHeroesDefeated(defeatedEnemyHeroes);
 
-        // Cálculo de Pontuação: Base de Vitória (500) + Dano (x15) + Cura (x10) + Abates (x120) + Vivos (x80) + Bônus de Velocidade
-        int victoryBonus = isWin ? 500 : 100;
-        int speedBonus = isWin ? Math.max(0, (12 - this.turnsElapsed) * 25) : 0;
-        int score = victoryBonus
-                + (stats.getTotalDamageDealt() * 15)
-                + (stats.getTotalHealingDone() * 10)
-                + (defeatedEnemyHeroes * 120)
-                + (alive * 80)
-                + speedBonus;
-
+        // Pontuação = soma direta de dano total causado + cura realizada
+        int score = stats.getTotalDamageDealt() + stats.getTotalHealingDone();
         stats.setMatchScore(score);
     }
 
