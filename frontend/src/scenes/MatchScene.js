@@ -1543,262 +1543,248 @@ export default class MatchScene extends Phaser.Scene {
 
     createGameOverModal() {
         const { COLORS } = BOARD_LAYOUT;
+
         this.gameOverModalContainer = this.add.container(960, 540).setDepth(270).setVisible(false);
 
-        // 1. Overlay escuro de fundo (bloqueia cliques nos tabuleiros)
-        const overlay = this.add.rectangle(0, 0, 1920, 1080, 0x000000, 0.82).setInteractive();
+        const overlay = this.add.rectangle(0, 0, 1920, 1080, 0x030712, 0.88).setInteractive();
 
-        // 2. Painel central com borda dourada
-        const panel = this.add.rectangle(0, 0, 920, 680, 0x0f172a, 0.98)
-            .setStrokeStyle(3, COLORS.GOLD_DUST);
+        const mainPanel = this.add.rectangle(0, 0, 920, 620, 0x0f172a, 0.98)
+            .setStrokeStyle(4, COLORS.GOLD_DUST);
 
-        // 3. Cabeçalho de Resultado
-        this.gameOverTitleText = this.add.text(0, -280, 'FIM DE PARTIDA', {
-            fontSize: '36px', color: '#ffd700', fontStyle: 'bold', fontFamily: 'monospace'
+        this.goHeaderBanner = this.add.rectangle(0, -245, 912, 86, 0x14532d, 0.45);
+
+        this.gameOverTitleText = this.add.text(0, -258, '🏆 VITÓRIA NAS AREIAS!', {
+            fontSize: '34px', color: '#4ade80', fontStyle: 'bold', fontFamily: 'monospace'
         }).setOrigin(0.5);
 
-        this.gameOverSubtitleText = this.add.text(0, -235, '', {
-            fontSize: '16px', color: '#cbd5e1', align: 'center', wordWrap: { width: 840 }
+        this.gameOverSubtitleText = this.add.text(0, -220, '', {
+            fontSize: '15px', color: '#e2e8f0', align: 'center', fontFamily: 'monospace'
         }).setOrigin(0.5);
 
-        // 4. Container para as estatísticas detalhadas (renderizadas dinamicamente)
-        this.gameOverStatsContainer = this.add.container(0, 0);
+        this.goTurnsBadge = this.add.text(0, -172, '⏳ Turnos Decorridos: 1', {
+            fontSize: '15px', color: '#ffd700', fontStyle: 'bold', fontFamily: 'monospace'
+        }).setOrigin(0.5);
 
-        // 5. Botões de Ação na base do modal
-        // Botão "Jogar Novamente"
-        this.playAgainBtnBg = this.add.rectangle(-170, 280, 280, 54, 0x1d4ed8)
-            .setStrokeStyle(2, COLORS.GOLD_DUST)
+        // Container onde os 2 cards comparativos (Você vs Oponente) serão desenhados dinamicamente
+        this.goStatsCardsGroup = this.add.container(0, -10);
+
+        // Botão "JOGAR NOVAMENTE"
+        this.playAgainBtnBg = this.add.rectangle(-165, 238, 290, 58, 0x16a34a)
+            .setStrokeStyle(2, 0x86efac)
             .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => this.playAgainBtnBg.setScale(1.03))
-            .on('pointerout', () => this.playAgainBtnBg.setScale(1.0))
-            .on('pointerdown', () => this.playAgain());
+            .on('pointerdown', () => this.onPlayAgainClicked());
 
-        this.playAgainBtnTxt = this.add.text(-170, 280, '🔄 JOGAR NOVAMENTE', {
-            fontSize: '17px', color: '#ffffff', fontStyle: 'bold'
+        this.playAgainBtnTxt = this.add.text(-165, 238, '⚔️ JOGAR NOVAMENTE', {
+            fontSize: '17px', color: '#ffffff', fontStyle: 'bold', fontFamily: 'monospace'
         }).setOrigin(0.5);
 
-        // Botão "Voltar ao Menu"
-        this.returnMenuBtnBg = this.add.rectangle(170, 280, 280, 54, 0x334155)
+        // Botão "MENU PRINCIPAL"
+        const menuBtnBg = this.add.rectangle(165, 238, 290, 58, 0x334155)
             .setStrokeStyle(2, 0x94a3b8)
             .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => this.returnMenuBtnBg.setScale(1.03))
-            .on('pointerout', () => this.returnMenuBtnBg.setScale(1.0))
             .on('pointerdown', () => this.cleanupAndReturnToMenu());
 
-        this.returnMenuBtnTxt = this.add.text(170, 280, '🏠 MENU PRINCIPAL', {
-            fontSize: '17px', color: '#ffffff', fontStyle: 'bold'
+        const menuBtnTxt = this.add.text(165, 238, '🏠 MENU PRINCIPAL', {
+            fontSize: '17px', color: '#ffffff', fontStyle: 'bold', fontFamily: 'monospace'
         }).setOrigin(0.5);
 
         this.gameOverModalContainer.add([
-            overlay,
-            panel,
-            this.gameOverTitleText,
-            this.gameOverSubtitleText,
-            this.gameOverStatsContainer,
-            this.playAgainBtnBg,
-            this.playAgainBtnTxt,
-            this.returnMenuBtnBg,
-            this.returnMenuBtnTxt
+            overlay, mainPanel, this.goHeaderBanner,
+            this.gameOverTitleText, this.gameOverSubtitleText, this.goTurnsBadge,
+            this.goStatsCardsGroup,
+            this.playAgainBtnBg, this.playAgainBtnTxt,
+            menuBtnBg, menuBtnTxt
         ]);
     }
 
     showGameOverModal(snapshot) {
-        if (!this.gameOverModalContainer) return;
+        if (!this.gameOverModalContainer || this.gameOverModalContainer.visible) return;
 
         this.isSettingsModalOpen = false;
         if (this.settingsModalContainer) this.settingsModalContainer.setVisible(false);
+        if (this.modalContainer) this.modalContainer.setVisible(false);
 
-        const winnerId = snapshot.winnerPlayerId;
+        const result = snapshot.matchResult || {};
+        const winnerId = result.winnerPlayerId || snapshot.winnerPlayerId;
         const isLocalWinner = winnerId && String(winnerId) === String(this.localPlayerId);
-        const isForfeit = snapshot.winReason === 'FORFEIT' || snapshot.triggerContext?.eventType === 'MATCH_FORFEITED';
+        const winReason = result.winReason || snapshot.winReason || 'ELIMINATION';
+        const isForfeit = winReason === 'FORFEIT' || snapshot.triggerContext?.eventType === 'MATCH_FORFEITED';
 
-        // Atualiza Título e Subtítulo
         if (isLocalWinner) {
-            this.gameOverTitleText.setText('🏆 VITÓRIA!').setColor('#4ade80');
+            this.goHeaderBanner.setFillStyle(0x14532d, 0.55);
+            this.gameOverTitleText.setText('🏆 VITÓRIA GLORIOSA!').setColor('#4ade80');
             this.gameOverSubtitleText.setText(
                 isForfeit
-                    ? 'Seu oponente desistiu da partida! Vitória concedida por W.O.'
-                    : 'Parabéns! Você derrotou todos os Heróis adversários e conquistou a arena!'
-            ).setColor('#86efac');
+                    ? 'Seu oponente bateu em retirada! Vitória por W.O.'
+                    : 'Todos os Heróis inimigos tombaram perante sua estratégia!'
+            );
         } else {
-            this.gameOverTitleText.setText('💀 DERROTA').setColor('#f87171');
+            this.goHeaderBanner.setFillStyle(0x7f1d1d, 0.55);
+            this.gameOverTitleText.setText('💀 DERROTA NAS POEIRAS').setColor('#f87171');
             this.gameOverSubtitleText.setText(
                 isForfeit
-                    ? 'A partida foi encerrada por desistência.'
-                    : 'Todos os seus Heróis foram derrotados em combate.'
-            ).setColor('#fca5a5');
+                    ? 'Partida encerrada por desistência.'
+                    : 'Seus Heróis foram derrotados em combate.'
+            );
         }
 
-        // Recupera estatísticas do matchResult ou monta fallback seguro
-        const result = snapshot.matchResult;
-        let myStats = null;
-        let oppStats = null;
+        const turns = result.turnsElapsed || 1;
+        this.goTurnsBadge.setText(`⏳ TURNOS DECORRIDOS: ${turns}   •   MOTIVO: ${isForfeit ? 'DESISTÊNCIA (W.O.)' : 'ELIMINAÇÃO'}`);
 
-        if (result?.player1Stats && result?.player2Stats) {
-            if (String(result.player1Stats.playerId) === String(this.localPlayerId)) {
-                myStats = result.player1Stats;
-                oppStats = result.player2Stats;
-            } else {
-                myStats = result.player2Stats;
-                oppStats = result.player1Stats;
-            }
-        }
-
-        if (!myStats) {
-            myStats = {
-                playerName: snapshot.localPlayer?.name || 'Você',
-                winner: isLocalWinner,
-                totalDamageDealt: 0,
-                totalDamageTaken: 0,
-                totalHealingDone: 0,
-                cardsPlayed: 0,
-                heroesDefeated: 0,
-                heroesAlive: snapshot.localPlayer?.heroes?.filter(h => h.estaVivo)?.length || 0,
-                matchScore: isLocalWinner ? 500 : 100
-            };
-            oppStats = {
-                playerName: snapshot.opponentPlayer?.name || 'Oponente',
-                winner: !isLocalWinner,
-                totalDamageDealt: 0,
-                totalDamageTaken: 0,
-                totalHealingDone: 0,
-                cardsPlayed: 0,
-                heroesDefeated: 0,
-                heroesAlive: snapshot.opponentPlayer?.heroes?.filter(h => h.estaVivo)?.length || 0,
-                matchScore: !isLocalWinner ? 500 : 100
-            };
-        }
-
-        // Renderiza a Tabela de Estatísticas Comparativas
-        this.gameOverStatsContainer.removeAll(true);
-
-        const tableY = -180;
-        const colMetricX = -260;
-        const colPlayerX = 80;
-        const colOpponentX = 280;
-
-        // Cabeçalho da Tabela
-        const headerBg = this.add.rectangle(0, tableY, 840, 38, 0x1e293b, 0.95)
-            .setStrokeStyle(1, 0x334155);
-        const headerMetric = this.add.text(colMetricX, tableY, 'MÉTRICA DA PARTIDA', {
-            fontSize: '14px', color: '#94a3b8', fontStyle: 'bold'
-        }).setOrigin(0, 0.5);
-
-        const myNameTrunc = (myStats.playerName || 'Você').length > 15 ? (myStats.playerName || 'Você').substring(0, 14) + '…' : (myStats.playerName || 'Você');
-        const oppNameTrunc = (oppStats.playerName || 'Oponente').length > 15 ? (oppStats.playerName || 'Oponente').substring(0, 14) + '…' : (oppStats.playerName || 'Oponente');
-
-        const headerPlayer = this.add.text(colPlayerX, tableY, `${myNameTrunc} ${myStats.winner ? '👑' : ''}`, {
-            fontSize: '14px', color: '#38bdf8', fontStyle: 'bold'
-        }).setOrigin(0.5);
-
-        const headerOpponent = this.add.text(colOpponentX, tableY, `${oppNameTrunc} ${oppStats.winner ? '👑' : ''}`, {
-            fontSize: '14px', color: '#f43f5e', fontStyle: 'bold'
-        }).setOrigin(0.5);
-
-        this.gameOverStatsContainer.add([headerBg, headerMetric, headerPlayer, headerOpponent]);
-
-        // Linhas de Métricas
-        const rows = [
-            { label: '⚔️ Dano Total Causado', pVal: myStats.totalDamageDealt, oVal: oppStats.totalDamageDealt },
-            { label: '🛡️ Dano Total Sofrido', pVal: myStats.totalDamageTaken, oVal: oppStats.totalDamageTaken },
-            { label: '💚 Cura Realizada', pVal: myStats.totalHealingDone, oVal: oppStats.totalHealingDone },
-            { label: '🃏 Cartas Jogadas', pVal: myStats.cardsPlayed, oVal: oppStats.cardsPlayed },
-            { label: '☠️ Heróis Abatidos', pVal: myStats.heroesDefeated, oVal: oppStats.heroesDefeated },
-            { label: '👥 Heróis Sobreviventes', pVal: myStats.heroesAlive, oVal: oppStats.heroesAlive },
-            { label: '⏳ Turnos Decorridos', pVal: result?.turnsElapsed || 1, oVal: result?.turnsElapsed || 1 }
-        ];
-
-        let currentY = tableY + 38;
-        rows.forEach((row, idx) => {
-            const isEven = idx % 2 === 0;
-            const rowBg = this.add.rectangle(0, currentY, 840, 36, isEven ? 0x0f172a : 0x1e293b, 0.6);
-
-            const labelTxt = this.add.text(colMetricX, currentY, row.label, {
-                fontSize: '14px', color: '#e2e8f0'
-            }).setOrigin(0, 0.5);
-
-            const pColor = row.pVal > row.oVal ? '#4ade80' : (row.pVal < row.oVal ? '#94a3b8' : '#e2e8f0');
-            const oColor = row.oVal > row.pVal ? '#f87171' : (row.oVal < row.pVal ? '#94a3b8' : '#e2e8f0');
-
-            const pValTxt = this.add.text(colPlayerX, currentY, String(row.pVal), {
-                fontSize: '15px', color: pColor, fontStyle: 'bold'
-            }).setOrigin(0.5);
-
-            const oValTxt = this.add.text(colOpponentX, currentY, String(row.oVal), {
-                fontSize: '15px', color: oColor, fontStyle: 'bold'
-            }).setOrigin(0.5);
-
-            this.gameOverStatsContainer.add([rowBg, labelTxt, pValTxt, oValTxt]);
-            currentY += 36;
-        });
-
-        // Destaque da Pontuação Final (Score)
-        currentY += 12;
-        const scoreBg = this.add.rectangle(0, currentY, 840, 48, 0x1e1b4b, 0.95)
-            .setStrokeStyle(2, 0xd4af37);
-
-        const scoreLabel = this.add.text(colMetricX, currentY, '🌟 PONTUAÇÃO FINAL (SCORE)', {
-            fontSize: '15px', color: '#ffd700', fontStyle: 'bold'
-        }).setOrigin(0, 0.5);
-
-        const pScoreTxt = this.add.text(colPlayerX, currentY, `${myStats.matchScore} pts`, {
-            fontSize: '17px', color: '#ffd700', fontStyle: 'bold'
-        }).setOrigin(0.5);
-
-        const oScoreTxt = this.add.text(colOpponentX, currentY, `${oppStats.matchScore} pts`, {
-            fontSize: '17px', color: '#cbd5e1', fontStyle: 'bold'
-        }).setOrigin(0.5);
-
-        this.gameOverStatsContainer.add([scoreBg, scoreLabel, pScoreTxt, oScoreTxt]);
-
-        this.gameOverModalContainer.setVisible(true);
-    }
-
-    async playAgain() {
-        if (this.snapshotPlayer) {
-            this.snapshotPlayer.clearQueue();
-        }
-        this.isSettingsModalOpen = false;
-        this.isChoiceModalActive = false;
-        sessionStorage.removeItem('ldp_matchId');
-
-        const opponentName = this.currentSnapshot?.opponentPlayer?.name || '';
-        const isOpponentBot = opponentName.toLowerCase().includes('bot')
-            || this.currentSnapshot?.opponentPlayer?.playerId === '00000000-0000-0000-0000-000000000002';
-
-        const storedPlayer = JSON.parse(localStorage.getItem('lendas_player')) || {
-            uuid: this.localPlayerId,
-            name: 'Viajante da Poeira'
+        const myStats = result.player1Stats || {
+            playerName: snapshot.localPlayer?.name || 'Você',
+            winner: isLocalWinner,
+            totalDamageDealt: 0,
+            totalDamageTaken: 0,
+            totalHealingDone: 0,
+            cardsPlayed: 0,
+            heroesDefeated: 0,
+            heroesAlive: (snapshot.localPlayer?.heroes || []).filter(h => h.estaVivo).length,
+            matchScore: isLocalWinner ? 500 : 100
         };
 
-        if (isOpponentBot) {
-            try {
-                const res = await fetch('http://localhost:8080/api/matches/start-pve', {
+        const oppStats = result.player2Stats || {
+            playerName: snapshot.opponentPlayer?.name || 'Oponente',
+            winner: !isLocalWinner,
+            totalDamageDealt: 0,
+            totalDamageTaken: 0,
+            totalHealingDone: 0,
+            cardsPlayed: 0,
+            heroesDefeated: 0,
+            heroesAlive: (snapshot.opponentPlayer?.heroes || []).filter(h => h.estaVivo).length,
+            matchScore: !isLocalWinner ? 500 : 100
+        };
+
+        this.goStatsCardsGroup.removeAll(true);
+        const localCard = this.createPlayerStatsSummaryCard(-215, 0, 'SUAS MÉTRICAS', myStats, true);
+        const oppCard = this.createPlayerStatsSummaryCard(215, 0, 'MÉTRICAS DO OPONENTE', oppStats, false);
+        this.goStatsCardsGroup.add([localCard, oppCard]);
+
+        // Animação fluida de entrada da tela de resultado
+        this.gameOverModalContainer.setVisible(true);
+        this.gameOverModalContainer.setAlpha(0);
+        this.gameOverModalContainer.setScale(0.9);
+        this.tweens.add({
+            targets: this.gameOverModalContainer,
+            alpha: 1,
+            scaleX: 1,
+            scaleY: 1,
+            duration: 380,
+            ease: 'Back.easeOut'
+        });
+    }
+
+    createPlayerStatsSummaryCard(x, y, headerLabel, stats, isLocal) {
+        const container = this.add.container(x, y);
+        const borderColor = isLocal ? BOARD_LAYOUT.COLORS.LOCAL_RED : BOARD_LAYOUT.COLORS.OPP_BLUE;
+
+        const cardBg = this.add.rectangle(0, 0, 395, 340, 0x1e293b, 0.95)
+            .setStrokeStyle(2, borderColor);
+
+        const tagTxt = this.add.text(0, -142, headerLabel, {
+            fontSize: '12px', color: '#94a3b8', fontStyle: 'bold', fontFamily: 'monospace'
+        }).setOrigin(0.5);
+
+        const nameTxt = this.add.text(0, -116, `${stats.winner ? '👑 ' : ''}${stats.playerName || 'Jogador'}`, {
+            fontSize: '19px', color: '#ffffff', fontStyle: 'bold', fontFamily: 'monospace'
+        }).setOrigin(0.5);
+
+        const divider = this.add.rectangle(0, -92, 355, 2, 0x334155);
+
+        const rows = [
+            { label: '⚔️ Dano Total Causado:', val: `${stats.totalDamageDealt ?? 0}`, color: '#fbbf24' },
+            { label: '🛡️ Dano Total Recebido:', val: `${stats.totalDamageTaken ?? 0}`, color: '#f87171' },
+            { label: '💚 Cura Realizada:', val: `${stats.totalHealingDone ?? 0}`, color: '#4ade80' },
+            { label: '🃏 Cartas Jogadas:', val: `${stats.cardsPlayed ?? 0}`, color: '#38bdf8' },
+            { label: '💀 Heróis Abatidos:', val: `${stats.heroesDefeated ?? 0}`, color: '#c084fc' },
+            { label: '❤️ Heróis Sobreviventes:', val: `${stats.heroesAlive ?? 0}`, color: '#e2e8f0' }
+        ];
+
+        const rowElements = [];
+        rows.forEach((r, idx) => {
+            const ry = -62 + idx * 30;
+            const lbl = this.add.text(-170, ry, r.label, {
+                fontSize: '13.5px', color: '#cbd5e1', fontFamily: 'monospace'
+            }).setOrigin(0, 0.5);
+            const val = this.add.text(170, ry, r.val, {
+                fontSize: '14.5px', color: r.color, fontStyle: 'bold', fontFamily: 'monospace'
+            }).setOrigin(1, 0.5);
+            rowElements.push(lbl, val);
+        });
+
+        const scoreBg = this.add.rectangle(0, 134, 355, 42, 0x0f172a)
+            .setStrokeStyle(1, BOARD_LAYOUT.COLORS.GOLD_DUST);
+        const scoreLbl = this.add.text(-155, 134, '⭐ PONTUAÇÃO FINAL:', {
+            fontSize: '14px', color: '#ffd700', fontStyle: 'bold', fontFamily: 'monospace'
+        }).setOrigin(0, 0.5);
+        const scoreVal = this.add.text(155, 134, `${stats.matchScore ?? 0} PTS`, {
+            fontSize: '16px', color: '#ffd700', fontStyle: 'bold', fontFamily: 'monospace'
+        }).setOrigin(1, 0.5);
+
+        container.add([cardBg, tagTxt, nameTxt, divider, ...rowElements, scoreBg, scoreLbl, scoreVal]);
+        return container;
+    }
+
+    async onPlayAgainClicked() {
+        if (this.isSubmittingAction) return;
+        this.isSubmittingAction = true;
+        this.playAgainBtnTxt.setText('INICIANDO...');
+        this.playAgainBtnBg.setFillStyle(0x475569);
+
+        const oppName = this.currentSnapshot?.opponentPlayer?.name || '';
+        const isBotMatch = oppName.toLowerCase().includes('bot') || oppName.toLowerCase().includes('máquina');
+
+        try {
+            if (isBotMatch) {
+                const res = await fetch(`http://localhost:8080/api/matches/start-pve?playerId=${this.localPlayerId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        playerId: storedPlayer.uuid,
-                        playerName: storedPlayer.name,
-                        currentDeck: storedPlayer.currentDeck
+                        playerId: this.localPlayerId,
+                        playerName: this.currentSnapshot?.localPlayer?.name || 'Viajante da Poeira'
                     })
                 });
-
                 if (res.ok) {
                     const data = await res.json();
+                    this.isSubmittingAction = false;
+                    sessionStorage.setItem('ldp_matchId', data.matchId);
                     this.scene.restart({
                         matchId: data.matchId,
-                        localPlayerId: data.localPlayerId,
-                        initialSnapshots: data.initialSnapshots
+                        localPlayerId: data.playerId || this.localPlayerId,
+                        initialSnapshots: data.snapshots || []
                     });
                     return;
                 }
-            } catch (err) {
-                console.warn('Falha ao reiniciar PvE diretamente:', err);
+            } else {
+                // Reingressa na fila de matchmaking PvP
+                const res = await fetch(`http://localhost:8080/api/matchmaking/join`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        playerId: this.localPlayerId,
+                        playerName: this.currentSnapshot?.localPlayer?.name || 'Viajante da Poeira'
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    this.isSubmittingAction = false;
+                    if (data.status === 'MATCH_FOUND' && data.matchId) {
+                        sessionStorage.setItem('ldp_matchId', data.matchId);
+                        this.scene.restart({
+                            matchId: data.matchId,
+                            localPlayerId: data.playerId || this.localPlayerId,
+                            initialSnapshots: data.snapshots || []
+                        });
+                        return;
+                    }
+                }
             }
-            this.scene.start('MainMenuScene', { player: storedPlayer, autoStartPve: true });
-        } else {
-            this.scene.start('MainMenuScene', { player: storedPlayer, autoSearchPvp: true });
+        } catch (err) {
+            console.warn('Falha ao reiniciar partida automaticamente, voltando ao menu:', err);
         }
+
+        this.isSubmittingAction = false;
+        this.cleanupAndReturnToMenu();
     }
 
     cleanupAndReturnToMenu() {
