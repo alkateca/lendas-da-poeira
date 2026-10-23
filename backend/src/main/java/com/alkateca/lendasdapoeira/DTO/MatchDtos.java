@@ -98,4 +98,72 @@ public class MatchDtos {
         private boolean canSkip;
         private List<UUID> validTargetUuids = new ArrayList<>();
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class LobbyPlayerDTO {
+        private UUID playerId;
+        private String playerName;
+        private int permanentElo;
+        private boolean inQueue;
+        /**
+         * Status contextual em relação ao jogador que está visualizando a lista:
+         * "NONE" -> Pode ser desafiado (exibe botão "Desafiar")
+         * "CHALLENGE_SENT" -> Você já desafiou este jogador ("Desafio Pendente")
+         * "CHALLENGE_RECEIVED" -> Este jogador desafiou você (exibe botão "Aceitar Combate")
+         */
+        private String challengeStatus;
+        private UUID challengeId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class DirectChallengeDTO {
+        private UUID challengeId;
+        private UUID challengerId;
+        private String challengerName;
+        private int challengerElo;
+        private UUID targetId;
+        private String targetName;
+        private long createdAtEpochMilli;
+        private long expiresAtEpochMilli;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ChallengeRequestDTO {
+        private UUID challengerId;
+        private String challengerName;
+        private Deck challengerDeck;
+        private UUID targetPlayerId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class AcceptChallengeRequestDTO {
+        private UUID challengeId;
+        private UUID targetPlayerId;
+        private String targetPlayerName;
+        private Deck targetDeck;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class LobbyStateResponseDTO {
+        private String status; // "IN_LOBBY", "IN_QUEUE" ou "MATCH_FOUND"
+        private List<LobbyPlayerDTO> players = new ArrayList<>();
+        private List<DirectChallengeDTO> incomingChallenges = new ArrayList<>();
+        private List<DirectChallengeDTO> outgoingChallenges = new ArrayList<>();
+        private MatchmakingStatusResponseDTO activeMatch; // Preenchido se status == "MATCH_FOUND"
+    }
 }

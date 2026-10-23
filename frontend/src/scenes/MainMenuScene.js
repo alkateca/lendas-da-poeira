@@ -183,41 +183,17 @@ export default class MainMenuScene extends Phaser.Scene {
         bg.on('pointerdown', callback);
     }
 
-    async onPvpButtonClicked() {
-        if (this.isSearchingMatch) return;
-        this.isSearchingMatch = true;
+    onPvpButtonClicked() {
+        const activeDeck = this.player.currentDeck;
 
-        this.statusText.setText('🔍 Procurando oponente na Poeira...').setColor('#38bdf8');
-
-        try {
-            const res = await fetch('http://localhost:8080/api/matchmaking/join', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    playerId: this.player.uuid,
-                    playerName: this.player.name,
-                    currentDeck: this.player.currentDeck
-                })
-            });
-
-            if (!res.ok) throw new Error('Falha ao entrar na fila de matchmaking');
-
-            const data = await res.json();
-
-            if (data.status === 'MATCH_FOUND') {
-                this.startMatchScene(data);
-            } else {
-                this.pollQueueTimer = this.time.addEvent({
-                    delay: 1500,
-                    loop: true,
-                    callback: () => this.checkQueueStatus()
-                });
-            }
-        } catch (err) {
-            console.error('Erro ao conectar ao servidor de Matchmaking:', err);
-            this.statusText.setText('❌ Servidor offline ou erro no pareamento!').setColor('#f87171');
-            this.isSearchingMatch = false;
+        if (activeDeck && !DeckRestrictionValidator.isDeckReadyForMatch(activeDeck)) {
+            this.statusText.setText(
+                `⚠️ O baralho "${activeDeck.deckName}" está incompleto (${activeDeck.heroList?.length || 0}/3 Heróis, ${activeDeck.cardList?.length || 0}/30 Cartas) e está indisponível para jogar!`
+            ).setColor('#f87171');
+            return;
         }
+
+        this.scene.start('PvpLobbyScene', { player: this.player });
     }
 
     async checkQueueStatus() {

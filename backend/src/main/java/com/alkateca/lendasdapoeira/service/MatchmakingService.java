@@ -24,10 +24,51 @@ public class MatchmakingService {
 
     private static final Duration FINISHED_MATCH_RETENTION = Duration.ofMinutes(10);
     private static final Duration INACTIVE_MATCH_TIMEOUT = Duration.ofMinutes(60);
+    private static final Duration LOBBY_PRESENCE_TIMEOUT = Duration.ofSeconds(30);
+    private static final Duration CHALLENGE_EXPIRATION = Duration.ofSeconds(60);
+
+    public static class LobbyPresenceEntry {
+        private Player player;
+        private Instant lastSeenAt;
+
+        public LobbyPresenceEntry(Player player, Instant lastSeenAt) {
+            this.player = player;
+            this.lastSeenAt = lastSeenAt;
+        }
+
+        public Player getPlayer() { return player; }
+        public void setPlayer(Player player) { this.player = player; }
+        public Instant getLastSeenAt() { return lastSeenAt; }
+        public void setLastSeenAt(Instant lastSeenAt) { this.lastSeenAt = lastSeenAt; }
+    }
+
+    public static class DirectChallengeEntry {
+        private final UUID challengeId;
+        private final Player challenger;
+        private final UUID targetPlayerId;
+        private final Instant createdAt;
+        private final Instant expiresAt;
+
+        public DirectChallengeEntry(UUID challengeId, Player challenger, UUID targetPlayerId, Instant createdAt, Instant expiresAt) {
+            this.challengeId = challengeId;
+            this.challenger = challenger;
+            this.targetPlayerId = targetPlayerId;
+            this.createdAt = createdAt;
+            this.expiresAt = expiresAt;
+        }
+
+        public UUID getChallengeId() { return challengeId; }
+        public Player getChallenger() { return challenger; }
+        public UUID getTargetPlayerId() { return targetPlayerId; }
+        public Instant getCreatedAt() { return createdAt; }
+        public Instant getExpiresAt() { return expiresAt; }
+    }
 
     private final List<Player> waitingPool = Collections.synchronizedList(new ArrayList<>());
     private final Map<UUID, Match> activeMatches = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> playerToMatchMap = new ConcurrentHashMap<>();
+    private final Map<UUID, LobbyPresenceEntry> lobbyPresence = new ConcurrentHashMap<>();
+    private final Map<UUID, DirectChallengeEntry> directChallenges = new ConcurrentHashMap<>();
     private final EloRatingService eloRatingService;
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -39,6 +80,332 @@ public class MatchmakingService {
     public MatchmakingService() {
         this.eloRatingService = null;
     }
+
+    // =========================================================================
+    // SALÃO DE PARTIDAS (LOBBY PVP) E DESAFIOS DIRETOS
+    // =========================================================================
+
+    /**
+     * Registra ou atualiza o heartbeat do jogador no Salão PvP.
+     */
+    public synchronized LobbyStateResponseDTO joinOrHeartbeatLobby(Player player) {
+        UUID playerId = player.getUuid();
+        cleanupPreviousFinishedMatchForPlayer(playerId);
+        cleanupExpiredLobbyAndChallenges();
+
+        lobbyPresence.compute(playerId, (id, existing) -> {
+            if (existing == null) {
+                System.out.println("🏛️ Jogador entrou no Salão PvP: " + player.getName());
+                return new LobbyPresenceEntry(player, Instant.now());
+            } else {
+                existing.setPlayer(player);
+                existing.setLastSeenAt(Instant.now());
+                return existing;
+            }
+        });
+
+        return getLobbyState(playerId);
+    }
+
+    /**
+     * Remove o jogador do Salão PvP, da fila de espera e limpa seus desafios.
+     */
+    public synchronized void leaveLobby(UUID playerId) {
+        if (playerId == null) return;
+        lobbyPresence.remove(playerId);
+        waitingPool.removeIf(p -> p.getUuid().equals(playerId));
+        removeAllChallengesForPlayer(playerId);
+        System.out.println("🚪 Jogador saiu do Salão PvP: " + playerId);
+    }
+
+    /**
+     * Retorna a visão completa do Salão para um jogador específico, incluindo
+     * se uma partida já foi encontrada (via fila ou desafio aceito).
+     */
+    public synchronized LobbyStateResponseDTO getLobbyState(UUID viewerId) {
+        cleanupExpiredLobbyAndChallenges();
+
+        LobbyPresenceEntry viewerEntry = lobbyPresence.get(viewerId);
+        if (viewerEntry != null) {
+            viewerEntry.setLastSeenAt(Instant.now());
+        }
+
+        // Verifica se o jogador já foi alocado em uma partida ativa
+        UUID activeMatchId = playerToMatchMap.get(viewerId);
+        if (activeMatchId != null) {
+            Match match = activeMatches.get(activeMatchId);
+            if (match != null && match.getStatus() != MatchStatus.FINISHED) {
+                MatchmakingStatusResponseDTO matchDto = buildMatchFoundResponse(match, viewerId);
+                return new LobbyStateResponseDTO(
+                        "MATCH_FOUND",
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        matchDto
+                );
+            }
+        }
+
+        Set<UUID> queuedPlayerIds = waitingPool.stream()
+                .map(Player::getUuid)
+                .collect(Collectors.toSet());
+
+        List<DirectChallengeDTO> incoming = new ArrayList<>();
+        List<DirectChallengeDTO> outgoing = new ArrayList<>();
+        Map<UUID, DirectChallengeEntry> challengeByOtherPlayer = new HashMap<>();
+
+        for (DirectChallengeEntry ce : directChallenges.values()) {
+            UUID challengerId = ce.getChallenger().getUuid();
+            UUID targetId = ce.getTargetPlayerId();
+            LobbyPresenceEntry targetEntry = lobbyPresence.get(targetId);
+            String targetName = targetEntry != null ? targetEntry.getPlayer().getName() : "Oponente";
+
+            DirectChallengeDTO dto = new DirectChallengeDTO(
+                    ce.getChallengeId(),
+                    challengerId,
+                    ce.getChallenger().getName(),
+                    ce.getChallenger().getPermanentElo(),
+                    targetId,
+                    targetName,
+                    ce.getCreatedAt().toEpochMilli(),
+                    ce.getExpiresAt().toEpochMilli()
+            );
+
+            if (targetId.equals(viewerId)) {
+                incoming.add(dto);
+                challengeByOtherPlayer.put(challengerId, ce);
+            } else if (challengerId.equals(viewerId)) {
+                outgoing.add(dto);
+                challengeByOtherPlayer.put(targetId, ce);
+            }
+        }
+
+        List<LobbyPlayerDTO> playerList = new ArrayList<>();
+        for (LobbyPresenceEntry entry : lobbyPresence.values()) {
+            Player p = entry.getPlayer();
+            UUID pid = p.getUuid();
+
+            // Não exibe jogadores que já estão dentro de uma partida ativa
+            if (hasActiveUnfinishedMatch(pid)) {
+                continue;
+            }
+
+            String challengeStatus = "NONE";
+            UUID challengeId = null;
+
+            DirectChallengeEntry rel = challengeByOtherPlayer.get(pid);
+            if (rel != null) {
+                challengeId = rel.getChallengeId();
+                if (rel.getChallenger().getUuid().equals(viewerId)) {
+                    challengeStatus = "CHALLENGE_SENT";
+                } else if (rel.getTargetPlayerId().equals(viewerId)) {
+                    challengeStatus = "CHALLENGE_RECEIVED";
+                }
+            }
+
+            playerList.add(new LobbyPlayerDTO(
+                    pid,
+                    p.getName(),
+                    p.getPermanentElo(),
+                    queuedPlayerIds.contains(pid),
+                    challengeStatus,
+                    challengeId
+            ));
+        }
+
+        // Ordena: quem desafiou você primeiro, depois por ELO permanente decrescente
+        playerList.sort((a, b) -> {
+            boolean aRec = "CHALLENGE_RECEIVED".equals(a.getChallengeStatus());
+            boolean bRec = "CHALLENGE_RECEIVED".equals(b.getChallengeStatus());
+            if (aRec != bRec) return aRec ? -1 : 1;
+            return Integer.compare(b.getPermanentElo(), a.getPermanentElo());
+        });
+
+        String lobbyStatus = queuedPlayerIds.contains(viewerId) ? "IN_QUEUE" : "IN_LOBBY";
+        return new LobbyStateResponseDTO(lobbyStatus, playerList, incoming, outgoing, null);
+    }
+
+    /**
+     * Envia um desafio direto de um jogador no salão para outro jogador alvo.
+     */
+    public synchronized DirectChallengeDTO sendDirectChallenge(Player challenger, UUID targetPlayerId) {
+        cleanupExpiredLobbyAndChallenges();
+
+        if (challenger == null || challenger.getUuid() == null || targetPlayerId == null) {
+            throw new IllegalArgumentException("Desafiante e jogador alvo são obrigatórios.");
+        }
+        UUID challengerId = challenger.getUuid();
+        if (challengerId.equals(targetPlayerId)) {
+            throw new IllegalArgumentException("Você não pode desafiar a si mesmo.");
+        }
+
+        if (hasActiveUnfinishedMatch(challengerId) || hasActiveUnfinishedMatch(targetPlayerId)) {
+            throw new IllegalStateException("Um dos jogadores já está em uma partida em andamento.");
+        }
+
+        LobbyPresenceEntry targetPresence = lobbyPresence.get(targetPlayerId);
+        if (targetPresence == null) {
+            throw new IllegalArgumentException("O jogador alvo não está presente no salão.");
+        }
+
+        // Garante que o desafiante também conste no salão atualizado
+        lobbyPresence.put(challengerId, new LobbyPresenceEntry(challenger, Instant.now()));
+
+        // Se já houver um desafio idêntico pendente, retorna o existente
+        for (DirectChallengeEntry existing : directChallenges.values()) {
+            if (existing.getChallenger().getUuid().equals(challengerId)
+                    && existing.getTargetPlayerId().equals(targetPlayerId)) {
+                return new DirectChallengeDTO(
+                        existing.getChallengeId(),
+                        challengerId,
+                        challenger.getName(),
+                        challenger.getPermanentElo(),
+                        targetPlayerId,
+                        targetPresence.getPlayer().getName(),
+                        existing.getCreatedAt().toEpochMilli(),
+                        existing.getExpiresAt().toEpochMilli()
+                );
+            }
+        }
+
+        Instant now = Instant.now();
+        Instant expires = now.plus(CHALLENGE_EXPIRATION);
+        UUID challengeId = UUID.randomUUID();
+
+        DirectChallengeEntry entry = new DirectChallengeEntry(challengeId, challenger, targetPlayerId, now, expires);
+        directChallenges.put(challengeId, entry);
+
+        System.out.println("🧤 Desafio Direto enviado! " + challenger.getName()
+                + " desafiou " + targetPresence.getPlayer().getName() + " (ID: " + challengeId + ")");
+
+        return new DirectChallengeDTO(
+                challengeId,
+                challengerId,
+                challenger.getName(),
+                challenger.getPermanentElo(),
+                targetPlayerId,
+                targetPresence.getPlayer().getName(),
+                now.toEpochMilli(),
+                expires.toEpochMilli()
+        );
+    }
+
+    /**
+     * Aceita um desafio direto, remove ambos da fila/salão e instancia a partida PvP no GameEngine.
+     */
+    public synchronized MatchmakingStatusResponseDTO acceptDirectChallenge(UUID challengeId, Player acceptingTargetPlayer) {
+        cleanupExpiredLobbyAndChallenges();
+
+        if (challengeId == null || acceptingTargetPlayer == null || acceptingTargetPlayer.getUuid() == null) {
+            throw new IllegalArgumentException("Dados para aceitar desafio são inválidos.");
+        }
+
+        DirectChallengeEntry challenge = directChallenges.get(challengeId);
+        if (challenge == null) {
+            throw new IllegalArgumentException("Desafio não encontrado ou expirado: " + challengeId);
+        }
+
+        UUID targetId = acceptingTargetPlayer.getUuid();
+        if (!challenge.getTargetPlayerId().equals(targetId)) {
+            throw new IllegalStateException("Este desafio não pertence ao jogador informado.");
+        }
+
+        Player challenger = challenge.getChallenger();
+        UUID challengerId = challenger.getUuid();
+
+        if (hasActiveUnfinishedMatch(challengerId) || hasActiveUnfinishedMatch(targetId)) {
+            directChallenges.remove(challengeId);
+            throw new IllegalStateException("Um dos jogadores já iniciou outra partida.");
+        }
+
+        // Remove ambos da fila de matchmaking automático e limpa desafios pendentes de ambos
+        waitingPool.removeIf(p -> p.getUuid().equals(challengerId) || p.getUuid().equals(targetId));
+        removeAllChallengesForPlayer(challengerId);
+        removeAllChallengesForPlayer(targetId);
+        lobbyPresence.remove(challengerId);
+        lobbyPresence.remove(targetId);
+
+        // Instancia e inicia a partida PvP no GameEngine
+        UUID matchId = UUID.randomUUID();
+        Match match = new Match(matchId, MatchMode.PVP, challenger, acceptingTargetPlayer, false);
+        match.startMatch();
+
+        activeMatches.put(matchId, match);
+        playerToMatchMap.put(challengerId, matchId);
+        playerToMatchMap.put(targetId, matchId);
+
+        System.out.println("⚔️ Desafio Aceito! Partida PvP " + matchId + ": "
+                + challenger.getName() + " vs " + acceptingTargetPlayer.getName());
+
+        return buildMatchFoundResponse(match, targetId);
+    }
+
+    /**
+     * Cancela ou recusa um desafio direto específico.
+     */
+    public synchronized void cancelDirectChallenge(UUID challengeId, UUID requesterId) {
+        if (challengeId == null) return;
+        DirectChallengeEntry entry = directChallenges.get(challengeId);
+        if (entry != null) {
+            if (requesterId == null
+                    || entry.getChallenger().getUuid().equals(requesterId)
+                    || entry.getTargetPlayerId().equals(requesterId)) {
+                directChallenges.remove(challengeId);
+                System.out.println("❌ Desafio Direto cancelado/recusado: " + challengeId);
+            }
+        }
+    }
+
+    /**
+     * Limpa desafios expirados e jogadores inativos do salão.
+     */
+    public synchronized int cleanupExpiredLobbyAndChallenges() {
+        Instant now = Instant.now();
+        int removedCount = 0;
+
+        // 1. Expiração de desafios diretos
+        Iterator<Map.Entry<UUID, DirectChallengeEntry>> challengeIt = directChallenges.entrySet().iterator();
+        while (challengeIt.hasNext()) {
+            Map.Entry<UUID, DirectChallengeEntry> entry = challengeIt.next();
+            if (now.isAfter(entry.getValue().getExpiresAt())) {
+                challengeIt.remove();
+                removedCount++;
+            }
+        }
+
+        // 2. Expiração de presença no salão por inatividade
+        Iterator<Map.Entry<UUID, LobbyPresenceEntry>> lobbyIt = lobbyPresence.entrySet().iterator();
+        while (lobbyIt.hasNext()) {
+            Map.Entry<UUID, LobbyPresenceEntry> entry = lobbyIt.next();
+            if (Duration.between(entry.getValue().getLastSeenAt(), now).compareTo(LOBBY_PRESENCE_TIMEOUT) > 0) {
+                UUID inactivePlayerId = entry.getKey();
+                lobbyIt.remove();
+                waitingPool.removeIf(p -> p.getUuid().equals(inactivePlayerId));
+                removeAllChallengesForPlayer(inactivePlayerId);
+                removedCount++;
+            }
+        }
+
+        return removedCount;
+    }
+
+    private void removeAllChallengesForPlayer(UUID playerId) {
+        directChallenges.entrySet().removeIf(e ->
+                e.getValue().getChallenger().getUuid().equals(playerId)
+                        || e.getValue().getTargetPlayerId().equals(playerId)
+        );
+    }
+
+    private boolean hasActiveUnfinishedMatch(UUID playerId) {
+        UUID matchId = playerToMatchMap.get(playerId);
+        if (matchId == null) return false;
+        Match m = activeMatches.get(matchId);
+        return m != null && m.getStatus() != MatchStatus.FINISHED;
+    }
+
+    // =========================================================================
+    // MÉTODOS EXISTENTES (PVE, FILA AUTOMÁTICA E ROTEAMENTO DE PARTIDAS)
+    // =========================================================================
 
     private void applyEloIfMatchFinished(Match match) {
         if (match == null || match.isEloProcessed()) return;
@@ -58,9 +425,6 @@ public class MatchmakingService {
         }
     }
 
-    /**
-     * Inicia imediatamente uma partida PvE isolada contra a Máquina (Bot).
-     */
     public MatchmakingStatusResponseDTO startPveMatch(Player humanPlayer, Player botPlayer) {
         cleanupPreviousFinishedMatchForPlayer(humanPlayer.getUuid());
 
@@ -82,9 +446,6 @@ public class MatchmakingService {
         return buildMatchFoundResponse(match, humanPlayer.getUuid());
     }
 
-    /**
-     * Coloca o jogador no pool de espera PvP ou, se houver oponentes, cria uma entidade Match isolada.
-     */
     public synchronized MatchmakingStatusResponseDTO joinQueue(Player joiningPlayer) {
         UUID playerId = joiningPlayer.getUuid();
         cleanupPreviousFinishedMatchForPlayer(playerId);
@@ -102,6 +463,11 @@ public class MatchmakingService {
         if (!waitingPool.isEmpty()) {
             int randomIndex = ThreadLocalRandom.current().nextInt(waitingPool.size());
             Player opponent = waitingPool.remove(randomIndex);
+
+            removeAllChallengesForPlayer(opponent.getUuid());
+            removeAllChallengesForPlayer(playerId);
+            lobbyPresence.remove(opponent.getUuid());
+            lobbyPresence.remove(playerId);
 
             UUID matchId = UUID.randomUUID();
             Match match = new Match(matchId, MatchMode.PVP, opponent, joiningPlayer, false);
@@ -148,7 +514,6 @@ public class MatchmakingService {
             return Map.of("status", "ALREADY_CLOSED", "matchId", matchId);
         }
 
-        // Caso 1: Partida PvE -> Destruição imediata da instância do GameEngine e limpeza total
         if (match.getMode() == MatchMode.PVE) {
             match.executeLocked(() -> {
                 match.getGameEngine().gameOver();
@@ -164,7 +529,6 @@ public class MatchmakingService {
             );
         }
 
-        // Caso 2: Partida PvP -> Declara derrota por W.O., gera snapshot para o oponente e encerra a sessão
         return match.executeLocked(() -> {
             applyEloIfMatchFinished(match);
             GameEngine engine = match.getGameEngine();
@@ -187,9 +551,6 @@ public class MatchmakingService {
         });
     }
 
-    /**
-     * Roteamento thread-safe por matchId (não bloqueia outras partidas em andamento).
-     */
     public MatchTimelineResponseDTO processPlayerAction(UUID matchId, PlayerActionRequestDTO request) {
         Match match = getMatchOrThrow(matchId);
 
@@ -228,7 +589,6 @@ public class MatchmakingService {
             match.syncStatusWithEngine();
             applyEloIfMatchFinished(match);
 
-            // Se a partida terminou, desvincula os jogadores para que possam iniciar novas partidas imediatamente
             if (match.getStatus() == MatchStatus.FINISHED) {
                 releasePlayersFromMatch(match);
             }
@@ -274,12 +634,9 @@ public class MatchmakingService {
         return activeMatches.size();
     }
 
-    /**
-     * Garbage Collection de partidas finalizadas ou órfãs.
-     * Pode ser chamado manualmente ou via agendamento do Spring.
-     */
     @Scheduled(fixedRate = 60000)
     public int cleanupFinishedMatches() {
+        cleanupExpiredLobbyAndChallenges();
         Instant now = Instant.now();
         List<UUID> toRemove = new ArrayList<>();
 

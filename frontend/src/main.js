@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { BOARD_LAYOUT } from './config/BoardCoordinates.js';
 import LoginScene from './scenes/LoginScene.js';
 import MainMenuScene from './scenes/MainMenuScene.js';
+import PvpLobbyScene from './scenes/PvpLobbyScene.js';
 import DeckBuilderScene from './scenes/DeckBuilderScene.js';
 import MatchScene from './scenes/MatchScene.js';
 
@@ -25,9 +26,9 @@ const config = {
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
     dom: {
-        createContainer: true // Necessário para inputs de texto HTML na LoginScene
+        createContainer: true
     },
-    scene: [LoginScene, MainMenuScene, DeckBuilderScene, MatchScene]
+    scene: [LoginScene, MainMenuScene, PvpLobbyScene, DeckBuilderScene, MatchScene]
 };
 
 new Phaser.Game(config);

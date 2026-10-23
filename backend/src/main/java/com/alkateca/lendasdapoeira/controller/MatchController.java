@@ -132,6 +132,73 @@ public class MatchController {
         }
     }
 
+    // =========================================================================
+    // ENDPOINTS DO SALÃO DE PARTIDAS (LOBBY PVP) E DESAFIOS DIRETOS
+    // =========================================================================
+
+    @PostMapping("/lobby/join")
+    public ResponseEntity<LobbyStateResponseDTO> joinLobby(@RequestBody JoinQueueRequestDTO request) {
+        Player player = buildPlayerWithDefaultOrSavedDeck(
+                request.getPlayerId(),
+                request.getPlayerName(),
+                request.getCurrentDeck()
+        );
+        return ResponseEntity.ok(matchmakingService.joinOrHeartbeatLobby(player));
+    }
+
+    @GetMapping("/lobby/state")
+    public ResponseEntity<LobbyStateResponseDTO> getLobbyState(@RequestParam UUID playerId) {
+        return ResponseEntity.ok(matchmakingService.getLobbyState(playerId));
+    }
+
+    @PostMapping("/lobby/leave")
+    public ResponseEntity<Void> leaveLobby(@RequestParam UUID playerId) {
+        matchmakingService.leaveLobby(playerId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/lobby/challenge")
+    public ResponseEntity<DirectChallengeDTO> sendChallenge(@RequestBody ChallengeRequestDTO request) {
+        try {
+            Player challenger = buildPlayerWithDefaultOrSavedDeck(
+                    request.getChallengerId(),
+                    request.getChallengerName(),
+                    request.getChallengerDeck()
+            );
+            DirectChallengeDTO dto = matchmakingService.sendDirectChallenge(challenger, request.getTargetPlayerId());
+            return ResponseEntity.ok(dto);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/lobby/challenge/{challengeId}/accept")
+    public ResponseEntity<MatchmakingStatusResponseDTO> acceptChallenge(
+            @PathVariable UUID challengeId,
+            @RequestBody AcceptChallengeRequestDTO request) {
+        try {
+            Player targetPlayer = buildPlayerWithDefaultOrSavedDeck(
+                    request.getTargetPlayerId(),
+                    request.getTargetPlayerName(),
+                    request.getTargetDeck()
+            );
+            MatchmakingStatusResponseDTO matchResponse = matchmakingService.acceptDirectChallenge(challengeId, targetPlayer);
+            return ResponseEntity.ok(matchResponse);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/lobby/challenge/{challengeId}/cancel")
+    public ResponseEntity<Void> cancelChallenge(
+            @PathVariable UUID challengeId,
+            @RequestParam(required = false) UUID playerId) {
+        matchmakingService.cancelDirectChallenge(challengeId, playerId);
+        return ResponseEntity.ok().build();
+    }
+
     private Player buildPlayerWithDefaultOrSavedDeck(UUID playerId, String playerName, Deck incomingDeck) {
         UUID finalPlayerId = (playerId != null) ? playerId : UUID.randomUUID();
         String finalName = (playerName != null && !playerName.isBlank()) ? playerName : "Viajante da Poeira";
