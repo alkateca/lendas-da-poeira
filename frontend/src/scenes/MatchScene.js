@@ -160,6 +160,7 @@ export default class MatchScene extends Phaser.Scene {
 
         this.drawBoardBackgroundAndSlots();
         this.createPilesPlayerBannersAndMainButton();
+        this.createLiberationZonePanels();
         this.createLargeHoverPreviewPanel();
         this.createDiscardInspectionModal();
         this.createSettingsGearAndModal();
@@ -773,6 +774,10 @@ export default class MatchScene extends Phaser.Scene {
 
         this.syncLocalHand(localPlayer.hand || []);
         this.syncOpponentHand(opponentPlayer.handCount ?? 0);
+        this.syncLiberationZones(
+            localPlayer.liberationZone || [],
+            opponentPlayer.liberationZone || []
+        );
         this.syncInterleavedResolveZone(
             localPlayer.playedCardsInResolve || [],
             opponentPlayer.playedCardsInResolve || [],
@@ -784,6 +789,12 @@ export default class MatchScene extends Phaser.Scene {
             this.handleCardSpawnEvent(snapshot.triggerContext, localHasInitiative);
         } else if (eventType === 'SPAWN_FAILED_ZONE_FULL') {
             this.handleSpawnFailedZoneFull(snapshot.triggerContext);
+        } else if (eventType === 'MISSION_PROGRESS') {
+            this.handleMissionProgressEvent(snapshot.triggerContext);
+        } else if (eventType === 'CARD_LIBERATED') {
+            this.handleCardLiberatedEvent(snapshot.triggerContext);
+        } else if (eventType === 'HERO_EVOLVED') {
+            this.handleHeroEvolvedEvent(snapshot.triggerContext);
         } else if (eventType === 'EFFECT_RESOLVED' && snapshot.triggerContext?.sourceCardUuid) {
             this.highlightSourceCard(snapshot.triggerContext.sourceCardUuid);
         }
@@ -2012,6 +2023,212 @@ export default class MatchScene extends Phaser.Scene {
             this.scene.start(targetMenuKey, { player: storedPlayer });
         } else {
             window.location.href = '/';
+        }
+    }
+
+    // =========================================================================
+    // PAINEL E ANIMAÇÕES DO SISTEMA DE LIBERAÇÃO (MISSÃO / EVOLUÇÃO)
+    // =========================================================================
+
+    createLiberationZonePanels() {
+        const localPos = BOARD_LAYOUT.LIBERATION_PANEL?.LOCAL || { x: 525, y: 1018 };
+        const oppPos = BOARD_LAYOUT.LIBERATION_PANEL?.OPPONENT || { x: 525, y: 62 };
+
+        this.localLiberationContainer = this.add.container(localPos.x, localPos.y).setDepth(50);
+        this.oppLiberationContainer = this.add.container(oppPos.x, oppPos.y).setDepth(50);
+    }
+
+    syncLiberationZones(localLibCards = [], oppLibCards = []) {
+        this.renderSingleLiberationPanel(this.localLiberationContainer, localLibCards, true);
+        this.renderSingleLiberationPanel(this.oppLiberationContainer, oppLibCards, false);
+    }
+
+    renderSingleLiberationPanel(container, liberationCards, isLocal) {
+        if (!container) return;
+        container.removeAll(true);
+
+        const bg = this.add.rectangle(0, 0, 224, 96, BOARD_LAYOUT.COLORS.ZONE_SURFACE, 0.95)
+            .setStrokeStyle(2, liberationCards.length > 0 ? BOARD_LAYOUT.COLORS.GOLD_DUST : 0x334155);
+
+        const headerTxt = this.add.text(0, -34, isLocal ? '📜 ZONA DE LIBERAÇÃO' : '📜 MISSÃO INIMIGA', {
+            fontSize: '10.5px',
+            color: liberationCards.length > 0 ? '#ffd700' : '#64748b',
+            fontStyle: 'bold',
+            fontFamily: 'monospace'
+        }).setOrigin(0.5);
+
+        container.add([bg, headerTxt]);
+
+        if (liberationCards.length === 0) {
+            const emptyTxt = this.add.text(0, 8, 'Nenhuma missão ativa\n(Liberada ou ausente)', {
+                fontSize: '10px', color: '#475569', align: 'center', fontFamily: 'monospace'
+            }).setOrigin(0.5);
+            container.add(emptyTxt);
+            return;
+        }
+
+        const activeMission = liberationCards[0];
+        const current = activeMission.missionCurrentProgress ?? 0;
+        const target = Math.max(1, activeMission.missionTargetValue ?? 1);
+        const ratio = Phaser.Math.Clamp(current / target, 0, 1);
+
+        const cardTitle = this.add.text(0, -14, activeMission.cardName || 'Carta de Liberação', {
+            fontSize: '11.5px', color: '#ffffff', fontStyle: 'bold', fontFamily: 'monospace'
+        }).setOrigin(0.5);
+
+        const targetHeroHint = activeMission.evolvesIntoHeroName
+            ? `➜ ${activeMission.evolvesIntoHeroName}`
+            : (activeMission.missionType || 'Missão');
+        const subTxt = this.add.text(0, 3, targetHeroHint, {
+            fontSize: '9.5px', color: '#38bdf8', fontFamily: 'monospace'
+        }).setOrigin(0.5);
+
+        const barWidth = 188;
+        const barBg = this.add.rectangle(0, 24, barWidth, 14, 0x1e293b)
+            .setStrokeStyle(1, 0x475569);
+        const barFill = this.add.rectangle(-barWidth / 2, 24, barWidth * ratio, 14, 0x22c55e)
+            .setOrigin(0, 0.5);
+        const progLabel = this.add.text(0, 24, `${current} / ${target}`, {
+            fontSize: '10px', color: '#ffffff', fontStyle: 'bold', fontFamily: 'monospace'
+        }).setOrigin(0.5);
+
+        bg.setInteractive({ useHandCursor: true })
+            .on('pointerover', () => this.showLargeCardPreview(activeMission, false))
+            .on('pointerout', () => this.hideLargeCardPreview());
+
+        container.add([cardTitle, subTxt, barBg, barFill, progLabel]);
+    }
+
+    handleMissionProgressEvent(triggerContext) {
+        if (!triggerContext) return;
+        const isLocalOwner = String(triggerContext.ownerPlayerId) === String(this.localPlayerId);
+        const targetPanel = isLocalOwner ? this.localLiberationContainer : this.oppLiberationContainer;
+
+        if (targetPanel) {
+            this.tweens.killTweensOf(targetPanel);
+            targetPanel.setScale(1.0);
+            this.tweens.add({
+                targets: targetPanel,
+                scaleX: 1.12,
+                scaleY: 1.12,
+                yoyo: true,
+                duration: 220,
+                ease: 'Sine.easeInOut'
+            });
+        }
+    }
+
+    handleCardLiberatedEvent(triggerContext) {
+        if (!triggerContext) return;
+        const isLocalOwner = String(triggerContext.ownerPlayerId) === String(this.localPlayerId);
+        const startPos = isLocalOwner
+            ? (BOARD_LAYOUT.LIBERATION_PANEL?.LOCAL || { x: 525, y: 1018 })
+            : (BOARD_LAYOUT.LIBERATION_PANEL?.OPPONENT || { x: 525, y: 62 });
+
+        this.playVisualEffect('buff', startPos.x, startPos.y);
+
+        const cardData = triggerContext.spawnedCardData || {
+            uuid: triggerContext.spawnedCardUuid,
+            cardName: triggerContext.spawnedCardName || 'Carta Liberada',
+            cardType: 'ACTION',
+            color: 'YELLOW',
+            faceUp: isLocalOwner
+        };
+
+        const flyingCard = new PlayableCardPrefab(
+            this,
+            startPos.x,
+            startPos.y,
+            { ...cardData, faceUp: isLocalOwner },
+            false,
+            'MEDIUM',
+            0
+        );
+        flyingCard.setDepth(200);
+        flyingCard.bg.setStrokeStyle(4, 0xfacc15);
+
+        const destX = 1035;
+        const destY = isLocalOwner ? 964 : 10;
+
+        const banner = this.add.text(960, 440, `✨ MISSÃO CONCLUÍDA: ${cardData.cardName} LIBERADA!`, {
+            fontSize: '20px',
+            color: '#fef08a',
+            backgroundColor: '#1e293b',
+            padding: { x: 18, y: 10 },
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(210);
+
+        this.tweens.add({
+            targets: banner,
+            y: 390,
+            alpha: 0,
+            delay: 1500,
+            duration: 500,
+            onComplete: () => banner.destroy()
+        });
+
+        this.tweens.add({
+            targets: flyingCard,
+            x: 960,
+            y: 540,
+            scaleX: 1.25,
+            scaleY: 1.25,
+            duration: 420,
+            ease: 'Back.easeOut',
+            onComplete: () => {
+                this.tweens.add({
+                    targets: flyingCard,
+                    x: destX,
+                    y: destY,
+                    scaleX: 0.75,
+                    scaleY: 0.75,
+                    alpha: 0,
+                    delay: 380,
+                    duration: 420,
+                    ease: 'Cubic.easeIn',
+                    onComplete: () => flyingCard.destroy()
+                });
+            }
+        });
+    }
+
+    handleHeroEvolvedEvent(triggerContext) {
+        if (!triggerContext) return;
+        const heroId = triggerContext.targetHeroId || triggerContext.sourceCardUuid;
+        const heroPrefab = heroId ? this.heroPrefabs.get(heroId) : null;
+
+        const effectX = heroPrefab ? heroPrefab.x : BOARD_LAYOUT.ARENA_CIRCLE.x;
+        const effectY = heroPrefab ? heroPrefab.y : BOARD_LAYOUT.ARENA_CIRCLE.y;
+
+        this.playVisualEffect('buff', effectX, effectY);
+        this.playVisualEffect('cura', effectX, effectY);
+
+        // Anel de impacto dourado de evolução
+        const evoRing = this.add.circle(effectX, effectY, 30, 0xfacc15, 0.45)
+            .setStrokeStyle(4, 0xffffff)
+            .setDepth(185);
+
+        this.tweens.add({
+            targets: evoRing,
+            scaleX: 4.5,
+            scaleY: 4.5,
+            alpha: 0,
+            duration: 650,
+            ease: 'Cubic.easeOut',
+            onComplete: () => evoRing.destroy()
+        });
+
+        if (heroPrefab) {
+            heroPrefab.showFloatingNumber('🔥 EVOLUIU!', '#facc15');
+            this.tweens.killTweensOf(heroPrefab);
+            this.tweens.add({
+                targets: heroPrefab,
+                scaleX: 1.28,
+                scaleY: 1.28,
+                yoyo: true,
+                duration: 340,
+                ease: 'Back.easeOut'
+            });
         }
     }
 }

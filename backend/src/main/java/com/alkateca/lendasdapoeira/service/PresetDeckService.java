@@ -316,6 +316,8 @@ public class PresetDeckService {
         copy.setCardName(src.getCardName());
         copy.setCardType(src.getCardType());
         copy.setColor(src.getColor());
+        copy.setRarity(src.getRarity());
+        copy.setCardSet(src.getCardSet());
         copy.setDescricao(src.getDescricao());
         copy.setEspirito(src.getEspirito());
         copy.setAtaque(src.getAtaque());
@@ -343,6 +345,9 @@ public class PresetDeckService {
         copy.setCardName(src.getCardName());
         copy.setCardType(src.getCardType());
         copy.setColor(src.getColor());
+        copy.setRarity(src.getRarity());
+        copy.setCardSet(src.getCardSet());
+        copy.setUnica(src.isUnica());
         copy.setItemType(src.getItemType());
         copy.setEmpunhadura(src.getEmpunhadura());
         copy.setDescricao(src.getDescricao());

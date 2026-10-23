@@ -168,6 +168,9 @@ public class GameEngine {
                     ownerStats.setTotalDamageDealt(ownerStats.getTotalDamageDealt() + dmg);
                 } else {
                     opponentStats.setTotalDamageDealt(opponentStats.getTotalDamageDealt() + dmg);
+                    if (this.turnPhase != null) {
+                        trackMissionProgress(opponent.getUuid(), "DEAL_DAMAGE", dmg);
+                    }
                 }
             } else if (delta > 0) {
                 ownerStats.setTotalHealingDone(ownerStats.getTotalHealingDone() + delta);
@@ -267,6 +270,9 @@ public class GameEngine {
         player1.getCurrentDeck().shuffleDeck();
         player2.getCurrentDeck().shuffleDeck();
 
+        initLiberationZoneForPlayer(player1);
+        initLiberationZoneForPlayer(player2);
+
         drawInitialHand(player1);
         drawInitialHand(player2);
 
@@ -350,6 +356,8 @@ public class GameEngine {
         }
 
         this.turnsElapsed++;
+        trackMissionProgress(player1.getUuid(), "SURVIVE_TURNS", 1);
+        trackMissionProgress(player2.getUuid(), "SURVIVE_TURNS", 1);
         changePhase(TurnPhase.CHOICE);
     }
 
@@ -642,6 +650,9 @@ public class GameEngine {
                 targetPlayedList.add(cardInHand);
             }
             incrementCardsPlayed(playerId, targetPlayedList.size());
+            for (Card playedCard : targetPlayedList) {
+                trackCardPlayedMissions(playerId, playedCard);
+            }
         }
 
         if (isP1) {
@@ -970,17 +981,54 @@ public class GameEngine {
     }
 
     private void evaluateHeroesDeathAndReturnToBench(Player player) {
+        int newlyDeadAllies = 0;
+
         for (Card c : player.getCurrentDeck().getHeroList()) {
-            if (c instanceof HeroCard) {
-                HeroCard hero = (HeroCard) c;
+            if (c instanceof HeroCard hero) {
                 if (hero.getZoneId() == ZoneId.BATTLE) {
                     hero.setEstaAtivo(false); // Já atuou neste ciclo
                     hero.setZoneId(ZoneId.BENCH); // Retorna para a bancada
                 }
                 if (hero.getVidaAtual() <= 0) {
-                    hero.setEstaVivo(false); // Permanece na BENCH, mas marcado como morto
+                    boolean wasAlive = Boolean.TRUE.equals(hero.getEstaVivo());
+                    hero.setEstaVivo(false);
                     hero.setEstaAtivo(false);
+
+                    // Regra: Quando o personagem morre, todas as cartas anexadas a ele são descartadas!
+                    detachAllCardsFromHero(hero.getUuid(), ZoneId.DISCARD);
+
+                    if (wasAlive) {
+                        newlyDeadAllies++;
+                        UUID killerPlayerId = player.getUuid().equals(player1.getUuid())
+                                ? player2.getUuid()
+                                : player1.getUuid();
+                        trackMissionProgress(killerPlayerId, "DEFEAT_HERO", 1);
+                    }
                 }
+            }
+        }
+
+        if (newlyDeadAllies > 0) {
+            trackMissionProgress(player.getUuid(), "ALLY_HEROES_DEAD", newlyDeadAllies);
+        }
+    }
+
+    /**
+     * Desanexa todas as cartas vinculadas a um Herói específico (usado quando o Herói morre).
+     */
+    public void detachAllCardsFromHero(UUID heroId, ZoneId destinationZone) {
+        if (heroId == null) return;
+        List<Card> allCards = new ArrayList<>();
+        if (player1 != null && player1.getCurrentDeck() != null && player1.getCurrentDeck().getCardList() != null) {
+            allCards.addAll(player1.getCurrentDeck().getCardList());
+        }
+        if (player2 != null && player2.getCurrentDeck() != null && player2.getCurrentDeck().getCardList() != null) {
+            allCards.addAll(player2.getCurrentDeck().getCardList());
+        }
+
+        for (Card card : allCards) {
+            if (card.getZoneId() == ZoneId.ATTACHED && heroId.equals(card.getAttachedToCardId())) {
+                detachCard(card, destinationZone);
             }
         }
     }
@@ -1135,6 +1183,8 @@ public class GameEngine {
             if (templateInDeck != null) {
                 invokedCard.setCardType(templateInDeck.getCardType());
                 invokedCard.setColor(templateInDeck.getColor());
+                invokedCard.setRarity(templateInDeck.getRarity());
+                invokedCard.setCardSet(templateInDeck.getCardSet());
                 invokedCard.setItemType(templateInDeck.getItemType());
                 invokedCard.setEmpunhadura(templateInDeck.getEmpunhadura());
                 invokedCard.setDescricao(templateInDeck.getDescricao());
@@ -1399,6 +1449,7 @@ public class GameEngine {
         }
 
         incrementCardsPlayed(cardToPlay.getOwnerId(), 1);
+        trackCardPlayedMissions(cardToPlay.getOwnerId(), cardToPlay);
 
         int slotIndex = Math.max(0, ownerPlayedList.indexOf(cardToPlay));
         UUID activeHeroId = isP1 ? gameState.getActiveHeroPlayer1Id() : gameState.getActiveHeroPlayer2Id();
@@ -1418,6 +1469,202 @@ public class GameEngine {
         );
 
         enqueueCardAndHeroOnPlayResolution(cardToPlay, true);
+    }
+
+    // =========================================================================
+    // SISTEMA DE LIBERAÇÃO (CARTAS DE MISSÃO / EVOLUÇÃO DE HERÓI)
+    // =========================================================================
+
+    /**
+     * Inicializa as cartas da liberationList do jogador na zona especial ZoneId.LIBERATION
+     * fora das 30 cartas do baralho principal.
+     */
+    public void initLiberationZoneForPlayer(Player player) {
+        if (player == null || player.getCurrentDeck() == null) return;
+        if (player.getCurrentDeck().getLiberationList() == null) {
+            player.getCurrentDeck().setLiberationList(new ArrayList<>());
+        }
+
+        for (Card libCard : player.getCurrentDeck().getLiberationList()) {
+            if (libCard == null) continue;
+            if (libCard.getUuid() == null) libCard.setUuid(UUID.randomUUID());
+            libCard.setOwnerId(player.getUuid());
+            libCard.setLiberationCard(true);
+            libCard.setZoneId(ZoneId.LIBERATION);
+            libCard.setMissionCurrentProgress(0);
+            if (libCard.getEffects() == null || libCard.getEffects().isEmpty()) {
+                CardFactory.buildCardLogic(libCard);
+            }
+        }
+    }
+
+    /**
+     * Avalia e incrementa o progresso das cartas na ZoneId.LIBERATION do jogador.
+     * Ao atingir missionTargetValue, move a carta para a mão (ZoneId.HAND).
+     */
+    public void trackMissionProgress(UUID playerId, String missionType, int progressDelta) {
+        if (playerId == null || missionType == null || progressDelta <= 0) return;
+        Player player = (player1 != null && playerId.equals(player1.getUuid()))
+                ? player1
+                : ((player2 != null && playerId.equals(player2.getUuid())) ? player2 : null);
+
+        if (player == null || player.getCurrentDeck() == null || player.getCurrentDeck().getLiberationList() == null) {
+            return;
+        }
+
+        List<Card> liberationCards = player.getCurrentDeck().getLiberationList();
+        for (Card card : liberationCards) {
+            if (card == null || card.getZoneId() != ZoneId.LIBERATION || !card.isLiberationCard()) {
+                continue;
+            }
+            if (card.getMissionType() == null || !card.getMissionType().equalsIgnoreCase(missionType)) {
+                continue;
+            }
+
+            int target = Math.max(1, card.getMissionTargetValue());
+            int previous = card.getMissionCurrentProgress();
+            int updated = Math.min(target, previous + progressDelta);
+
+            if (updated > previous) {
+                card.setMissionCurrentProgress(updated);
+                captureSnapshot(card, null, "MISSION_PROGRESS");
+
+                if (updated >= target) {
+                    liberateCardToHand(player, card);
+                }
+            }
+        }
+    }
+
+    /**
+     * Notifica todos os gatilhos de missão associados ao ato de jogar uma carta.
+     */
+    private void trackCardPlayedMissions(UUID playerId, Card playedCard) {
+        if (playerId == null || playedCard == null) return;
+        trackMissionProgress(playerId, "PLAY_CARD", 1);
+
+        if (playedCard.getCardType() != null) {
+            trackMissionProgress(playerId, "PLAY_" + playedCard.getCardType().name(), 1);
+        }
+        if (playedCard.getAfinidades() != null) {
+            for (var afinidade : playedCard.getAfinidades()) {
+                if (afinidade != null) {
+                    trackMissionProgress(playerId, "PLAY_AFFINITY_" + afinidade.name(), 1);
+                }
+            }
+        }
+    }
+
+    /**
+     * Libera efetivamente uma carta da ZoneId.LIBERATION para a Mão (ZoneId.HAND) do jogador.
+     */
+    public void liberateCardToHand(Player player, Card card) {
+        if (player == null || card == null) return;
+        card.setZoneId(ZoneId.HAND);
+        card.setOwnerId(player.getUuid());
+
+        // Garante que a carta liberada faça parte da cardList ativa para poder ser jogada na PREPARATION
+        List<Card> deckCards = player.getCurrentDeck().getCardList();
+        if (deckCards != null && !deckCards.contains(card)) {
+            deckCards.add(card);
+        }
+
+        System.out.println("✨ Carta de Liberação [" + card.getCardName() + "] adicionada à mão de " + player.getName());
+        captureSnapshot(card, null, "CARD_LIBERATED");
+    }
+
+    /**
+     * Substitui/Evolui um Herói em campo por sua forma evoluída preservando o UUID,
+     * a proporção de vida atual, os equipamentos anexados (ATTACHED) e os modificadores permanentes.
+     */
+    public void evolveHero(Player owner, UUID targetHeroUuid, HeroCard evolvedTemplate) {
+        evolveHero(owner, targetHeroUuid, evolvedTemplate, null);
+    }
+
+    public void evolveHero(Player owner, UUID targetHeroUuid, HeroCard evolvedTemplate, Card sourceLiberationCard) {
+        if (owner == null || targetHeroUuid == null || evolvedTemplate == null) return;
+        HeroCard targetHero = findHeroById(targetHeroUuid);
+        if (targetHero == null || !Boolean.TRUE.equals(targetHero.getEstaVivo())) return;
+
+        String oldName = targetHero.getCardName();
+
+        // Calcula o dano sofrido ou a proporção de vida para preservar o estado de saúde proporcionalmente
+        int oldMaxHp = Math.max(1, targetHero.getVidaMaxima());
+        int oldCurrentHp = Math.max(1, targetHero.getVidaAtual());
+        double healthRatio = (double) oldCurrentHp / (double) oldMaxHp;
+
+        int newMaxHp = evolvedTemplate.getVidaMaxima() > 0
+                ? evolvedTemplate.getVidaMaxima()
+                : oldMaxHp + 5;
+        int newCurrentHp = Math.max(1, (int) Math.round(newMaxHp * healthRatio));
+
+        // Calcula os bônus de equipamentos já anexados a este Herói para somá-los aos novos atributos base
+        int attachedSpiritBonus = 0;
+        int attachedAttackBonus = 0;
+        int attachedDefenseBonus = 0;
+
+        if (owner.getCurrentDeck() != null && owner.getCurrentDeck().getCardList() != null) {
+            for (Card c : owner.getCurrentDeck().getCardList()) {
+                if (c.getZoneId() == ZoneId.ATTACHED && targetHeroUuid.equals(c.getAttachedToCardId()) && c.getEffects() != null) {
+                    for (com.alkateca.lendasdapoeira.effects.Effect eff : c.getEffects()) {
+                        if (eff instanceof com.alkateca.lendasdapoeira.effects.combat.EquipBuffEffect equipBuff) {
+                            attachedSpiritBonus += equipBuff.getSpiritBuff();
+                            attachedAttackBonus += equipBuff.getAttackBuff();
+                            attachedDefenseBonus += equipBuff.getDefenseBuff();
+                        }
+                    }
+                }
+            }
+        }
+
+        // Atualiza os atributos do Herói in-place (mantendo o UUID para preservar todos os vínculos e anexos)
+        targetHero.setCardName(evolvedTemplate.getCardName());
+        if (evolvedTemplate.getColor() != null) targetHero.setColor(evolvedTemplate.getColor());
+        if (evolvedTemplate.getDescricao() != null) targetHero.setDescricao(evolvedTemplate.getDescricao());
+
+        targetHero.setEspirito(Math.max(targetHero.getEspirito(), evolvedTemplate.getEspirito() + attachedSpiritBonus));
+        targetHero.setAtaque(Math.max(targetHero.getAtaque(), evolvedTemplate.getAtaque() + attachedAttackBonus));
+        targetHero.setDefesa(Math.max(targetHero.getDefesa(), evolvedTemplate.getDefesa() + attachedDefenseBonus));
+        targetHero.setVidaMaxima(newMaxHp);
+        targetHero.setVidaAtual(newCurrentHp);
+        targetHero.setMaxWeaponSlots(Math.max(targetHero.getMaxWeaponSlots(), evolvedTemplate.getMaxWeaponSlots()));
+        targetHero.setReducaoDano(targetHero.getReducaoDano() + evolvedTemplate.getReducaoDano());
+        targetHero.setDanoBonus(targetHero.getDanoBonus() + evolvedTemplate.getDanoBonus());
+
+        if (evolvedTemplate.getRacas() != null && !evolvedTemplate.getRacas().isEmpty()) {
+            targetHero.setRacas(new ArrayList<>(evolvedTemplate.getRacas()));
+        }
+        if (evolvedTemplate.getAfinidades() != null && !evolvedTemplate.getAfinidades().isEmpty()) {
+            targetHero.setAfinidades(new ArrayList<>(evolvedTemplate.getAfinidades()));
+        }
+        if (evolvedTemplate.getOrdem() != null && !evolvedTemplate.getOrdem().isEmpty()) {
+            targetHero.setOrdem(new ArrayList<>(evolvedTemplate.getOrdem()));
+        }
+        if (evolvedTemplate.getClasse() != null && !evolvedTemplate.getClasse().isEmpty()) {
+            targetHero.setClasse(new ArrayList<>(evolvedTemplate.getClasse()));
+        }
+
+        if (evolvedTemplate.getEffects() != null && !evolvedTemplate.getEffects().isEmpty()) {
+            targetHero.setEffects(new ArrayList<>(evolvedTemplate.getEffects()));
+        } else {
+            CardFactory.buildCardLogic(targetHero);
+        }
+
+        // Atualiza o registro de HP para que o ganho de vida máxima da evolução não seja confundido com cura comum
+        lastRecordedHeroHp.put(targetHero.getUuid(), targetHero.getVidaAtual());
+
+        // Se a carta de liberação que originou a evolução não tiver "Exilar." na descrição, garante seu exílio
+        if (sourceLiberationCard != null && (sourceLiberationCard.getDescricao() == null || !sourceLiberationCard.getDescricao().contains("Exilar."))) {
+            sourceLiberationCard.setDescricao((sourceLiberationCard.getDescricao() != null ? sourceLiberationCard.getDescricao() + "\n" : "") + "Exilar.");
+        }
+
+        MatchSnapshotDTO snapshot = SnapshotFactory.createSnapshot(this, targetHero, null, "HERO_EVOLVED");
+        snapshot.getTriggerContext().setPreviousHeroName(oldName);
+        snapshot.getTriggerContext().setEvolvedHeroName(targetHero.getCardName());
+        snapshot.getTriggerContext().setTargetHeroId(targetHero.getUuid());
+        snapshot.getTriggerContext().setOwnerPlayerId(owner.getUuid());
+        snapshot.getTriggerContext().setLogMessage("🔥 EVOLUÇÃO! " + oldName + " evoluiu para " + targetHero.getCardName() + "!");
+        this.snapshotHistory.add(snapshot);
     }
 
     public void gamePhase(){

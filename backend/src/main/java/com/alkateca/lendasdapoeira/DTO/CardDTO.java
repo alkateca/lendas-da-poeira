@@ -9,6 +9,8 @@ public class CardDTO {
     private String type;
     private String zone;
     private String ownerId;
+    private String rarity;
+    private String cardSet;
 
     // Atributos numéricos (Ficarão nulos se a carta for Item/Magia)
     private Integer hp;

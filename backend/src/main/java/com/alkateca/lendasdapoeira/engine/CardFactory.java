@@ -337,6 +337,58 @@ public class CardFactory {
                 effects.add(new PlayTheurgyChooseHeroBuffAndHealEffect(2, 2));
                 break;
 
+            // ==========================================
+            // CARTAS DE LIBERAÇÃO (Missão / Evolução)
+            // ==========================================
+            case "Sagração da Santa das Lâminas":
+                rawCardFromJson.setLiberationCard(true);
+                if (rawCardFromJson.getMissionType() == null) rawCardFromJson.setMissionType("PLAY_SPELL");
+                if (rawCardFromJson.getMissionTargetValue() <= 0) rawCardFromJson.setMissionTargetValue(2);
+                rawCardFromJson.setTargetBaseHeroName("Moyra, Aprendiz da Santa");
+                rawCardFromJson.setEvolvesIntoHeroName("Moyra, Santa das Laminas");
+                // 1º Efeito: Se jogada por Moyra, substitui por Moyra, Santa das Lâminas
+                effects.add(new EvolveHeroEffect(
+                        "Moyra, Aprendiz da Santa",
+                        "Moyra, Santa das Laminas",
+                        5, 6, 3, 22, 3,
+                        com.alkateca.lendasdapoeira.enums.Colors.WHITE,
+                        "Início do Combate: -2 Espírito inimigo.\nAo jogar Feitiço: +2 Ataque.\nFinal do Combate: 5 Dano Mágico."
+                ));
+                // 2º Efeito: Joga 1 carta da mão à sua escolha!
+                effects.add(new PlayCardFromHandEffect());
+                break;
+
+            case "Ascensão da Horda Lendária":
+                rawCardFromJson.setLiberationCard(true);
+                if (rawCardFromJson.getMissionType() == null) rawCardFromJson.setMissionType("ALLY_HEROES_DEAD");
+                if (rawCardFromJson.getMissionTargetValue() <= 0) rawCardFromJson.setMissionTargetValue(2);
+                rawCardFromJson.setEvolvesIntoHeroName("Heróis Lendários dos Goblin");
+                // Ao morrerem 2 aliados, vai para a mão. Quando jogada, revive 1 aliado morto com +2 ESP, +3 ATQ, +2 DEF, +8 HP e muda o nome!
+                effects.add(new ReviveAndEvolveDeadHeroEffect(
+                        "Heróis Lendários dos Goblin",
+                        2, 3, 2, 8,
+                        "Evoluído: Herda habilidades originais e cura 3 em todos os aliados no fim do combate."
+                ));
+                break;
+
+            case "Despertar do Cavaleiro Bestial":
+                rawCardFromJson.setLiberationCard(true);
+                if (rawCardFromJson.getMissionType() == null) rawCardFromJson.setMissionType("DEAL_DAMAGE");
+                if (rawCardFromJson.getMissionTargetValue() <= 0) rawCardFromJson.setMissionTargetValue(10);
+                rawCardFromJson.setTargetBaseHeroName("Kael, Domador de Feras");
+                rawCardFromJson.setEvolvesIntoHeroName("Kael, Cavaleiro Bestial");
+                if (rawCardFromJson.getDescricao() == null) {
+                    rawCardFromJson.setDescricao("Missão (Causar 10 de Dano): Libera para a mão.\nEvolui seu Herói para Kael, Cavaleiro Bestial. Exilar.");
+                }
+                effects.add(new EvolveHeroEffect(
+                        "Kael, Domador de Feras",
+                        "Kael, Cavaleiro Bestial",
+                        4, 7, 4, 25, 3,
+                        com.alkateca.lendasdapoeira.enums.Colors.RED,
+                        "Forma Evoluída: Atributos de combate ampliados e 3 slots de arma."
+                ));
+                break;
+
             default:
                 // Cartas sem nome mapeado passarão por aqui sem adicionar efeitos.
                 break;

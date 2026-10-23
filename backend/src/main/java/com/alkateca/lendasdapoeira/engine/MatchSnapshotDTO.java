@@ -50,7 +50,7 @@ public class MatchSnapshotDTO {
 
     @Data
     public static class TriggerContextDTO {
-        private String eventType; // "PHASE_CHANGE", "EFFECT_RESOLVED", "PHYSICAL_COMBAT_EXCHANGE", "CARD_SPAWNED", "TOKEN_SUMMONED", "SPAWN_FAILED_ZONE_FULL"
+        private String eventType; // "PHASE_CHANGE", "EFFECT_RESOLVED", "PHYSICAL_COMBAT_EXCHANGE", "CARD_SPAWNED", "TOKEN_SUMMONED", "SPAWN_FAILED_ZONE_FULL", "MISSION_PROGRESS", "CARD_LIBERATED", "HERO_EVOLVED"
         private UUID sourceCardUuid;
         private String sourceCardName;
         private String effectClassName;
@@ -66,6 +66,11 @@ public class MatchSnapshotDTO {
         private boolean tokenCreated;  // true se foi instanciado dinamicamente fora do deck
         private boolean zoneFull;      // true se a zona/slots de arma ou bancada estavam cheios
         private CardSnapshotDTO spawnedCardData;
+
+        private Integer missionProgress;
+        private Integer missionTarget;
+        private String previousHeroName;
+        private String evolvedHeroName;
     }
 
     @Data
@@ -82,6 +87,7 @@ public class MatchSnapshotDTO {
         private List<CardSnapshotDTO> playedCardsInResolve = new ArrayList<>();
         private List<CardSnapshotDTO> discardPile = new ArrayList<>();
         private List<CardSnapshotDTO> exilePile = new ArrayList<>();
+        private List<CardSnapshotDTO> liberationZone = new ArrayList<>();
     }
 
     @Data
@@ -89,6 +95,8 @@ public class MatchSnapshotDTO {
         private UUID uuid;
         private String cardName;
         private String color;
+        private String rarity;
+        private String cardSet;
         private String descricao;
         private String zoneId;
         private int espirito;
@@ -107,6 +115,7 @@ public class MatchSnapshotDTO {
         private List<String> classe = new ArrayList<>();
         private Boolean estaVivo;
         private Boolean estaAtivo;
+        private boolean evolved;
         private List<CardSnapshotDTO> attachedCards = new ArrayList<>();
     }
 
@@ -116,11 +125,19 @@ public class MatchSnapshotDTO {
         private String cardName;
         private String cardType;
         private String color;
+        private String rarity;
+        private String cardSet;
         private String itemType;
         private int empunhadura;
         private String descricao;
         private String zoneId;
         private boolean faceUp;
+        private boolean liberationCard;
+        private String missionType;
+        private int missionTargetValue;
+        private int missionCurrentProgress;
+        private String targetBaseHeroName;
+        private String evolvesIntoHeroName;
     }
 
     @Data

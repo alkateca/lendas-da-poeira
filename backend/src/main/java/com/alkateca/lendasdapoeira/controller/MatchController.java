@@ -243,6 +243,8 @@ public class MatchController {
             copy.setCardName(template.getCardName());
             copy.setCardType(CardType.HERO);
             copy.setColor(template.getColor());
+            copy.setRarity(template.getRarity());
+            copy.setCardSet(template.getCardSet());
             copy.setDescricao(template.getDescricao());
             copy.setEspirito(template.getEspirito());
             copy.setAtaque(template.getAtaque());
@@ -277,6 +279,8 @@ public class MatchController {
             copy.setCardName(template.getCardName());
             copy.setCardType(template.getCardType());
             copy.setColor(template.getColor());
+            copy.setRarity(template.getRarity());
+            copy.setCardSet(template.getCardSet());
             copy.setItemType(template.getItemType());
             copy.setEmpunhadura(template.getEmpunhadura());
             copy.setDescricao(template.getDescricao());
@@ -289,7 +293,49 @@ public class MatchController {
             readyCards.add(copy);
         }
 
-        Deck readyDeck = new Deck(deck.getDeckName() != null ? deck.getDeckName() : "Deck de Batalha", readyCards, readyHeroes);
+        List<Card> readyLiberations = new ArrayList<>();
+        if (deck.getLiberationList() != null) {
+            for (Card libCard : deck.getLiberationList()) {
+                if (libCard == null) continue;
+                Card template = catalogCards.stream()
+                        .filter(cc -> cc.getCardName() != null && cc.getCardName().equalsIgnoreCase(libCard.getCardName()))
+                        .findFirst()
+                        .orElse(libCard);
+
+                Card copy = new Card();
+                copy.setUuid(UUID.randomUUID());
+                copy.setOwnerId(finalPlayerId);
+                copy.setCardName(template.getCardName());
+                copy.setCardType(template.getCardType() != null ? template.getCardType() : CardType.ACTION);
+                copy.setColor(template.getColor() != null ? template.getColor() : Colors.NEUTRAL);
+                copy.setRarity(template.getRarity());
+                copy.setCardSet(template.getCardSet());
+                copy.setItemType(template.getItemType() != null ? template.getItemType() : ItemType.NENHUM);
+                copy.setEmpunhadura(template.getEmpunhadura());
+                copy.setDescricao(template.getDescricao());
+                copy.setUnica( true );
+                copy.setLiberationCard(true);
+                copy.setMissionType(template.getMissionType());
+                copy.setMissionTargetValue(template.getMissionTargetValue());
+                copy.setMissionCurrentProgress(0);
+                copy.setTargetBaseHeroName(template.getTargetBaseHeroName());
+                copy.setEvolvesIntoHeroName(template.getEvolvesIntoHeroName());
+                copy.setRacas(template.getRacas() != null ? new ArrayList<>(template.getRacas()) : new ArrayList<>());
+                copy.setAfinidades(template.getAfinidades() != null ? new ArrayList<>(template.getAfinidades()) : new ArrayList<>());
+                copy.setOrdem(template.getOrdem() != null ? new ArrayList<>(template.getOrdem()) : new ArrayList<>());
+                copy.setClasse(template.getClasse() != null ? new ArrayList<>(template.getClasse()) : new ArrayList<>());
+                copy.setZoneId(ZoneId.LIBERATION);
+                CardFactory.buildCardLogic(copy);
+                readyLiberations.add(copy);
+            }
+        }
+
+        Deck readyDeck = new Deck(
+                deck.getDeckName() != null ? deck.getDeckName() : "Deck de Batalha",
+                readyCards,
+                readyHeroes,
+                readyLiberations
+        );
         Player matchPlayer = new Player(finalPlayerId, finalName, readyDeck);
         if (savedPlayer != null) {
             matchPlayer.setPermanentElo(savedPlayer.getPermanentElo() > 0 ? savedPlayer.getPermanentElo() : 1000);
@@ -325,6 +371,8 @@ public class MatchController {
                     copy.setCardName(template.getCardName());
                     copy.setCardType(template.getCardType());
                     copy.setColor(template.getColor());
+                    copy.setRarity(template.getRarity());
+                    copy.setCardSet(template.getCardSet());
                     copy.setItemType(template.getItemType());
                     copy.setEmpunhadura(template.getEmpunhadura());
                     copy.setDescricao(template.getDescricao());
