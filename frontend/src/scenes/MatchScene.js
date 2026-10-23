@@ -394,14 +394,17 @@ export default class MatchScene extends Phaser.Scene {
     createPlayerCornerBanner(x, y, badgeCode, roleLabel, defaultName, fillColor) {
         const { COLORS } = BOARD_LAYOUT;
         const container = this.add.container(x, y);
-        const bg = this.add.rectangle(0, 0, 340, 64, COLORS.ZONE_SURFACE, 1);
-        const avatar = this.add.circle(-132, 0, 20, fillColor);
-        const codeTxt = this.add.text(-132, 0, badgeCode, { fontSize: '13px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
-        const roleTxt = this.add.text(-98, -14, roleLabel, { fontSize: '10px', color: '#ffd700', fontStyle: 'bold' }).setOrigin(0, 0.5);
-        const nameTxt = this.add.text(-98, 10, defaultName, { fontSize: '15px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0, 0.5);
+        const bg = this.add.rectangle(0, 0, 360, 68, COLORS.ZONE_SURFACE, 1);
+        const avatar = this.add.circle(-142, 0, 20, fillColor);
+        const codeTxt = this.add.text(-142, 0, badgeCode, { fontSize: '13px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
+        const roleTxt = this.add.text(-108, -18, roleLabel, { fontSize: '10px', color: '#ffd700', fontStyle: 'bold' }).setOrigin(0, 0.5);
+        const nameTxt = this.add.text(-108, 0, defaultName, { fontSize: '14px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0, 0.5);
+        const eloTxt = this.add.text(-108, 18, '🏅 ELO: 1000  |  📅 Semanal: 1000', {
+            fontSize: '10.5px', color: '#38bdf8', fontStyle: 'bold', fontFamily: 'monospace'
+        }).setOrigin(0, 0.5);
 
-        container.add([bg, avatar, codeTxt, roleTxt, nameTxt]);
-        return { container, roleTxt, nameTxt };
+        container.add([bg, avatar, codeTxt, roleTxt, nameTxt, eloTxt]);
+        return { container, roleTxt, nameTxt, eloTxt };
     }
 
     createLargeHoverPreviewPanel() {
@@ -748,11 +751,17 @@ export default class MatchScene extends Phaser.Scene {
         const localPlayer = snapshot.localPlayer || {};
         const opponentPlayer = snapshot.opponentPlayer || {};
 
+        const localPermElo = localPlayer.permanentElo ?? 1000;
+        const localWeekElo = localPlayer.weeklyElo ?? 1000;
         this.localBannerContainer.nameTxt.setText(localPlayer.name || 'Jogador 1');
         this.localBannerContainer.roleTxt.setText(localHasInitiative ? '★ VOCÊ (COM INICIATIVA)' : 'VOCÊ');
+        this.localBannerContainer.eloTxt.setText(`🏅 ELO: ${localPermElo}  |  📅 Semanal: ${localWeekElo}`);
 
+        const oppPermElo = opponentPlayer.permanentElo ?? 1000;
+        const oppWeekElo = opponentPlayer.weeklyElo ?? 1000;
         this.oppBannerContainer.nameTxt.setText(opponentPlayer.name || 'Jogador 2');
         this.oppBannerContainer.roleTxt.setText(!localHasInitiative ? '★ OPONENTE (COM INICIATIVA)' : 'OPONENTE');
+        this.oppBannerContainer.eloTxt.setText(`🏅 ELO: ${oppPermElo}  |  📅 Semanal: ${oppWeekElo}`);
 
         this.localDeckText.setText(`${localPlayer.deckCount ?? 0}/30`);
         this.localDiscardText.setText(`🪦 ${(localPlayer.discardPile || []).length}`);
@@ -1830,6 +1839,17 @@ export default class MatchScene extends Phaser.Scene {
             matchScore: 0
         };
 
+        if (myStats.permanentElo && myStats.weeklyElo) {
+            try {
+                const stored = JSON.parse(localStorage.getItem('lendas_player')) || {};
+                stored.permanentElo = myStats.permanentElo;
+                stored.weeklyElo = myStats.weeklyElo;
+                localStorage.setItem('lendas_player', JSON.stringify(stored));
+            } catch (e) {
+                console.warn('Não foi possível atualizar ELO local:', e);
+            }
+        }
+
         this.goStatsCardsGroup.removeAll(true);
         const localCard = this.createPlayerStatsSummaryCard(-215, 0, 'SUAS MÉTRICAS', myStats, true);
         const oppCard = this.createPlayerStatsSummaryCard(215, 0, 'MÉTRICAS DO OPONENTE', oppStats, false);
@@ -1866,13 +1886,21 @@ export default class MatchScene extends Phaser.Scene {
 
         const divider = this.add.rectangle(0, -92, 355, 2, 0x334155);
 
+        const formatDelta = (delta) => {
+            if (!delta || delta === 0) return '';
+            return delta > 0 ? ` (+${delta})` : ` (${delta})`;
+        };
+
+        const permEloVal = `${stats.permanentElo || 1000}${formatDelta(stats.permanentEloDelta)}`;
+        const weekEloVal = `${stats.weeklyElo || 1000}${formatDelta(stats.weeklyEloDelta)}`;
+
         const rows = [
+            { label: '🏅 ELO Permanente:', val: permEloVal, color: (stats.permanentEloDelta >= 0) ? '#4ade80' : '#f87171' },
+            { label: '📅 ELO Semanal:', val: weekEloVal, color: (stats.weeklyEloDelta >= 0) ? '#38bdf8' : '#f87171' },
             { label: '⚔️ Dano Total Causado:', val: `${stats.totalDamageDealt ?? 0}`, color: '#fbbf24' },
             { label: '🛡️ Dano Total Recebido:', val: `${stats.totalDamageTaken ?? 0}`, color: '#f87171' },
             { label: '💚 Cura Realizada:', val: `${stats.totalHealingDone ?? 0}`, color: '#4ade80' },
-            { label: '🃏 Cartas Jogadas:', val: `${stats.cardsPlayed ?? 0}`, color: '#38bdf8' },
-            { label: '💀 Heróis Abatidos:', val: `${stats.heroesDefeated ?? 0}`, color: '#c084fc' },
-            { label: '❤️ Heróis Sobreviventes:', val: `${stats.heroesAlive ?? 0}`, color: '#e2e8f0' }
+            { label: '💀 Heróis Abatidos:', val: `${stats.heroesDefeated ?? 0}`, color: '#c084fc' }
         ];
 
         const rowElements = [];

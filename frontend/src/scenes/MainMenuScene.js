@@ -22,12 +22,20 @@ export default class MainMenuScene extends Phaser.Scene {
         // Painel Superior de Perfil e Seletor de Baralho
         this.add.rectangle(width / 2, 65, 1760, 80, 0x0f172a, 0.95).setStrokeStyle(2, 0x334155);
 
-        this.add.text(110, 50, `👤 Jogador: ${this.player.name}`, {
-            fontSize: '20px', color: '#ffffff', fontStyle: 'bold'
+        const permElo = this.player.permanentElo ?? 1000;
+        const weekElo = this.player.weeklyElo ?? 1000;
+
+        this.playerNameText = this.add.text(110, 42, `👤 Jogador: ${this.player.name}`, {
+            fontSize: '19px', color: '#ffffff', fontStyle: 'bold'
         });
-        this.add.text(110, 76, `UUID: ${this.player.uuid}`, {
-            fontSize: '12px', color: '#64748b'
+        this.playerEloText = this.add.text(110, 66, `🏅 ELO: ${permElo}  |  📅 Semanal: ${weekElo}`, {
+            fontSize: '13px', color: '#38bdf8', fontStyle: 'bold', fontFamily: 'monospace'
         });
+        this.playerUuidText = this.add.text(110, 86, `UUID: ${this.player.uuid}`, {
+            fontSize: '11px', color: '#64748b'
+        });
+
+        this.syncPlayerProfileFromServer();
 
         // Botão para alternar o Baralho Escolhido no Menu Principal
         this.deckSelectorBg = this.add.rectangle(1420, 65, 480, 50, 0x1e293b)
@@ -243,5 +251,24 @@ export default class MainMenuScene extends Phaser.Scene {
             localPlayerId: matchData.localPlayerId,
             initialSnapshots: matchData.initialSnapshots
         });
+    }
+
+    async syncPlayerProfileFromServer() {
+        if (!this.player?.uuid) return;
+        try {
+            const res = await fetch(`http://localhost:8080/api/players/${this.player.uuid}`);
+            if (res.ok) {
+                const fresh = await res.json();
+                this.player.permanentElo = fresh.permanentElo ?? 1000;
+                this.player.weeklyElo = fresh.weeklyElo ?? 1000;
+                this.player.lastWeeklyResetWeek = fresh.lastWeeklyResetWeek;
+                localStorage.setItem('lendas_player', JSON.stringify(this.player));
+                if (this.playerEloText) {
+                    this.playerEloText.setText(`🏅 ELO: ${this.player.permanentElo}  |  📅 Semanal: ${this.player.weeklyElo}`);
+                }
+            }
+        } catch (e) {
+            // Silencioso se offline
+        }
     }
 }

@@ -26,6 +26,7 @@ public class Match {
     private final Map<UUID, ParticipantSession> participants = new ConcurrentHashMap<>();
     private final Instant createdAt;
     private volatile Instant lastActivityAt;
+    private boolean eloProcessed = false;
 
     // Lock dedicado a esta partida para garantir thread-safety sem bloquear outras partidas
     private final Object matchLock = new Object();

@@ -28,6 +28,35 @@ public class MatchmakingService {
     private final List<Player> waitingPool = Collections.synchronizedList(new ArrayList<>());
     private final Map<UUID, Match> activeMatches = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> playerToMatchMap = new ConcurrentHashMap<>();
+    private final EloRatingService eloRatingService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public MatchmakingService(EloRatingService eloRatingService) {
+        this.eloRatingService = eloRatingService;
+    }
+
+    // Construtor padrão para testes unitários sem Spring Context
+    public MatchmakingService() {
+        this.eloRatingService = null;
+    }
+
+    private void applyEloIfMatchFinished(Match match) {
+        if (match == null || match.isEloProcessed()) return;
+        GameEngine engine = match.getGameEngine();
+        if (engine.getTurnPhase() == TurnPhase.GAME_OVER && engine.getWinnerPlayerId() != null) {
+            match.setEloProcessed(true);
+            if (eloRatingService != null && !engine.getSnapshotHistory().isEmpty()) {
+                MatchSnapshotDTO lastSnap = engine.getSnapshotHistory().get(engine.getSnapshotHistory().size() - 1);
+                eloRatingService.processMatchEloUpdate(
+                        engine.getPlayer1(),
+                        engine.getPlayer2(),
+                        engine.getWinnerPlayerId(),
+                        match.getMode(),
+                        lastSnap.getMatchResult()
+                );
+            }
+        }
+    }
 
     /**
      * Inicia imediatamente uma partida PvE isolada contra a Máquina (Bot).
@@ -137,11 +166,13 @@ public class MatchmakingService {
 
         // Caso 2: Partida PvP -> Declara derrota por W.O., gera snapshot para o oponente e encerra a sessão
         return match.executeLocked(() -> {
+            applyEloIfMatchFinished(match);
             GameEngine engine = match.getGameEngine();
             if (match.getStatus() != MatchStatus.FINISHED && engine.getTurnPhase() != TurnPhase.GAME_OVER) {
                 engine.forfeitMatch(playerId);
                 match.syncStatusWithEngine();
             }
+            applyEloIfMatchFinished(match);
             releasePlayersFromMatch(match);
 
             System.out.println("🏳️ Partida PvP " + matchId + ": Jogador " + playerId
@@ -195,6 +226,7 @@ public class MatchmakingService {
 
             executeBotActionsIfNeeded(match);
             match.syncStatusWithEngine();
+            applyEloIfMatchFinished(match);
 
             // Se a partida terminou, desvincula os jogadores para que possam iniciar novas partidas imediatamente
             if (match.getStatus() == MatchStatus.FINISHED) {

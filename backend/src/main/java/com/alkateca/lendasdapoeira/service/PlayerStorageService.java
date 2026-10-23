@@ -69,4 +69,16 @@ public class PlayerStorageService {
         playerDatabase.put(player.getUuid(), player);
         saveToDisk();
     }
+
+    public synchronized void resetAllPlayersWeeklyEloIfNeeded(java.util.function.Function<Player, Boolean> resetCheck) {
+        boolean anyChanged = false;
+        for (Player player : playerDatabase.values()) {
+            if (Boolean.TRUE.equals(resetCheck.apply(player))) {
+                anyChanged = true;
+            }
+        }
+        if (anyChanged) {
+            saveToDisk();
+        }
+    }
 }

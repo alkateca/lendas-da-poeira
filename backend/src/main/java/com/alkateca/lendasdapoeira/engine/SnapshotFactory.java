@@ -110,6 +110,8 @@ public class SnapshotFactory {
         MatchSnapshotDTO.PlayerViewDTO view = new MatchSnapshotDTO.PlayerViewDTO();
         view.setPlayerId(player.getUuid());
         view.setName(player.getName());
+        view.setPermanentElo(player.getPermanentElo() > 0 ? player.getPermanentElo() : 1000);
+        view.setWeeklyElo(player.getWeeklyElo() > 0 ? player.getWeeklyElo() : 1000);
 
         boolean isP1 = player.equals(engine.getPlayer1());
         UUID activeHeroId = isP1
@@ -305,6 +307,8 @@ public class SnapshotFactory {
         MatchSnapshotDTO.PlayerViewDTO copy = new MatchSnapshotDTO.PlayerViewDTO();
         copy.setPlayerId(src.getPlayerId());
         copy.setName(src.getName());
+        copy.setPermanentElo(src.getPermanentElo());
+        copy.setWeeklyElo(src.getWeeklyElo());
         copy.setDeckCount(src.getDeckCount());
         copy.setHandCount(src.getHandCount());
         copy.setActiveHeroId(src.getActiveHeroId());

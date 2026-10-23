@@ -140,12 +140,12 @@ public class MatchController {
                 ? incomingDeck
                 : null;
 
-        if (deck == null && playerStorageService != null) {
-            Player savedPlayer = playerStorageService.getPlayer(finalPlayerId);
-            if (savedPlayer != null) {
-                if (savedPlayer.getName() != null && !savedPlayer.getName().isBlank()) {
-                    finalName = savedPlayer.getName();
-                }
+        Player savedPlayer = (playerStorageService != null) ? playerStorageService.getPlayer(finalPlayerId) : null;
+        if (savedPlayer != null) {
+            if (savedPlayer.getName() != null && !savedPlayer.getName().isBlank()) {
+                finalName = savedPlayer.getName();
+            }
+            if (deck == null) {
                 if (savedPlayer.getCurrentDeck() != null
                         && savedPlayer.getCurrentDeck().getHeroList() != null
                         && !savedPlayer.getCurrentDeck().getHeroList().isEmpty()) {
@@ -223,7 +223,13 @@ public class MatchController {
         }
 
         Deck readyDeck = new Deck(deck.getDeckName() != null ? deck.getDeckName() : "Deck de Batalha", readyCards, readyHeroes);
-        return new Player(finalPlayerId, finalName, readyDeck);
+        Player matchPlayer = new Player(finalPlayerId, finalName, readyDeck);
+        if (savedPlayer != null) {
+            matchPlayer.setPermanentElo(savedPlayer.getPermanentElo() > 0 ? savedPlayer.getPermanentElo() : 1000);
+            matchPlayer.setWeeklyElo(savedPlayer.getWeeklyElo() > 0 ? savedPlayer.getWeeklyElo() : 1000);
+            matchPlayer.setLastWeeklyResetWeek(savedPlayer.getLastWeeklyResetWeek());
+        }
+        return matchPlayer;
     }
 
     private Deck createDefaultDeckFromJsonOrFallback() {
