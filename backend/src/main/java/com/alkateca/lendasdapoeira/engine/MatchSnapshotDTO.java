@@ -72,6 +72,8 @@ public class MatchSnapshotDTO {
     public static class PlayerViewDTO {
         private UUID playerId;
         private String name;
+        private int permanentElo;
+        private int weeklyElo;
         private int deckCount;
         private int handCount;
         private UUID activeHeroId;
@@ -151,5 +153,24 @@ public class MatchSnapshotDTO {
         private int heroesDefeated;
         private int heroesAlive;
         private int matchScore;
+        private int permanentElo;
+        private int permanentEloDelta;
+        private int weeklyElo;
+        private int weeklyEloDelta;
+
+        public PlayerMatchStatsDTO(UUID playerId, String playerName, boolean winner, int totalDamageDealt,
+                                   int totalDamageTaken, int totalHealingDone, int cardsPlayed,
+                                   int heroesDefeated, int heroesAlive, int matchScore) {
+            this.playerId = playerId;
+            this.playerName = playerName;
+            this.winner = winner;
+            this.totalDamageDealt = totalDamageDealt;
+            this.totalDamageTaken = totalDamageTaken;
+            this.totalHealingDone = totalHealingDone;
+            this.cardsPlayed = cardsPlayed;
+            this.heroesDefeated = heroesDefeated;
+            this.heroesAlive = heroesAlive;
+            this.matchScore = matchScore;
+        }
     }
 }

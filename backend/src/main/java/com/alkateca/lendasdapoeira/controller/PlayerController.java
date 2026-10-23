@@ -2,8 +2,10 @@ package com.alkateca.lendasdapoeira.controller;
 
 import com.alkateca.lendasdapoeira.entity.Deck;
 import com.alkateca.lendasdapoeira.entity.Player;
-import com.alkateca.lendasdapoeira.service.PlayerStorageService;
 import com.alkateca.lendasdapoeira.service.DeckValidatorService;
+import com.alkateca.lendasdapoeira.service.EloRatingService;
+import com.alkateca.lendasdapoeira.service.PlayerStorageService;
+import com.alkateca.lendasdapoeira.service.PresetDeckService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,12 @@ public class PlayerController {
     @Autowired
     private DeckValidatorService validatorService;
 
+    @Autowired
+    private PresetDeckService presetDeckService;
+
+    @Autowired
+    private EloRatingService eloRatingService;
+
     @PostMapping("/login")
     public ResponseEntity<Player> login(@RequestBody Map<String, String> payload) {
         String nick = payload.get("nick");
@@ -29,6 +37,19 @@ public class PlayerController {
             return ResponseEntity.badRequest().build();
         }
         Player player = storageService.loginOrRegister(nick);
+        if (eloRatingService.ensurePlayerEloInitializedAndCurrentWeek(player)) {
+            storageService.saveOrUpdatePlayer(player);
+        }
+        return ResponseEntity.ok(player);
+    }
+
+    @GetMapping("/{playerId}")
+    public ResponseEntity<Player> getPlayerProfile(@PathVariable UUID playerId) {
+        Player player = storageService.getPlayer(playerId);
+        if (player == null) return ResponseEntity.notFound().build();
+        if (eloRatingService.ensurePlayerEloInitializedAndCurrentWeek(player)) {
+            storageService.saveOrUpdatePlayer(player);
+        }
         return ResponseEntity.ok(player);
     }
 
@@ -48,10 +69,6 @@ public class PlayerController {
         storageService.saveOrUpdatePlayer(player);
         return ResponseEntity.ok(player);
     }
-
-    // Injete o PresetDeckService no PlayerController.java:
-    @Autowired
-    private com.alkateca.lendasdapoeira.service.PresetDeckService presetDeckService;
 
     @GetMapping("/catalog")
     public ResponseEntity<Map<String, Object>> getFullCatalog() {
