@@ -75,13 +75,14 @@ class FireHeroesIntegrationTest {
                 effect.resolve(engine, xama);
             }
         });
+        engine.getResolutionQueue().resolveAll(engine);
 
         assertEquals(1, xama.getDanoBonus(), "A aura de Xamã das cinzas deve conceder +1 de Dano Bônus.");
         assertEquals(8, enemyHero.getVidaAtual(), "A Bola de Fogo invocada no início do combate deve causar 7 de Dano Mágico (4 + 3 Espírito).");
-        long discardFireballs = deck1.getCardList().stream()
-                .filter(c -> c.getZoneId() == ZoneId.DISCARD && "Bola de fogo".equalsIgnoreCase(c.getCardName()))
+        long resolveFireballs = deck1.getCardList().stream()
+                .filter(c -> c.getZoneId() == ZoneId.RESOLVE && "Bola de fogo".equalsIgnoreCase(c.getCardName()))
                 .count();
-        assertEquals(1, discardFireballs, "A Bola de Fogo invocada deve ir para o descarte.");
+        assertEquals(1, resolveFireballs, "A Bola de Fogo invocada deve permanecer em resolução na mesa durante o combate.");
         assertTrue(deck1.getCardList().get(0).getAfinidades().contains(Afinidade.FOGO),
                 "A Bola de Fogo invocada deve possuir Afinidade Fogo.");
     }
@@ -151,6 +152,7 @@ class FireHeroesIntegrationTest {
                 effect.resolve(engine, alix);
             }
         });
+        engine.getResolutionQueue().resolveAll(engine);
         assertEquals(9, enemyHero.getVidaAtual(), "Alix deve invocar Bola de Fogo ao jogar Armadura, causando 6 de Dano Mágico (4 + 2 Espírito).");
 
         // Fase COMBAT_END: Final do Combate -> Cause 3 de Dano Mágico ao Herói Inimigo

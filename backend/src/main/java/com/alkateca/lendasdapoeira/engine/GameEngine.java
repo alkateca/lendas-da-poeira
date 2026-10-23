@@ -290,6 +290,14 @@ public class GameEngine {
         }
         resolutionQueue.resolveAll(this);
 
+        // Finaliza o destino de itens invocados no GAME_START (ex: Naelis -> Rapieira de Cristal)
+        moveResolvedCardsToDestination(gameState.getPlayer1PlayedCards());
+        moveResolvedCardsToDestination(gameState.getPlayer2PlayedCards());
+        gameState.getPlayer1PlayedCards().clear();
+        gameState.getPlayer2PlayedCards().clear();
+        resolvedCardsInCurrentCombat.clear();
+        invokedCardIdsInCurrentCombat.clear();
+
         changePhase(TurnPhase.CHOICE);
     }
 
@@ -664,28 +672,29 @@ public class GameEngine {
 
 
     public void resumeCombatChainFromCurrentPhase() {
-        // 1. Se estava em COMBAT_START, termina a fila de COMBAT_START
+        // 1. Se estava em COMBAT_START, termina a fila de COMBAT_START (incluindo cartas invocadas no início do combate)
         if (this.turnPhase == TurnPhase.COMBAT_START) {
             resolutionQueue.resolveAll(this);
-            if (isWaitingForPlayerChoice()) return; // Pausou no meio do COMBAT_START!
+            if (isWaitingForPlayerChoice()) return;
 
-            // Avança para RESOLUTION e enfileira as 4 cartas base dos jogadores
+            // Equipa itens que já foram invocados no COMBAT_START para que seus buffs valham na RESOLUTION,
+            // mas MANTÉM todas as cartas na lista visual (player1PlayedCards / player2PlayedCards) até o fim!
+            attachItemsAlreadyInvokedInCombatStart(gameState.getPlayer1PlayedCards());
+            attachItemsAlreadyInvokedInCombatStart(gameState.getPlayer2PlayedCards());
+
             changePhase(TurnPhase.RESOLUTION);
             enqueueInitialResolutionCards();
         }
 
-        // 2. Se está em RESOLUTION, resolve a fila (incluindo cartas extras jogadas por efeitos!)
+        // 2. Se está em RESOLUTION, resolve a fila (incluindo cartas e tokens invocados encadeados!)
         if (this.turnPhase == TurnPhase.RESOLUTION) {
             resolutionQueue.resolveAll(this);
-            if (isWaitingForPlayerChoice()) return; // Pausou esperando o jogador escolher uma carta/herói!
+            if (isWaitingForPlayerChoice()) return;
 
-            // Todas as cartas (as 4 iniciais + as extras inseridas por efeitos) já resolveram!
-            moveResolvedCardsToDestination(gameState.getPlayer1PlayedCards());
-            moveResolvedCardsToDestination(gameState.getPlayer2PlayedCards());
-            gameState.getPlayer1PlayedCards().clear();
-            gameState.getPlayer2PlayedCards().clear();
-            resolvedCardsInCurrentCombat.clear();
-            invokedCardIdsInCurrentCombat.clear();
+            // Anexa os itens aos heróis para que contem no combate físico (COMBAT),
+            // porém NÃO limpa player1PlayedCards/player2PlayedCards ainda para que persistam na mesa!
+            attachItemsAlreadyInvokedInCombatStart(gameState.getPlayer1PlayedCards());
+            attachItemsAlreadyInvokedInCombatStart(gameState.getPlayer2PlayedCards());
 
             changePhase(TurnPhase.COMBAT);
         }
@@ -696,10 +705,16 @@ public class GameEngine {
             triggerActiveHeroesEffects(TurnPhase.COMBAT_END);
         }
 
-        // 4. Se está em COMBAT_END, resolve os efeitos de fim de combate
+        // 4. Se está em COMBAT_END, resolve os efeitos de fim de combate e só então recolhe as cartas da mesa!
         if (this.turnPhase == TurnPhase.COMBAT_END) {
             resolutionQueue.resolveAll(this);
-            if (isWaitingForPlayerChoice()) return; // Pausou para escolha no fim do combate!
+            if (isWaitingForPlayerChoice()) return;
+
+            // AGORA SIM: Fim da sequência de combate -> move cartas e tokens da mesa para ATTACHED, EXILE ou DISCARD
+            moveResolvedCardsToDestination(gameState.getPlayer1PlayedCards());
+            moveResolvedCardsToDestination(gameState.getPlayer2PlayedCards());
+            gameState.getPlayer1PlayedCards().clear();
+            gameState.getPlayer2PlayedCards().clear();
 
             processAttachedCardsDuration();
             runCombatEndCleanup();
@@ -722,10 +737,30 @@ public class GameEngine {
         }
     }
 
-    private void enqueueInitialResolutionCards() {
-        resolvedCardsInCurrentCombat.clear();
-        invokedCardIdsInCurrentCombat.clear();
+    /**
+     * Garante que itens jogados/invocados já fiquem vinculados como ATTACHED no Herói durante o combate
+     * sem removê-los da lista visual da pilha de resolução até o fim da sequência de combate.
+     */
+    private void attachItemsAlreadyInvokedInCombatStart(List<Card> playedCards) {
+        if (playedCards == null) return;
+        UUID activeP1HeroId = gameState.getActiveHeroPlayer1Id();
+        UUID activeP2HeroId = gameState.getActiveHeroPlayer2Id();
 
+        for (Card card : playedCards) {
+            if (card.getAttachedToCardId() != null) {
+                card.setZoneId(ZoneId.ATTACHED);
+            } else if (card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM) {
+                boolean isP1Owner = card.getOwnerId().equals(player1.getUuid());
+                UUID defaultHeroId = isP1Owner ? activeP1HeroId : activeP2HeroId;
+                if (defaultHeroId != null) {
+                    card.setAttachedToCardId(defaultHeroId);
+                    card.setZoneId(ZoneId.ATTACHED);
+                }
+            }
+        }
+    }
+
+    private void enqueueInitialResolutionCards() {
         boolean p1HasInitiative = gameState.getActiveTurnPlayerId() == null
                 || gameState.getActiveTurnPlayerId().equals(gameState.getPlayer1().getUuid());
         List<Card> firstPlayerCards = p1HasInitiative
@@ -740,10 +775,17 @@ public class GameEngine {
 
         for (int i = 0; i < maxCards; i++) {
             if (i < firstPlayerCards.size()) {
-                enqueueCardAndHeroOnPlayResolution(firstPlayerCards.get(i), false);
+                Card c1 = firstPlayerCards.get(i);
+                // Não re-enfileira cartas que já foram invocadas e resolvidas em COMBAT_START
+                if (!resolvedCardsInCurrentCombat.contains(c1)) {
+                    enqueueCardAndHeroOnPlayResolution(c1, false);
+                }
             }
             if (i < secondPlayerCards.size()) {
-                enqueueCardAndHeroOnPlayResolution(secondPlayerCards.get(i), false);
+                Card c2 = secondPlayerCards.get(i);
+                if (!resolvedCardsInCurrentCombat.contains(c2)) {
+                    enqueueCardAndHeroOnPlayResolution(c2, false);
+                }
             }
         }
     }
@@ -1030,6 +1072,13 @@ public class GameEngine {
      * valida limites de zona/slots, dispara o evento explícito CARD_SPAWNED / TOKEN_SUMMONED
      * e resolve seus efeitos de entrada (RESOLUTION) imediatamente.
      */
+    /**
+     * Regra de Invocação:
+     * 1. Busca a carta no Baralho (DECK) -> Mão (HAND) -> Descarte (DISCARD).
+     * 2. Apenas se não existir em nenhuma dessas zonas, instancia um Token dinâmico.
+     * 3. Aloca a carta na pilha de resolução (playerPlayedCards) e enfileira seus efeitos no início da ResolutionQueue (LIFO encadeado).
+     * 4. Mantém a carta visível na mesa durante toda a sequência de combate (só é recolhida no COMBAT_END).
+     */
     public Card invokeCard(Player owner, HeroCard targetHero, String cardName) {
         return invokeCard(owner, targetHero, targetHero, cardName);
     }
@@ -1037,18 +1086,37 @@ public class GameEngine {
     public Card invokeCard(Player owner, Card invokerCard, HeroCard targetHero, String cardName) {
         if (owner == null || cardName == null) return null;
 
-        // 1. Procura a carta priorizando DECK primeiro
         Card invokedCard = null;
         boolean isDynamicToken = false;
 
+        // 1. Regra de busca de Invocação: Baralho (DECK) -> Mão (HAND) -> Descarte (DISCARD)
         if (owner.getCurrentDeck() != null && owner.getCurrentDeck().getCardList() != null) {
-            invokedCard = owner.getCurrentDeck().getCardList().stream()
+            List<Card> deckCards = owner.getCurrentDeck().getCardList();
+
+            // 1º Prioridade: Baralho (DECK)
+            invokedCard = deckCards.stream()
                     .filter(c -> cardName.equalsIgnoreCase(c.getCardName()) && c.getZoneId() == ZoneId.DECK)
                     .findFirst()
                     .orElse(null);
+
+            // 2º Prioridade: Mão (HAND)
+            if (invokedCard == null) {
+                invokedCard = deckCards.stream()
+                        .filter(c -> cardName.equalsIgnoreCase(c.getCardName()) && c.getZoneId() == ZoneId.HAND)
+                        .findFirst()
+                        .orElse(null);
+            }
+
+            // 3º Prioridade: Descarte (DISCARD)
+            if (invokedCard == null) {
+                invokedCard = deckCards.stream()
+                        .filter(c -> cardName.equalsIgnoreCase(c.getCardName()) && c.getZoneId() == ZoneId.DISCARD)
+                        .findFirst()
+                        .orElse(null);
+            }
         }
 
-        // 2. Se a carta não estiver no DECK, instancia um Token dinâmico e injeta a lógica via CardFactory
+        // 2. Se não encontrou em DECK, HAND ou DISCARD, cria um Token dinâmico
         if (invokedCard == null) {
             isDynamicToken = true;
             Card templateInDeck = null;
@@ -1168,7 +1236,7 @@ public class GameEngine {
             invokedCard.setAttachedToCardId(targetHero.getUuid());
         }
 
-        // 4. Aloca na zona RESOLVE e calcula o slot visual correspondente
+        // 4. Aloca a carta na zona RESOLVE e na lista de cartas em resolução do jogador (persistindo até o fim do combate!)
         invokedCard.setZoneId(ZoneId.RESOLVE);
         invokedCardIdsInCurrentCombat.add(invokedCard.getUuid());
 
@@ -1176,10 +1244,9 @@ public class GameEngine {
         List<Card> ownerPlayedList = isP1Owner
                 ? gameState.getPlayer1PlayedCards()
                 : gameState.getPlayer2PlayedCards();
-        boolean addedTempToPlayed = false;
+
         if (ownerPlayedList != null && !ownerPlayedList.contains(invokedCard)) {
             ownerPlayedList.add(invokedCard);
-            addedTempToPlayed = true;
         }
 
         int slotIndex = ownerPlayedList != null ? Math.max(0, ownerPlayedList.indexOf(invokedCard)) : 0;
@@ -1188,7 +1255,7 @@ public class GameEngine {
                 ? ZoneId.ATTACHED.name()
                 : ZoneId.RESOLVE.name();
 
-        // Dispara o evento explícito de invocação com a carta visível em RESOLVE
+        // 5. Dispara o snapshot explícito da carta surgindo na pilha de resolução
         Card sourceInvoker = invokerCard != null ? invokerCard : targetHero;
         captureSpawnSnapshot(
                 sourceInvoker,
@@ -1203,36 +1270,50 @@ public class GameEngine {
                 "✨ Invocado: " + invokedCard.getCardName() + (targetHero != null ? " (" + targetHero.getCardName() + ")" : "")
         );
 
-        // 5. Resolve imediatamente os efeitos de entrada (TurnPhase.RESOLUTION) da carta invocada.
-        // A carta permanece em ownerPlayedList durante toda a resolução e captura dos snapshots EFFECT_RESOLVED.
+        // 6. Enfileira os efeitos da carta invocada na frente da ResolutionQueue (pilha encadeada LIFO)
+        // para que sejam resolvidos em ordem pelo loop principal da ResolutionQueue!
+        enqueueInvokeEffectsAtFront(invokedCard);
+
+        return invokedCard;
+    }
+
+    /**
+     * Enfileira os efeitos de entrada (RESOLUTION) de uma carta invocada no topo da ResolutionQueue,
+     * funcionando em qualquer fase (GAME_START, COMBAT_START ou RESOLUTION).
+     */
+    private void enqueueInvokeEffectsAtFront(Card invokedCard) {
+        if (invokedCard == null) return;
+
+        com.alkateca.lendasdapoeira.effects.Effect markResolvedStep = new com.alkateca.lendasdapoeira.effects.Effect() {
+            @Override
+            public boolean predicate(Card sourceCard, TurnPhase turnPhase) {
+                return true;
+            }
+
+            @Override
+            public boolean shouldCaptureSnapshot() {
+                return false;
+            }
+
+            @Override
+            public void resolve(GameEngine gameEngine, Card sourceCard) {
+                gameEngine.markCardAsResolved(sourceCard);
+            }
+        };
+
+        List<com.alkateca.lendasdapoeira.effects.Effect> cardEffects = new ArrayList<>();
         if (invokedCard.getEffects() != null) {
-            for (com.alkateca.lendasdapoeira.effects.Effect effect : invokedCard.getEffects()) {
-                if (effect.predicate(invokedCard, TurnPhase.RESOLUTION)) {
-                    effect.resolve(this, invokedCard);
-                    captureSnapshot(invokedCard, effect, "EFFECT_RESOLVED");
+            for (com.alkateca.lendasdapoeira.effects.Effect eff : invokedCard.getEffects()) {
+                if (eff.predicate(invokedCard, TurnPhase.RESOLUTION)) {
+                    cardEffects.add(eff);
                 }
             }
         }
 
-        // 6. Move a carta invocada para a zona final (ATTACHED, EXILE ou DISCARD)
-        if (invokedCard.getAttachedToCardId() != null) {
-            invokedCard.setZoneId(ZoneId.ATTACHED);
-        } else if (invokedCard.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM && targetHero != null) {
-            invokedCard.setAttachedToCardId(targetHero.getUuid());
-            invokedCard.setZoneId(ZoneId.ATTACHED);
-        } else if (invokedCard.getDescricao() != null && invokedCard.getDescricao().contains("Exilar.")) {
-            invokedCard.setZoneId(ZoneId.EXILE);
-        } else {
-            invokedCard.setZoneId(ZoneId.DISCARD);
+        for (int i = cardEffects.size() - 1; i >= 0; i--) {
+            resolutionQueue.enqueueFirst(cardEffects.get(i), invokedCard);
         }
-
-        // 7. Remove da lista de cartas jogadas SOMENTE DEPOIS que todos os snapshots
-        // daquela invocação forem emitidos, garantindo integridade visual no Front-End.
-        if (addedTempToPlayed) {
-            ownerPlayedList.remove(invokedCard);
-        }
-
-        return invokedCard;
+        resolutionQueue.enqueueFirst(markResolvedStep, invokedCard);
     }
 
     /**

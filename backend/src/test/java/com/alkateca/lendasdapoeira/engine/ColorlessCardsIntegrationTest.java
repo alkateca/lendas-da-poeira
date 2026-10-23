@@ -208,11 +208,12 @@ class ColorlessCardsIntegrationTest {
                 eff.resolve(engine, paraRaios);
             }
         });
+        engine.getResolutionQueue().resolveAll(engine);
 
         assertEquals(2, myHero.getEspirito(), "Para-raios deve conceder +1 de Espírito até o Final do Combate.");
         assertEquals(22, enemyHero.getVidaAtual(), "As 2 cópias de Estatica no baralho devem causar 4 de dano cada (total 8), parando quando o baralho esgotar.");
-        assertEquals(ZoneId.DISCARD, estatica1.getZoneId(), "A 1ª Estatica invocada deve ir para o descarte.");
-        assertEquals(ZoneId.DISCARD, estatica2.getZoneId(), "A 2ª Estatica invocada deve ir para o descarte.");
+        assertEquals(ZoneId.RESOLVE, estatica1.getZoneId(), "A 1ª Estatica invocada deve permanecer em resolução na mesa durante o combate.");
+        assertEquals(ZoneId.RESOLVE, estatica2.getZoneId(), "A 2ª Estatica invocada deve permanecer em resolução na mesa durante o combate.");
 
         // Testa Risada Sarcástica: causa X + 2 de Dano Mágico (2 + 2 - 1 = 3 -> 22 -> 19) e adiciona Tristeza ao DECK inimigo no Final do Combate
         Card risada = new Card();

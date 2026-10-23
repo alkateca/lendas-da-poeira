@@ -104,6 +104,7 @@ class YellowThroneGuardiansIntegrationTest {
                 effect.resolve(engine, oraculo);
             }
         });
+        engine.getResolutionQueue().resolveAll(engine);
 
         assertEquals(11, oraculo.getAtaque(), "Oráculo Real deve ter 11 de Ataque (6 base + 2 Aura + 2 temporário + 1 permanente de Transformador).");
         assertEquals(1, oraculo.getDefesa(), "Oráculo Real deve ter 1 de Defesa pela Aura.");
