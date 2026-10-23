@@ -10,7 +10,9 @@ import com.alkateca.lendasdapoeira.enums.TurnPhase;
 import com.alkateca.lendasdapoeira.enums.ZoneId;
 
 import java.util.UUID;
+import lombok.Getter;
 
+@Getter
 public class EquipBuffEffect implements Effect {
 
     private final int bonusEspirito;
@@ -38,6 +40,18 @@ public class EquipBuffEffect implements Effect {
         this.bonusVidaMaxima = bonusVidaMaxima;
         this.targetEnemy = targetEnemy;
         this.durationTurns = durationTurns;
+    }
+
+    public int getSpiritBuff() {
+        return bonusEspirito;
+    }
+
+    public int getAttackBuff() {
+        return bonusAtaque;
+    }
+
+    public int getDefenseBuff() {
+        return bonusDefesa;
     }
 
     @Override

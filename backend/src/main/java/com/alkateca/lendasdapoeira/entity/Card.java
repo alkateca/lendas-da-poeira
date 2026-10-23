@@ -1,7 +1,6 @@
 package com.alkateca.lendasdapoeira.entity;
 
 import com.alkateca.lendasdapoeira.effects.Effect;
-import com.alkateca.lendasdapoeira.engine.GameEngine;
 import com.alkateca.lendasdapoeira.engine.ResolutionQueue;
 import com.alkateca.lendasdapoeira.enums.*;
 import lombok.*;
@@ -9,7 +8,6 @@ import lombok.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import com.alkateca.lendasdapoeira.enums.Colors;
 
 @Data
 @AllArgsConstructor
@@ -22,6 +20,8 @@ public class Card {
     private String cardName;
     private CardType cardType;
     private Colors color;
+    private CardRarity rarity;
+    private CardSet cardSet;
     private UUID ownerId;
     private ZoneId zoneId;
     private ItemType itemType = ItemType.NENHUM;
@@ -33,10 +33,16 @@ public class Card {
     private String descricao;
     private boolean unica;
 
-
     private UUID attachedToCardId;
-
     private Integer turnsRemaining;
+
+    // Metadados do Sistema de Liberação (Missão / Evolução)
+    private boolean liberationCard = false;
+    private String missionType;          // Ex: "DEAL_DAMAGE", "SURVIVE_TURNS", "PLAY_SPELL", "PLAY_AFFINITY_FOGO", "DEFEAT_HERO"
+    private int missionTargetValue = 0;
+    private int missionCurrentProgress = 0;
+    private String targetBaseHeroName;   // Ex: "Moyra, Aprendiz da Santa"
+    private String evolvesIntoHeroName;  // Ex: "Moyra, Santa das Laminas"
 
     private List<Effect> effects = new ArrayList<>();
 
@@ -49,5 +55,4 @@ public class Card {
             }
         }
     }
-
 }

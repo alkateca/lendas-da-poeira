@@ -51,6 +51,25 @@ public class SnapshotFactory {
                     : engine.getPlayer2();
             Player winner = (quitter == engine.getPlayer1()) ? engine.getPlayer2() : engine.getPlayer1();
             trigger.setLogMessage("🏳️ " + quitter.getName() + " desistiu da partida! Vitória por W.O. para " + winner.getName() + "!");
+        } else if ("MISSION_PROGRESS".equals(eventType) && sourceCard != null) {
+            trigger.setMissionProgress(sourceCard.getMissionCurrentProgress());
+            trigger.setMissionTarget(sourceCard.getMissionTargetValue());
+            trigger.setOwnerPlayerId(sourceCard.getOwnerId());
+            trigger.setLogMessage("📜 Missão [" + sourceCard.getCardName() + "]: "
+                    + sourceCard.getMissionCurrentProgress() + "/" + sourceCard.getMissionTargetValue());
+        } else if ("CARD_LIBERATED".equals(eventType) && sourceCard != null) {
+            trigger.setMissionProgress(sourceCard.getMissionCurrentProgress());
+            trigger.setMissionTarget(sourceCard.getMissionTargetValue());
+            trigger.setOwnerPlayerId(sourceCard.getOwnerId());
+            trigger.setSpawnedCardUuid(sourceCard.getUuid());
+            trigger.setSpawnedCardName(sourceCard.getCardName());
+            trigger.setSpawnedCardData(toCardDTO(sourceCard));
+            trigger.setLogMessage("✨ MISSÃO CONCLUÍDA! [" + sourceCard.getCardName() + "] foi liberada para a mão!");
+        } else if ("HERO_EVOLVED".equals(eventType) && sourceCard != null) {
+            trigger.setTargetHeroId(sourceCard.getUuid());
+            trigger.setEvolvedHeroName(sourceCard.getCardName());
+            trigger.setOwnerPlayerId(sourceCard.getOwnerId());
+            trigger.setLogMessage("🔥 EVOLUÇÃO SUPREMA! " + sourceCard.getCardName() + " despertou na arena!");
         } else {
             trigger.setLogMessage("Fase atual: " + engine.getTurnPhase());
         }
@@ -158,6 +177,13 @@ public class SnapshotFactory {
                     .collect(Collectors.toList()));
         }
 
+        if (player.getCurrentDeck() != null && player.getCurrentDeck().getLiberationList() != null) {
+            view.setLiberationZone(player.getCurrentDeck().getLiberationList().stream()
+                    .filter(c -> c != null && c.getZoneId() == ZoneId.LIBERATION)
+                    .map(SnapshotFactory::toCardDTO)
+                    .collect(Collectors.toList()));
+        }
+
         List<Card> played = isP1
                 ? engine.getGameState().getPlayer1PlayedCards()
                 : engine.getGameState().getPlayer2PlayedCards();
@@ -188,6 +214,8 @@ public class SnapshotFactory {
         dto.setUuid(hero.getUuid());
         dto.setCardName(hero.getCardName());
         dto.setColor(hero.getColor() != null ? hero.getColor().name() : "NEUTRAL");
+        dto.setRarity(hero.getRarity() != null ? hero.getRarity().name() : null);
+        dto.setCardSet(hero.getCardSet() != null ? hero.getCardSet().name() : null);
         dto.setDescricao(hero.getDescricao());
         dto.setZoneId(hero.getZoneId() != null ? hero.getZoneId().name() : "BENCH");
         dto.setEspirito(hero.getEspirito());
@@ -240,11 +268,19 @@ public class SnapshotFactory {
         dto.setCardName(card.getCardName());
         dto.setCardType(card.getCardType() != null ? card.getCardType().name() : "UNKNOWN");
         dto.setColor(card.getColor() != null ? card.getColor().name() : "NEUTRAL");
+        dto.setRarity(card.getRarity() != null ? card.getRarity().name() : null);
+        dto.setCardSet(card.getCardSet() != null ? card.getCardSet().name() : null);
         dto.setItemType(card.getItemType() != null ? card.getItemType().name() : "NENHUM");
         dto.setEmpunhadura(card.getEmpunhadura());
         dto.setDescricao(card.getDescricao());
         dto.setZoneId(card.getZoneId() != null ? card.getZoneId().name() : "DECK");
         dto.setFaceUp(true);
+        dto.setLiberationCard(card.isLiberationCard());
+        dto.setMissionType(card.getMissionType());
+        dto.setMissionTargetValue(card.getMissionTargetValue());
+        dto.setMissionCurrentProgress(card.getMissionCurrentProgress());
+        dto.setTargetBaseHeroName(card.getTargetBaseHeroName());
+        dto.setEvolvesIntoHeroName(card.getEvolvesIntoHeroName());
         return dto;
     }
 
@@ -315,6 +351,7 @@ public class SnapshotFactory {
         copy.setHeroes(src.getHeroes());
         copy.setDiscardPile(src.getDiscardPile());
         copy.setExilePile(src.getExilePile());
+        copy.setLiberationZone(src.getLiberationZone() != null ? new ArrayList<>(src.getLiberationZone()) : new ArrayList<>());
 
         // Mão: visível apenas para o dono
         copy.setHand(isViewerOwner ? new ArrayList<>(src.getHand()) : List.of());
@@ -355,6 +392,10 @@ public class SnapshotFactory {
         copy.setTokenCreated(src.isTokenCreated());
         copy.setZoneFull(src.isZoneFull());
         copy.setLogMessage(src.getLogMessage());
+        copy.setMissionProgress(src.getMissionProgress());
+        copy.setMissionTarget(src.getMissionTarget());
+        copy.setPreviousHeroName(src.getPreviousHeroName());
+        copy.setEvolvedHeroName(src.getEvolvedHeroName());
         return copy;
     }
 }

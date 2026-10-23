@@ -13,11 +13,14 @@ Antes de gerar o JSON de saída, você DEVE obrigatoriamente imprimir um "Relat�
 *   **Cartas Comuns (Destino):** `src/main/resources/cards.json`
 *   **Tipos de Carta (cardType):** `src/main/java/com/alkateca/lendasdapoeira/enums/CardType.java`
 *   **Cores (color):** `src/main/java/com/alkateca/lendasdapoeira/enums/Colors.java`
+*   **Raridades (rarity):** `src/main/java/com/alkateca/lendasdapoeira/enums/CardRarity.java`
+*   **Coleções/Sets (cardSet):** `src/main/java/com/alkateca/lendasdapoeira/enums/CardSet.java`
 *   **Tipos de Item (itemType):** `src/main/java/com/alkateca/lendasdapoeira/enums/ItemType.java`
 
 ## 3. Regras de Estrutura de Dados (JSON)
 *   **UUID:** Deve ser único e incremental em relação à última carta da lista no formato padrão (ex: se a última for `...0004`, a nova será `...0005`).
 *   **Nome:** `cardName` deve ser único.
+*   **Raridade e Coleção:** `rarity` (ex: "COMUM", "INCOMUM", "RARA", "LENDARIA") e `cardSet` (ex: "BASE").
 *   **Empunhadura:** Atributo exclusivo de itens do tipo `ARMA`. Pode ser `1` ou `2`. Para cartas que não são armas, use `0`.
 *   **Arrays:** Os campos `racas`, `ordem`, `classe` e `afinidades` devem ser listas de strings.
 
@@ -50,6 +53,8 @@ Deve conter o `itemType`, `afinidades`, `racas`, `classe` e `ordem`, sempre sepa
 "cardName": "Atmosfera Pesada",
 "cardType": "SPELL",
 "color": "BLACK",
+"rarity": "COMUM",
+"cardSet": "BASE",
 "itemType": "NENHUM",
 "empunhadura": 0,
 "descricao": "Afinidade Ar - Zumbi\nOs Heróis Inimigos recebem -1 de Espirito",

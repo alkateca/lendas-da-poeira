@@ -99,5 +99,10 @@ export const BOARD_LAYOUT = {
     PLAYER_BANNERS: {
         OPPONENT: { x: 1730, y: 50,   width: 340, height: 64 },
         LOCAL:    { x: 1730, y: 1030, width: 340, height: 64 }
+    },
+
+    LIBERATION_PANEL: {
+        OPPONENT: { x: 525, y: 62,   width: 220, height: 96 },
+        LOCAL:    { x: 525, y: 1018, width: 220, height: 96 }
     }
 };

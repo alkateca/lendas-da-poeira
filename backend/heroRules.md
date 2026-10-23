@@ -14,10 +14,12 @@ Antes de gerar o JSON de saída, você DEVE obrigatoriamente imprimir um "Relat�
 ## 2. Referências de Arquivos (Fonte da Verdade)
 *   Arquivo de Destino: `src/main/resources/heros.json`
 *   Tipos de Carta (`cardType`): OBRIGATORIAMENTE `"HERO"` para este gerador.
+*   Raridades (`rarity`): `src/main/java/com/alkateca/lendasdapoeira/enums/CardRarity.java`
+*   Coleções/Sets (`cardSet`): `src/main/java/com/alkateca/lendasdapoeira/enums/CardSet.java`
 
 ## 3. Regras de Estrutura de Dados (JSON)
 O JSON de um Herói não possui `itemType` nem `empunhadura`. Ele requer os seguintes campos exatos:
-*   **Identificação:** `uuid` (incremental), `cardName` (string única), `color` (string em MAIÚSCULO, ex: "WHITE", "GREEN", "BLACK", "BLUE", "YELLOW", "RED").
+*   **Identificação:** `uuid` (incremental), `cardName` (string única), `color` (string em MAIÚSCULO, ex: "WHITE", "GREEN", "BLACK", "BLUE", "YELLOW", "RED"), `rarity` (string em MAIÚSCULO: "COMUM", "INCOMUM", "RARA", "LENDARIA"), `cardSet` (string em MAIÚSCULO, ex: "BASE").
 *   **Atributos Base (Inteiros):** `espirito`, `ataque`, `defesa`, `vidaMaxima`. O campo `vidaAtual` deve ser idêntico à `vidaMaxima` na criação.
 *   **Atributos de Combate (Inteiros):** `reducaoDano`, `danoBonus`, `vulnerabilidade`. Devem iniciar como `0` por padrão.
 *   **Equipamento:** `maxWeaponSlots` (Inteiro). O padrão é `2`. Se a descrição contiver "Empunhadura Quadrupla", altere para `4`, ou "Empunhadura Tripla", altere para `3` e assim por diante. Caso a empunhadura seja diferente de `2`, escreva na descrição da carta junto dos outros modificadores de raça, classe, etc.
@@ -57,6 +59,8 @@ Se o usuário pedir: "Crie o herói Thor, branco, 3 esp, 5 atq, 2 def, 15 vida. 
 "cardName": "Thor",
 "cardType": "HERO",
 "color": "WHITE",
+"rarity": "COMUM",
+"cardSet": "BASE",
 "descricao": "Início do Combate: Cause 2 de Dano Mágico ao Herói Inimigo.\nInvocar: Estatica",
 "espirito": 3,
 "ataque": 5,
