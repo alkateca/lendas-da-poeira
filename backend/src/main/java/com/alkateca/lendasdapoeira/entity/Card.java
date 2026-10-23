@@ -3,6 +3,7 @@ package com.alkateca.lendasdapoeira.entity;
 import com.alkateca.lendasdapoeira.effects.Effect;
 import com.alkateca.lendasdapoeira.engine.ResolutionQueue;
 import com.alkateca.lendasdapoeira.enums.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -44,6 +45,7 @@ public class Card {
     private String targetBaseHeroName;   // Ex: "Moyra, Aprendiz da Santa"
     private String evolvesIntoHeroName;  // Ex: "Moyra, Santa das Laminas"
 
+    @JsonIgnore
     private List<Effect> effects = new ArrayList<>();
 
     public void onPhaseChange(TurnPhase currentPhase, ResolutionQueue queue) {
