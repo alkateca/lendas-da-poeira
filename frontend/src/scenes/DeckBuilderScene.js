@@ -12,14 +12,26 @@ export default class DeckBuilderScene extends Phaser.Scene {
         // Estado do baralho em edição
         this.currentDeck = null;
         this.activeTab = 'HEROES'; // 'HEROES', 'LIBERATION', 'ALL_CARDS', 'ITEM', 'SPELL', 'ACTION', 'THEURGY'
-        this.hideLockedCards = false;
+        this.hideIncompatibleCards = true; // Filtra dinamicamente cartas incompatíveis com os heróis selecionados
         this.currentPage = 0;
         this.itemsPerPage = 10;
         this.longHoverTimer = null;
+
+        // Estado dos Filtros Cumulativos
+        this.filters = {
+            search: '',
+            color: 'ALL',
+            typeOrSubtype: 'ALL',
+            raca: 'ALL',
+            afinidade: 'ALL',
+            classe: 'ALL',
+            ordem: 'ALL',
+            empunhadura: 'ALL'
+        };
     }
 
     init(data) {
-        this.player = data.player || JSON.parse(localStorage.getItem('lendas_player'));
+        this.player = data?.player || JSON.parse(localStorage.getItem('lendas_player'));
         if (!this.player.decks) this.player.decks = [];
     }
 
@@ -33,12 +45,22 @@ export default class DeckBuilderScene extends Phaser.Scene {
 
         await this.loadCatalogFromServer();
 
-        // Carrega o primeiro baralho salvo do jogador ou cria um novo rascunho
         if (this.player.decks.length > 0) {
             this.loadDeckIntoEditor(this.player.decks[0]);
         } else {
             this.createNewBlankDeck();
         }
+    }
+
+    // Normaliza strings removendo acentos e underscores para comparação consistente entre JSON e Enums
+    normalizeKey(val) {
+        if (!val) return '';
+        return String(val)
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/_/g, ' ')
+            .trim()
+            .toUpperCase();
     }
 
     drawBackgroundAndFrames() {
@@ -51,10 +73,10 @@ export default class DeckBuilderScene extends Phaser.Scene {
         this.add.rectangle(960, 48, 1860, 68, 0x0f172a, 0.95).setStrokeStyle(2, 0x334155);
 
         // Moldura Passo 1: Equipe de 3 Heróis + Slot de Carta de Liberação
-        this.add.rectangle(690, 215, 1320, 230, 0x111827, 0.9).setStrokeStyle(2, 0x1d4ed8);
+        this.add.rectangle(690, 205, 1320, 210, 0x111827, 0.9).setStrokeStyle(2, 0x1d4ed8);
 
-        // Moldura Passo 2: Catálogo de Cartas
-        this.add.rectangle(690, 695, 1320, 690, 0x111827, 0.9).setStrokeStyle(2, 0x334155);
+        // Moldura Passo 2: Catálogo de Cartas e Barra de Filtros
+        this.add.rectangle(690, 680, 1320, 720, 0x111827, 0.9).setStrokeStyle(2, 0x334155);
 
         // Moldura Direita: Lista do Baralho Atual
         this.add.rectangle(1635, 570, 510, 940, 0x0f172a, 0.95).setStrokeStyle(2, BOARD_LAYOUT.COLORS.GOLD_DUST);
@@ -65,75 +87,68 @@ export default class DeckBuilderScene extends Phaser.Scene {
             fontSize: '22px', color: '#ffd700', fontStyle: 'bold'
         }).setOrigin(0, 0.5);
 
-        // Input HTML para o Nome do Baralho (deckName)
         const inputHtml = `
             <input type="text" id="deck-name-input" placeholder="Nome do Baralho..."
-                style="width: 280px; height: 38px; font-size: 15px; padding: 0 12px;
+                style="width: 260px; height: 36px; font-size: 15px; padding: 0 12px;
                 background: #1e293b; color: #ffffff; border: 2px solid #38bdf8;
                 border-radius: 6px; font-weight: bold; outline: none;" />
         `;
-        this.deckNameDom = this.add.dom(530, 48).createFromHTML(inputHtml);
+        this.deckNameDom = this.add.dom(520, 48).createFromHTML(inputHtml);
 
-        // Botão Alternar entre Baralhos Salvos
-        this.deckCycleBtn = this.createUIButton(830, 48, 250, 42, 'Meus Decks (0)', 0x1e293b, () => {
+        this.deckCycleBtn = this.createUIButton(805, 48, 220, 40, 'Alternar Deck (0)', 0x1e293b, () => {
             if (this.player.decks.length === 0) return;
             const currentIdx = this.player.decks.findIndex(d => d.uuid === this.currentDeck?.uuid);
             const nextIdx = (currentIdx + 1) % this.player.decks.length;
             this.loadDeckIntoEditor(this.player.decks[nextIdx]);
         });
 
-        // Botão + Novo Deck
-        this.createUIButton(1055, 48, 160, 42, '+ NOVO DECK', 0x2563eb, () => {
+        this.createUIButton(1005, 48, 150, 40, '+ NOVO DECK', 0x2563eb, () => {
             this.createNewBlankDeck();
         });
 
-        // Botão Salvar Deck
-        this.createUIButton(1245, 48, 180, 42, '💾 SALVAR DECK', 0x16a34a, () => {
+        this.createUIButton(1175, 48, 165, 40, '💾 SALVAR DECK', 0x16a34a, () => {
             this.saveCurrentDeck();
         });
 
-        // Botão Definir como Principal (Para Jogar)
-        this.createUIButton(1465, 48, 220, 42, '★ USAR EM PARTIDA', 0xca8a04, () => {
+        this.createUIButton(1375, 48, 205, 40, '★ USAR EM PARTIDA', 0xca8a04, () => {
             this.setAsCurrentPlayableDeck();
         });
 
-        // Botão Voltar ao Menu
-        this.createUIButton(1745, 48, 260, 42, '⬅ VOLTAR AO MENU', 0x475569, () => {
+        this.createUIButton(1735, 48, 250, 40, '⬅ VOLTAR AO MENU', 0x475569, () => {
             this.scene.start('MainMenuScene', { player: this.player });
         });
     }
 
     createHeroTeamSection() {
-        this.add.text(50, 122, 'PASSO 1: ESCOLHA OS 3 HERÓIS E SUA CARTA DE LIBERAÇÃO (FORA DO BARALHO)', {
-            fontSize: '14px', color: '#60a5fa', fontStyle: 'bold'
+        this.add.text(50, 114, 'PASSO 1: ESCOLHA OS 3 HERÓIS E SUA CARTA DE LIBERAÇÃO (Clique para remover)', {
+            fontSize: '13.5px', color: '#60a5fa', fontStyle: 'bold'
         });
 
         this.selectedHeroesContainer = this.add.container(0, 0);
 
-        // Painel de Permissões Desbloqueadas pelos 3 Heróis (ajustado à direita do slot de Liberação)
-        this.add.rectangle(1065, 225, 510, 175, 0x0f172a).setStrokeStyle(1, 0x334155);
-        this.permissionsTitle = this.add.text(825, 152, '🔓 PERMISSÕES LIBERADAS PELA EQUIPE:', {
-            fontSize: '13.5px', color: '#ffd700', fontStyle: 'bold'
+        this.add.rectangle(1065, 218, 510, 162, 0x0f172a).setStrokeStyle(1, 0x334155);
+        this.permissionsTitle = this.add.text(825, 148, '🔓 PERMISSÕES ATIVAS DA EQUIPE:', {
+            fontSize: '13px', color: '#ffd700', fontStyle: 'bold'
         });
-        this.permissionsBody = this.add.text(825, 178, '', {
-            fontSize: '12px', color: '#e2e8f0', lineSpacing: 5, wordWrap: { width: 480 }
+        this.permissionsBody = this.add.text(825, 172, '', {
+            fontSize: '11.5px', color: '#e2e8f0', lineSpacing: 4, wordWrap: { width: 480 }
         });
     }
 
     createCatalogSection() {
         const tabs = [
-            { key: 'HEROES',     label: '1. HERÓIS',       x: 105, w: 125 },
-            { key: 'LIBERATION', label: '★ LIBERAÇÃO',     x: 240, w: 130 },
-            { key: 'ALL_CARDS',  label: '2. TODAS CARTAS', x: 382, w: 140 },
-            { key: 'ITEM',       label: 'ITENS / ARMAS',   x: 530, w: 136 },
-            { key: 'SPELL',      label: 'MAGIAS',          x: 668, w: 120 },
-            { key: 'ACTION',     label: 'AÇÕES',           x: 790, w: 110 },
-            { key: 'THEURGY',    label: 'TEURGIAS',        x: 905, w: 115 }
+            { key: 'HEROES',     label: '1. HERÓIS',       x: 98,  w: 112 },
+            { key: 'LIBERATION', label: '★ LIBERAÇÃO',     x: 220, w: 120 },
+            { key: 'ALL_CARDS',  label: '2. TODAS CARTAS', x: 352, w: 132 },
+            { key: 'ITEM',       label: 'ITENS / ARMAS',   x: 490, w: 124 },
+            { key: 'SPELL',      label: 'MAGIAS',          x: 610, w: 96  },
+            { key: 'ACTION',     label: 'AÇÕES',           x: 708, w: 90  },
+            { key: 'THEURGY',    label: 'TEURGIAS',        x: 806, w: 100 }
         ];
 
         this.tabButtons = [];
         tabs.forEach(t => {
-            const btn = this.createUIButton(t.x, 382, t.w, 36, t.label, 0x1e293b, () => {
+            const btn = this.createUIButton(t.x, 346, t.w, 34, t.label, 0x1e293b, () => {
                 this.activeTab = t.key;
                 this.currentPage = 0;
                 this.refreshCatalogGrid();
@@ -141,28 +156,278 @@ export default class DeckBuilderScene extends Phaser.Scene {
             this.tabButtons.push({ key: t.key, ...btn });
         });
 
-        // Toggle para Ocultar Cartas Bloqueadas
-        this.filterLockedBtn = this.createUIButton(1080, 382, 200, 36, '☐ Ocultar Bloqueadas', 0x334155, () => {
-            this.hideLockedCards = !this.hideLockedCards;
-            this.filterLockedBtn.txt.setText(this.hideLockedCards ? '☑ Ocultar Bloqueadas' : '☐ Ocultar Bloqueadas');
+        // Toggle para Ocultar/Exibir incompatíveis com a equipe atual
+        this.filterLockedBtn = this.createUIButton(965, 346, 195, 34, '☑ Só Compatíveis', 0x065f46, () => {
+            this.hideIncompatibleCards = !this.hideIncompatibleCards;
+            this.filterLockedBtn.txt.setText(this.hideIncompatibleCards ? '☑ Só Compatíveis' : '☐ Mostrar Bloq.');
+            this.filterLockedBtn.bg.setFillStyle(this.hideIncompatibleCards ? 0x065f46 : 0x334155);
             this.currentPage = 0;
             this.refreshCatalogGrid();
         });
 
+        // Contador de Cartas Encontradas
+        this.catalogCountLabel = this.add.text(1145, 346, '0 encontradas', {
+            fontSize: '12px', color: '#38bdf8', fontStyle: 'bold'
+        }).setOrigin(0.5);
+
         // Paginação
-        this.createUIButton(1215, 382, 44, 36, '◀', 0x334155, () => {
+        this.createUIButton(1232, 346, 38, 34, '◀', 0x334155, () => {
             if (this.currentPage > 0) {
                 this.currentPage--;
                 this.refreshCatalogGrid();
             }
         });
-        this.pageLabel = this.add.text(1265, 382, '1/1', { fontSize: '13px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
-        this.createUIButton(1315, 382, 44, 36, '▶', 0x334155, () => {
+        this.pageLabel = this.add.text(1278, 346, '1/1', {
+            fontSize: '12.5px', color: '#ffffff', fontStyle: 'bold'
+        }).setOrigin(0.5);
+        this.createUIButton(1324, 346, 38, 34, '▶', 0x334155, () => {
             this.currentPage++;
             this.refreshCatalogGrid();
         });
 
+        // Barra de Busca por Escrita + Seletores de Todos os Atributos + Botão Limpar Filtros
+        const filterBarHtml = `
+            <div id="deckbuilder-filter-bar" style="
+                width: 1300px;
+                display: flex;
+                flex-wrap: nowrap;
+                gap: 6px;
+                align-items: center;
+                background: #0f172a;
+                padding: 5px 8px;
+                border: 1px solid #334155;
+                border-radius: 6px;
+                box-sizing: border-box;
+                font-family: sans-serif;
+            ">
+                <input type="text" id="db-search-input" placeholder="🔍 Buscar nome ou efeito..."
+                    style="width: 198px; height: 28px; padding: 0 8px; background: #1e293b; color: #ffffff;
+                    border: 1px solid #38bdf8; border-radius: 4px; font-size: 12px; font-weight: bold; outline: none;" />
+
+                <select id="db-filter-color" style="width: 122px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                    <option value="ALL">🎨 Cor: Todas</option>
+                    <option value="WHITE">Branca / Incolor</option>
+                    <option value="BLUE">Azul</option>
+                    <option value="RED">Vermelha</option>
+                    <option value="GREEN">Verde</option>
+                    <option value="BLACK">Preta</option>
+                    <option value="YELLOW">Amarela</option>
+                    <option value="NEUTRAL">Neutra</option>
+                </select>
+
+                <select id="db-filter-type" style="width: 142px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                    <option value="ALL">🃏 Tipo/Sub: Todos</option>
+                    <optgroup label="Tipos de Carta">
+                        <option value="TYPE:SPELL">Magia / Feitiço</option>
+                        <option value="TYPE:ITEM">Item (Todos)</option>
+                        <option value="TYPE:ACTION">Ação</option>
+                        <option value="TYPE:THEURGY">Teurgia</option>
+                    </optgroup>
+                    <optgroup label="Subtipos de Equipamento">
+                        <option value="SUB:ARMA">Arma</option>
+                        <option value="SUB:ARMADURA">Armadura</option>
+                        <option value="SUB:ESCUDO">Escudo</option>
+                        <option value="SUB:JOIA">Joia / Acessório</option>
+                        <option value="SUB:FERRAMENTA">Ferramenta</option>
+                    </optgroup>
+                </select>
+
+                <select id="db-filter-raca" style="width: 134px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                    <option value="ALL">🧬 Raça: Todas</option>
+                </select>
+
+                <select id="db-filter-afinidade" style="width: 136px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                    <option value="ALL">🔥 Afinidade: Todas</option>
+                </select>
+
+                <select id="db-filter-classe" style="width: 134px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                    <option value="ALL">⚔️ Classe: Todas</option>
+                </select>
+
+                <select id="db-filter-ordem" style="width: 134px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                    <option value="ALL">🛡️ Ordem: Todas</option>
+                </select>
+
+                <select id="db-filter-empunhadura" style="width: 110px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                    <option value="ALL">✋ Emp.: Todas</option>
+                    <option value="1">1 Mão (Emp. 1)</option>
+                    <option value="2">2 Mãos (Emp. 2)</option>
+                    <option value="0">Sem Emp. (0)</option>
+                </select>
+
+                <button type="button" id="db-clear-filters-btn" style="
+                    height: 28px; padding: 0 10px; background: #b91c1c; color: #ffffff;
+                    border: 1px solid #f87171; border-radius: 4px; font-size: 11.5px;
+                    font-weight: bold; cursor: pointer; white-space: nowrap;
+                ">✖ Limpar</button>
+            </div>
+        `;
+
+        this.filterDom = this.add.dom(690, 394).createFromHTML(filterBarHtml);
+        this.bindFilterDomEvents();
+
         this.catalogGridContainer = this.add.container(0, 0);
+    }
+
+    bindFilterDomEvents() {
+        if (!this.filterDom || !this.filterDom.node) return;
+        const root = this.filterDom.node;
+
+        const searchEl = root.querySelector('#db-search-input');
+        const colorEl = root.querySelector('#db-filter-color');
+        const typeEl = root.querySelector('#db-filter-type');
+        const racaEl = root.querySelector('#db-filter-raca');
+        const afinidadeEl = root.querySelector('#db-filter-afinidade');
+        const classeEl = root.querySelector('#db-filter-classe');
+        const ordemEl = root.querySelector('#db-filter-ordem');
+        const empEl = root.querySelector('#db-filter-empunhadura');
+        const clearBtn = root.querySelector('#db-clear-filters-btn');
+
+        if (searchEl) {
+            searchEl.addEventListener('input', (e) => {
+                this.filters.search = (e.target.value || '').trim().toLowerCase();
+                this.currentPage = 0;
+                this.refreshCatalogGrid();
+            });
+        }
+
+        const bindSelect = (el, filterKey) => {
+            if (!el) return;
+            el.addEventListener('change', (e) => {
+                this.filters[filterKey] = e.target.value;
+                this.currentPage = 0;
+                this.refreshCatalogGrid();
+            });
+        };
+
+        bindSelect(colorEl, 'color');
+        bindSelect(typeEl, 'typeOrSubtype');
+        bindSelect(racaEl, 'raca');
+        bindSelect(afinidadeEl, 'afinidade');
+        bindSelect(classeEl, 'classe');
+        bindSelect(ordemEl, 'ordem');
+        bindSelect(empEl, 'empunhadura');
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => this.resetAllFilters());
+        }
+    }
+
+    populateDynamicFilterDropdowns() {
+        if (!this.filterDom || !this.filterDom.node) return;
+        const root = this.filterDom.node;
+
+        const racasMap = new Map([
+            ['HUMANO', 'Humano'],
+            ['GOBLIN', 'Goblin'],
+            ['CONSTRUCTO', 'Constructo'],
+            ['ZUMBI', 'Zumbi'],
+            ['BESTA', 'Besta'],
+            ['DRAGAO', 'Dragão'],
+            ['GUARDIOES DO TRONO', 'Guardião do Trono']
+        ]);
+        const afinidadesMap = new Map([
+            ['FOGO', 'Fogo'],
+            ['AGUA', 'Água'],
+            ['TERRA', 'Terra'],
+            ['AR', 'Ar'],
+            ['GELO', 'Gelo'],
+            ['RAIO', 'Raio'],
+            ['LUZ', 'Luz'],
+            ['TREVAS', 'Trevas'],
+            ['CRISTAL', 'Cristal']
+        ]);
+        const classesMap = new Map([
+            ['GUERREIRO', 'Guerreiro'],
+            ['MAGO', 'Mago'],
+            ['CLERIGO', 'Clérigo'],
+            ['CACADOR', 'Caçador'],
+            ['LADINO', 'Ladino'],
+            ['EMISSOR', 'Emissor'],
+            ['TRANSFORMADOR', 'Transformador'],
+            ['DOMADOR', 'Domador']
+        ]);
+        const ordensMap = new Map([
+            ['CAVALEIRO', 'Cavaleiro'],
+            ['GUARDAO DO TRONO', 'Guardião do Trono'],
+            ['GRUPO DOS HEROIS', 'Grupo dos Heróis'],
+            ['SANTA DAS LAMINAS', 'Santa das Lâminas'],
+            ['NECROMANTE', 'Necromante']
+        ]);
+
+        [...this.catalogHeroes, ...this.catalogCards].forEach(item => {
+            (item.racas || []).forEach(v => {
+                const norm = this.normalizeKey(v);
+                if (norm && !racasMap.has(norm)) racasMap.set(norm, String(v).replace(/_/g, ' '));
+            });
+            (item.afinidades || []).forEach(v => {
+                const norm = this.normalizeKey(v);
+                if (norm && !afinidadesMap.has(norm)) afinidadesMap.set(norm, String(v).replace(/_/g, ' '));
+            });
+            (item.classe || []).forEach(v => {
+                const norm = this.normalizeKey(v);
+                if (norm && !classesMap.has(norm)) classesMap.set(norm, String(v).replace(/_/g, ' '));
+            });
+            (item.ordem || []).forEach(v => {
+                const norm = this.normalizeKey(v);
+                if (norm && !ordensMap.has(norm)) ordensMap.set(norm, String(v).replace(/_/g, ' '));
+            });
+        });
+
+        const fillOptions = (selector, defaultLabel, mapEntries) => {
+            const selectEl = root.querySelector(selector);
+            if (!selectEl) return;
+            const currentVal = selectEl.value || 'ALL';
+            selectEl.innerHTML = `<option value="ALL">${defaultLabel}</option>`;
+            Array.from(mapEntries.entries())
+                .sort((a, b) => a[1].localeCompare(b[1]))
+                .forEach(([key, label]) => {
+                    const opt = document.createElement('option');
+                    opt.value = key;
+                    opt.textContent = label;
+                    selectEl.appendChild(opt);
+                });
+            selectEl.value = currentVal;
+        };
+
+        fillOptions('#db-filter-raca', '🧬 Raça: Todas', racasMap);
+        fillOptions('#db-filter-afinidade', '🔥 Afinidade: Todas', afinidadesMap);
+        fillOptions('#db-filter-classe', '⚔️ Classe: Todas', classesMap);
+        fillOptions('#db-filter-ordem', '🛡️ Ordem: Todas', ordensMap);
+    }
+
+    resetAllFilters() {
+        this.filters = {
+            search: '',
+            color: 'ALL',
+            typeOrSubtype: 'ALL',
+            raca: 'ALL',
+            afinidade: 'ALL',
+            classe: 'ALL',
+            ordem: 'ALL',
+            empunhadura: 'ALL'
+        };
+
+        if (this.filterDom && this.filterDom.node) {
+            const root = this.filterDom.node;
+            const searchEl = root.querySelector('#db-search-input');
+            if (searchEl) searchEl.value = '';
+            [
+                '#db-filter-color',
+                '#db-filter-type',
+                '#db-filter-raca',
+                '#db-filter-afinidade',
+                '#db-filter-classe',
+                '#db-filter-ordem',
+                '#db-filter-empunhadura'
+            ].forEach(sel => {
+                const el = root.querySelector(sel);
+                if (el) el.value = 'ALL';
+            });
+        }
+
+        this.currentPage = 0;
+        this.refreshCatalogGrid();
     }
 
     createRightDeckListSection() {
@@ -198,8 +463,8 @@ export default class DeckBuilderScene extends Phaser.Scene {
             this.catalogCards = INITIAL_MATCH_SNAPSHOT.localPlayer.hand;
         }
 
-        // Garante que as Cartas de Liberação padrão estejam disponíveis no catálogo mesmo se ainda não cadastradas no cards.json
         this.ensureDefaultLiberationCardsInCatalog();
+        this.populateDynamicFilterDropdowns();
     }
 
     ensureDefaultLiberationCardsInCatalog() {
@@ -299,25 +564,25 @@ export default class DeckBuilderScene extends Phaser.Scene {
         // 1. Renderiza os 3 Slots de Heróis
         for (let i = 0; i < 3; i++) {
             const slotX = 125 + i * 170;
-            const slotY = 232;
+            const slotY = 218;
             const hero = heroes[i];
 
-            const slotRect = this.add.rectangle(slotX, slotY, 152, 148, 0x1e293b, 0.8)
+            const slotRect = this.add.rectangle(slotX, slotY, 152, 142, 0x1e293b, 0.8)
                 .setStrokeStyle(2, hero ? 0x00ff88 : 0x475569);
             this.selectedHeroesContainer.add(slotRect);
 
             if (hero) {
                 const colorHex = BOARD_LAYOUT.COLORS.CARD_COLORS[hero.color] || 0x475569;
-                const bar = this.add.rectangle(slotX, slotY - 56, 144, 26, colorHex);
-                const name = this.add.text(slotX, slotY - 56, hero.cardName, {
+                const bar = this.add.rectangle(slotX, slotY - 54, 144, 24, colorHex);
+                const name = this.add.text(slotX, slotY - 54, hero.cardName, {
                     fontSize: '10px', color: '#ffffff', fontStyle: 'bold', align: 'center', wordWrap: { width: 138 }
                 }).setOrigin(0.5);
 
-                const stats = this.add.text(slotX, slotY - 12, `ESP:${hero.espirito} ATQ:${hero.ataque}\nDEF:${hero.defesa} HP:${hero.vidaMaxima}`, {
+                const stats = this.add.text(slotX, slotY - 10, `ESP:${hero.espirito} ATQ:${hero.ataque}\nDEF:${hero.defesa} HP:${hero.vidaMaxima}`, {
                     fontSize: '10.5px', color: '#ffd700', fontStyle: 'bold', align: 'center'
                 }).setOrigin(0.5);
 
-                const removeHint = this.add.text(slotX, slotY + 52, '[REMOVER ✖]', {
+                const removeHint = this.add.text(slotX, slotY + 50, '[REMOVER ✖]', {
                     fontSize: '10px', color: '#f87171', fontStyle: 'bold'
                 }).setOrigin(0.5);
 
@@ -341,16 +606,16 @@ export default class DeckBuilderScene extends Phaser.Scene {
 
         // 2. Renderiza o Slot Especial da Carta de Liberação (Fora do Baralho)
         const libSlotX = 685;
-        const libSlotY = 232;
+        const libSlotY = 218;
         const activeLibCard = this.currentDeck.liberationList?.[0] || null;
 
-        const libRect = this.add.rectangle(libSlotX, libSlotY, 175, 148, 0x271a0c, 0.9)
+        const libRect = this.add.rectangle(libSlotX, libSlotY, 175, 142, 0x271a0c, 0.9)
             .setStrokeStyle(2, activeLibCard ? 0xfacc15 : 0xca8a04);
         this.selectedHeroesContainer.add(libRect);
 
         if (activeLibCard) {
-            const bar = this.add.rectangle(libSlotX, libSlotY - 56, 167, 26, 0xca8a04);
-            const name = this.add.text(libSlotX, libSlotY - 56, activeLibCard.cardName, {
+            const bar = this.add.rectangle(libSlotX, libSlotY - 54, 167, 24, 0xca8a04);
+            const name = this.add.text(libSlotX, libSlotY - 54, activeLibCard.cardName, {
                 fontSize: '9.5px', color: '#000000', fontStyle: 'bold', align: 'center', wordWrap: { width: 160 }
             }).setOrigin(0.5);
 
@@ -362,7 +627,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 fontSize: '10px', color: '#fef08a', fontStyle: 'bold', align: 'center', wordWrap: { width: 158 }
             }).setOrigin(0.5);
 
-            const removeHint = this.add.text(libSlotX, libSlotY + 52, '[REMOVER ✖]', {
+            const removeHint = this.add.text(libSlotX, libSlotY + 50, '[REMOVER ✖]', {
                 fontSize: '10px', color: '#f87171', fontStyle: 'bold'
             }).setOrigin(0.5);
 
@@ -394,57 +659,108 @@ export default class DeckBuilderScene extends Phaser.Scene {
         const team = DeckRestrictionValidator.analyzeHeroTeam(heroes);
         const colorDesc = team.hasWhiteHero
             ? 'CORINGA BRANCO ATIVO (Apenas WHITE e NEUTRAL)'
-            : (team.baseColor || 'Nenhuma (Escolha o 1º Herói)');
+            : (team.baseColor ? `${team.baseColor} e NEUTRAL` : 'Nenhuma (Escolha o 1º Herói)');
 
         this.permissionsBody.setText(
             `• Cor Permitida: ${colorDesc}\n` +
             `• Afinidades: ${team.affinities.size > 0 ? Array.from(team.affinities).join(', ') : 'Nenhuma'}\n` +
             `• Ordens / Raças: ${team.ordersAndRaces.size > 0 ? Array.from(team.ordersAndRaces).join(', ') : 'Nenhuma'}\n` +
-            `• Classes: ${team.classes.size > 0 ? Array.from(team.classes).join(', ') : 'Nenhuma'}`
+            `• Classes: ${team.classes.size > 0 ? Array.from(team.classes).join(', ') : 'Nenhuma'}` +
+            `${team.hasEmissor ? '  ★ [Emissor Ativo]' : ''}` +
+            `${team.hasGoblin ? '  ★ [Goblin Ativo]' : ''}`
         );
     }
 
     /**
-     * Valida se uma Carta de Liberação pode ser equipada pela equipe de Heróis atual
+     * Verifica se um item (Carta ou Herói) passa por todos os seletores de atributos e busca textual.
      */
-    canAddLiberationCard(card) {
-        if (!this.currentDeck.liberationList) this.currentDeck.liberationList = [];
-        if (this.currentDeck.liberationList.length >= 1) {
-            return { allowed: false, reason: 'Já possui 1 Carta de Liberação equipada' };
-        }
-        if (this.currentDeck.heroList.length === 0) {
-            return { allowed: false, reason: 'Escolha seus Heróis primeiro' };
-        }
-        if (card.targetBaseHeroName) {
-            const hasRequiredHero = this.currentDeck.heroList.some(
-                h => h.cardName && h.cardName.toLowerCase() === card.targetBaseHeroName.toLowerCase()
-            );
-            if (!hasRequiredHero) {
-                return { allowed: false, reason: `Requer Herói: ${card.targetBaseHeroName}` };
+    matchesActiveAttributeFilters(item) {
+        const f = this.filters;
+
+        // 1. Busca Textual (Nome ou Texto de Descrição do Efeito)
+        if (f.search) {
+            const nameStr = (item.cardName || '').toLowerCase();
+            const descStr = (item.descricao || '').toLowerCase();
+            if (!nameStr.includes(f.search) && !descStr.includes(f.search)) {
+                return false;
             }
         }
-        return { allowed: true, reason: 'Equipar na Zona de Liberação' };
+
+        // 2. Cor / Elemento
+        if (f.color !== 'ALL') {
+            if ((item.color || 'NEUTRAL').toUpperCase() !== f.color) return false;
+        }
+
+        // 3. Tipo de Carta ou Subtipo de Equipamento
+        if (f.typeOrSubtype !== 'ALL') {
+            if (f.typeOrSubtype.startsWith('TYPE:')) {
+                const reqType = f.typeOrSubtype.replace('TYPE:', '');
+                if ((item.cardType || '').toUpperCase() !== reqType) return false;
+            } else if (f.typeOrSubtype.startsWith('SUB:')) {
+                const reqSub = f.typeOrSubtype.replace('SUB:', '');
+                if ((item.itemType || 'NENHUM').toUpperCase() !== reqSub) return false;
+            }
+        }
+
+        // 4. Raça (normalizada contra acentos/underscores)
+        if (f.raca !== 'ALL') {
+            const racas = (item.racas || []).map(r => this.normalizeKey(r));
+            const matchesRaca = racas.some(r => r === f.raca || (f.raca.includes('GUARDI') && r.includes('GUARDI')));
+            if (!matchesRaca) return false;
+        }
+
+        // 5. Afinidade
+        if (f.afinidade !== 'ALL') {
+            const afinidades = (item.afinidades || []).map(a => this.normalizeKey(a));
+            if (!afinidades.includes(f.afinidade)) return false;
+        }
+
+        // 6. Classe
+        if (f.classe !== 'ALL') {
+            const classes = (item.classe || []).map(c => this.normalizeKey(c));
+            if (!classes.includes(f.classe)) return false;
+        }
+
+        // 7. Ordem
+        if (f.ordem !== 'ALL') {
+            const ordens = (item.ordem || []).map(o => this.normalizeKey(o));
+            const matchesOrdem = ordens.some(o => o === f.ordem || (f.ordem.includes('GUARDI') && o.includes('GUARDI')));
+            if (!matchesOrdem) return false;
+        }
+
+        // 8. Empunhadura
+        if (f.empunhadura !== 'ALL') {
+            const emp = item.empunhadura ?? 0;
+            if (Number(emp) !== Number(f.empunhadura)) return false;
+        }
+
+        return true;
     }
 
+    /**
+     * Ao remover ou trocar um Herói (de 0 a 3 heróis), revalida o baralho e a Carta de Liberação
+     */
     pruneInvalidCardsAfterHeroChange() {
-        // Revalida a Carta de Liberação caso o Herói exigido tenha sido removido
+        const heroes = this.currentDeck.heroList || [];
+
         if (this.currentDeck.liberationList?.length > 0) {
             const libCard = this.currentDeck.liberationList[0];
-            if (libCard.targetBaseHeroName) {
-                const stillHasHero = this.currentDeck.heroList.some(
-                    h => h.cardName && h.cardName.toLowerCase() === libCard.targetBaseHeroName.toLowerCase()
-                );
-                if (!stillHasHero) {
+            if (heroes.length === 0) {
+                this.currentDeck.liberationList = [];
+            } else {
+                const checkLib = DeckRestrictionValidator.canAddLiberationCard(libCard, heroes, []);
+                if (!checkLib.compatibleWithTeam) {
                     this.currentDeck.liberationList = [];
                 }
             }
         }
 
-        if (this.currentDeck.heroList.length < 3) return;
+        if (heroes.length === 0) return;
+
         const validCards = [];
         this.currentDeck.cardList.forEach(card => {
-            const check = DeckRestrictionValidator.canAddCardToDeck(card, this.currentDeck.heroList, validCards);
-            if (check.allowed) {
+            const reqCheck = DeckRestrictionValidator.checkCardHeroRequirements(card, heroes);
+            if (reqCheck.compatible) {
                 validCards.push(card);
             }
         });
@@ -454,7 +770,6 @@ export default class DeckBuilderScene extends Phaser.Scene {
     refreshCatalogGrid() {
         this.catalogGridContainer.removeAll(true);
 
-        // Destaca a aba ativa
         this.tabButtons.forEach(tb => {
             const isTabActive = tb.key === this.activeTab;
             const defaultColor = tb.key === 'LIBERATION' ? 0x422006 : 0x1e293b;
@@ -464,13 +779,14 @@ export default class DeckBuilderScene extends Phaser.Scene {
         let items = [];
         const isHeroTab = this.activeTab === 'HEROES';
         const isLiberationTab = this.activeTab === 'LIBERATION';
+        const heroes = this.currentDeck.heroList || [];
 
         if (isHeroTab) {
             items = this.catalogHeroes.map(h => ({
                 item: h,
                 isHero: true,
                 isLiberation: false,
-                validation: DeckRestrictionValidator.canSelectHero(h, this.currentDeck.heroList)
+                validation: DeckRestrictionValidator.canSelectHero(h, heroes)
             }));
         } else if (isLiberationTab) {
             const liberationCards = this.catalogCards.filter(c => c.liberationCard);
@@ -478,10 +794,9 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 item: c,
                 isHero: false,
                 isLiberation: true,
-                validation: this.canAddLiberationCard(c)
+                validation: DeckRestrictionValidator.canAddLiberationCard(c, heroes, this.currentDeck.liberationList)
             }));
         } else {
-            // Abas normais do baralho de 30 cartas (exclui cartas de liberação para não ocuparem vaga nas 30)
             let filteredCards = this.catalogCards.filter(c => !c.liberationCard);
             if (this.activeTab !== 'ALL_CARDS') {
                 filteredCards = filteredCards.filter(c => c.cardType === this.activeTab);
@@ -490,12 +805,21 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 item: c,
                 isHero: false,
                 isLiberation: false,
-                validation: DeckRestrictionValidator.canAddCardToDeck(c, this.currentDeck.heroList, this.currentDeck.cardList)
+                validation: DeckRestrictionValidator.canAddCardToDeck(c, heroes, this.currentDeck.cardList)
             }));
         }
 
-        if (this.hideLockedCards) {
-            items = items.filter(entry => entry.validation.allowed);
+        // 1. Aplica os Filtros Cumulativos de Atributos e Busca por Escrita
+        items = items.filter(entry => this.matchesActiveAttributeFilters(entry.item));
+
+        // 2. Filtragem Dinâmica por Heróis Selecionados (1 a 3 heróis):
+        // Oculta todas as cartas ou heróis incompatíveis com a equipe atual
+        if (this.hideIncompatibleCards && heroes.length > 0) {
+            items = items.filter(entry => entry.validation.compatibleWithTeam !== false);
+        }
+
+        if (this.catalogCountLabel) {
+            this.catalogCountLabel.setText(`${items.length} encontrada(s)`);
         }
 
         const totalPages = Math.max(1, Math.ceil(items.length / this.itemsPerPage));
@@ -504,11 +828,19 @@ export default class DeckBuilderScene extends Phaser.Scene {
 
         const pageSlice = items.slice(this.currentPage * this.itemsPerPage, (this.currentPage + 1) * this.itemsPerPage);
 
+        if (pageSlice.length === 0) {
+            const emptyMsg = this.add.text(690, 680, 'Nenhuma carta encontrada com os filtros atuais.\nClique em "✖ Limpar" para resetar a busca.', {
+                fontSize: '16px', color: '#94a3b8', align: 'center', fontStyle: 'bold'
+            }).setOrigin(0.5);
+            this.catalogGridContainer.add(emptyMsg);
+            return;
+        }
+
         pageSlice.forEach((entry, idx) => {
             const col = idx % 5;
             const row = Math.floor(idx / 5);
             const x = 165 + col * 255;
-            const y = 535 + row * 285;
+            const y = 555 + row * 270;
 
             this.createCatalogCardTile(x, y, entry.item, entry.isHero, entry.isLiberation, entry.validation);
         });
@@ -517,7 +849,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
     createCatalogCardTile(x, y, data, isHero, isLiberation, validation) {
         const tile = this.add.container(x, y);
         const w = 225;
-        const h = 255;
+        const h = 246;
 
         const accentColor = isLiberation
             ? 0xca8a04
@@ -528,7 +860,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
             .setStrokeStyle(2, borderColor)
             .setAlpha(validation.allowed ? 1.0 : 0.48);
 
-        const header = this.add.rectangle(0, -h / 2 + 18, w - 6, 30, accentColor);
+        const header = this.add.rectangle(0, -h / 2 + 18, w - 6, 28, accentColor);
         const title = this.add.text(0, -h / 2 + 18, data.cardName, {
             fontSize: '11.5px', color: '#ffffff', fontStyle: 'bold', align: 'center', wordWrap: { width: w - 14 }
         }).setOrigin(0.5);
@@ -539,17 +871,17 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 ? `★ LIBERAÇÃO (${data.cardType})`
                 : `${data.cardType}${data.unica ? ' ★ ÚNICA' : ''}${data.itemType && data.itemType !== 'NENHUM' ? ' • ' + data.itemType : ''}`);
 
-        const badge = this.add.text(0, -h / 2 + 46, subType, {
-            fontSize: '10px', color: '#ffd700', fontStyle: 'bold', align: 'center', wordWrap: { width: w - 12 }
+        const badge = this.add.text(0, -h / 2 + 44, subType, {
+            fontSize: '9.5px', color: '#ffd700', fontStyle: 'bold', align: 'center', wordWrap: { width: w - 12 }
         }).setOrigin(0.5);
 
-        const desc = this.add.text(0, 8, data.descricao || '', {
+        const desc = this.add.text(0, 6, data.descricao || '', {
             fontSize: '10px', color: '#e2e8f0', align: 'center', wordWrap: { width: w - 20 }
         }).setOrigin(0.5);
 
-        const statusFooter = this.add.rectangle(0, h / 2 - 20, w - 6, 32, validation.allowed ? 0x064e3b : 0x450a0a);
-        const statusTxt = this.add.text(0, h / 2 - 20, validation.allowed ? `➕ ${validation.reason}` : `🔒 ${validation.reason}`, {
-            fontSize: '10px', color: validation.allowed ? '#4ade80' : '#fca5a5', fontStyle: 'bold', align: 'center', wordWrap: { width: w - 10 }
+        const statusFooter = this.add.rectangle(0, h / 2 - 18, w - 6, 30, validation.allowed ? 0x064e3b : 0x450a0a);
+        const statusTxt = this.add.text(0, h / 2 - 18, validation.allowed ? `➕ ${validation.reason}` : `🔒 ${validation.reason}`, {
+            fontSize: '9.5px', color: validation.allowed ? '#4ade80' : '#fca5a5', fontStyle: 'bold', align: 'center', wordWrap: { width: w - 10 }
         }).setOrigin(0.5);
 
         tile.add([bg, header, title, badge, desc, statusFooter, statusTxt]);
@@ -562,8 +894,9 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 }
                 if (isHero) {
                     this.currentDeck.heroList.push(data);
+                    this.pruneInvalidCardsAfterHeroChange();
                     if (this.currentDeck.heroList.length === 3) {
-                        this.activeTab = 'LIBERATION';
+                        this.activeTab = 'ALL_CARDS';
                         this.currentPage = 0;
                     }
                 } else if (isLiberation) {
@@ -599,7 +932,6 @@ export default class DeckBuilderScene extends Phaser.Scene {
 
         let rowIdx = 0;
 
-        // Exibe a Carta de Liberação equipada em destaque dourado no topo da lista direita (fora das 30 cartas)
         if (libCount > 0) {
             const libCard = this.currentDeck.liberationList[0];
             const y = rowIdx * 38;
@@ -621,7 +953,6 @@ export default class DeckBuilderScene extends Phaser.Scene {
             rowIdx++;
         }
 
-        // Agrupa as 30 cartas do baralho principal por nome
         const grouped = new Map();
         this.currentDeck.cardList.forEach(card => {
             if (!grouped.has(card.cardName)) {
@@ -762,7 +1093,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
             .setStrokeStyle(1.5, 0x94a3b8)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', onClick);
-        const txt = this.add.text(x, y, label, { fontSize: '12px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
+        const txt = this.add.text(x, y, label, { fontSize: '11.5px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
         return { bg, txt };
     }
 

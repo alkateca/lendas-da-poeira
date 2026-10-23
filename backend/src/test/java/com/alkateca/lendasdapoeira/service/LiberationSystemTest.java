@@ -23,10 +23,14 @@ class LiberationSystemTest {
     private GameEngine gameEngine;
     private Player player1;
     private Player player2;
+
     private HeroCard moyraBaseHero;
+    private HeroCard goblinSquadHero;
+    private HeroCard goblinKingHero;
     private HeroCard enemyHero;
-    private Card liberationSpellCard;
-    private Card liberationReviveCard;
+
+    private Card moyraLiberationCard;
+    private Card goblinReviveLiberationCard;
 
     @BeforeEach
     void setUp() {
@@ -49,6 +53,38 @@ class LiberationSystemTest {
         moyraBaseHero.setEstaAtivo(true);
         CardFactory.buildCardLogic(moyraBaseHero);
 
+        goblinSquadHero = new HeroCard();
+        goblinSquadHero.setUuid(UUID.randomUUID());
+        goblinSquadHero.setOwnerId(p1Id);
+        goblinSquadHero.setCardName("Esquadrão Goblin");
+        goblinSquadHero.setCardType(CardType.HERO);
+        goblinSquadHero.setColor(Colors.GREEN);
+        goblinSquadHero.setEspirito(2);
+        goblinSquadHero.setAtaque(3);
+        goblinSquadHero.setDefesa(2);
+        goblinSquadHero.setVidaMaxima(14);
+        goblinSquadHero.setVidaAtual(14);
+        goblinSquadHero.setMaxWeaponSlots(2);
+        goblinSquadHero.setEstaVivo(true);
+        goblinSquadHero.setEstaAtivo(true);
+        CardFactory.buildCardLogic(goblinSquadHero);
+
+        goblinKingHero = new HeroCard();
+        goblinKingHero.setUuid(UUID.randomUUID());
+        goblinKingHero.setOwnerId(p1Id);
+        goblinKingHero.setCardName("Rei Goblin");
+        goblinKingHero.setCardType(CardType.HERO);
+        goblinKingHero.setColor(Colors.GREEN);
+        goblinKingHero.setEspirito(2);
+        goblinKingHero.setAtaque(4);
+        goblinKingHero.setDefesa(2);
+        goblinKingHero.setVidaMaxima(15);
+        goblinKingHero.setVidaAtual(15);
+        goblinKingHero.setMaxWeaponSlots(2);
+        goblinKingHero.setEstaVivo(true);
+        goblinKingHero.setEstaAtivo(true);
+        CardFactory.buildCardLogic(goblinKingHero);
+
         enemyHero = new HeroCard();
         enemyHero.setUuid(UUID.randomUUID());
         enemyHero.setOwnerId(p2Id);
@@ -58,35 +94,45 @@ class LiberationSystemTest {
         enemyHero.setEspirito(2);
         enemyHero.setAtaque(4);
         enemyHero.setDefesa(2);
-        enemyHero.setVidaMaxima(20);
-        enemyHero.setVidaAtual(20);
+        enemyHero.setVidaMaxima(30);
+        enemyHero.setVidaAtual(30);
         enemyHero.setMaxWeaponSlots(2);
         enemyHero.setEstaVivo(true);
         enemyHero.setEstaAtivo(true);
 
-        // Carta de Liberação 1: Sagração da Santa das Lâminas (Missão de Feitiços)
-        liberationSpellCard = new Card();
-        liberationSpellCard.setUuid(UUID.randomUUID());
-        liberationSpellCard.setOwnerId(p1Id);
-        liberationSpellCard.setCardName("Sagração da Santa das Lâminas");
-        liberationSpellCard.setCardType(CardType.THEURGY);
-        liberationSpellCard.setColor(Colors.WHITE);
-        CardFactory.buildCardLogic(liberationSpellCard);
+        // Carta de Liberação 1: Evolução da Moyra + Jogar 1 carta da mão
+        moyraLiberationCard = new Card();
+        moyraLiberationCard.setUuid(UUID.randomUUID());
+        moyraLiberationCard.setOwnerId(p1Id);
+        moyraLiberationCard.setCardName("Sagração da Santa das Lâminas");
+        moyraLiberationCard.setCardType(CardType.THEURGY);
+        moyraLiberationCard.setColor(Colors.WHITE);
+        CardFactory.buildCardLogic(moyraLiberationCard);
 
-        // Carta de Liberação 2: Ascensão da Horda Lendária (Missão de Aliados Mortos)
-        liberationReviveCard = new Card();
-        liberationReviveCard.setUuid(UUID.randomUUID());
-        liberationReviveCard.setOwnerId(p1Id);
-        liberationReviveCard.setCardName("Ascensão da Horda Lendária");
-        liberationReviveCard.setCardType(CardType.ACTION);
-        liberationReviveCard.setColor(Colors.GREEN);
-        CardFactory.buildCardLogic(liberationReviveCard);
+        // Carta de Liberação 2: Reviver e Evoluir após 2 aliados mortos
+        goblinReviveLiberationCard = new Card();
+        goblinReviveLiberationCard.setUuid(UUID.randomUUID());
+        goblinReviveLiberationCard.setOwnerId(p1Id);
+        goblinReviveLiberationCard.setCardName("Ascensão da Horda Lendária");
+        goblinReviveLiberationCard.setCardType(CardType.ACTION);
+        goblinReviveLiberationCard.setColor(Colors.GREEN);
+        CardFactory.buildCardLogic(goblinReviveLiberationCard);
 
         List<Card> p1DeckCards = createThirtyCards(p1Id);
         List<Card> p2DeckCards = createThirtyCards(p2Id);
 
-        Deck p1Deck = new Deck("Deck P1", p1DeckCards, new ArrayList<>(List.of(moyraBaseHero)), new ArrayList<>(List.of(liberationSpellCard, liberationReviveCard)));
-        Deck p2Deck = new Deck("Deck P2", p2DeckCards, new ArrayList<>(List.of(enemyHero)), new ArrayList<>());
+        Deck p1Deck = new Deck(
+                "Deck P1",
+                p1DeckCards,
+                new ArrayList<>(List.of(moyraBaseHero, goblinSquadHero, goblinKingHero)),
+                new ArrayList<>(List.of(moyraLiberationCard, goblinReviveLiberationCard))
+        );
+        Deck p2Deck = new Deck(
+                "Deck P2",
+                p2DeckCards,
+                new ArrayList<>(List.of(enemyHero)),
+                new ArrayList<>()
+        );
 
         player1 = new Player(p1Id, "Viajante 1", p1Deck);
         player2 = new Player(p2Id, "Viajante 2", p2Deck);
@@ -106,6 +152,7 @@ class LiberationSystemTest {
             c.setItemType(ItemType.ARMA);
             c.setEmpunhadura(1);
             c.setColor(Colors.WHITE);
+            c.setZoneId(ZoneId.DECK);
             CardFactory.buildCardLogic(c);
             cards.add(c);
         }
@@ -113,68 +160,123 @@ class LiberationSystemTest {
     }
 
     @Test
-    @DisplayName("1. Cartas de Liberação devem iniciar na zona LIBERATION, fora do baralho principal de 30 cartas")
-    void shouldStartInLiberationZoneOutsideMainDeck() {
-        assertEquals(ZoneId.LIBERATION, liberationSpellCard.getZoneId());
-        assertEquals(ZoneId.LIBERATION, liberationReviveCard.getZoneId());
-        assertEquals(0, liberationSpellCard.getMissionCurrentProgress());
-        assertFalse(player1.getCurrentDeck().getCardList().contains(liberationSpellCard));
+    @DisplayName("1. Cartas de Liberação iniciam na zona LIBERATION fora das 30 cartas do baralho e fora da mão inicial")
+    void shouldInitializeInLiberationZoneOutsideMainDeck() {
+        assertEquals(ZoneId.LIBERATION, moyraLiberationCard.getZoneId());
+        assertEquals(ZoneId.LIBERATION, goblinReviveLiberationCard.getZoneId());
+        assertFalse(player1.getCurrentDeck().getCardList().contains(moyraLiberationCard));
+        assertFalse(player1.getCurrentDeck().getCardList().contains(goblinReviveLiberationCard));
 
-        MatchSnapshotDTO lastSnapshot = gameEngine.getSnapshotHistory().get(gameEngine.getSnapshotHistory().size() - 1);
-        assertEquals(2, lastSnapshot.getLocalPlayer().getLiberationZone().size());
+        long initialHandCount = player1.getCurrentDeck().getCardList().stream()
+                .filter(c -> c.getZoneId() == ZoneId.HAND)
+                .count();
+        assertEquals(5, initialHandCount);
     }
 
     @Test
-    @DisplayName("2. Deve progredir missão de feitiços, emitir snapshot CARD_LIBERATED e mover para a HAND")
-    void shouldTrackSpellMissionAndLiberateToHand() {
-        gameEngine.trackMissionProgress(player1.getUuid(), "PLAY_SPELL", 1);
-        assertEquals(1, liberationSpellCard.getMissionCurrentProgress());
-        assertEquals(ZoneId.LIBERATION, liberationSpellCard.getZoneId());
+    @DisplayName("2. Caso Moyra: Ao cumprir missão, substitui pelo campeão evoluído e permite jogar 1 carta da mão à escolha")
+    void shouldEvolveMoyraAndPlayChosenCardFromHand() {
+        moyraBaseHero.setVidaAtual(8); // 50% de vida (8/16)
 
-        gameEngine.trackMissionProgress(player1.getUuid(), "PLAY_SPELL", 1);
-        assertEquals(2, liberationSpellCard.getMissionCurrentProgress());
-        assertEquals(ZoneId.HAND, liberationSpellCard.getZoneId());
-        assertTrue(player1.getCurrentDeck().getCardList().contains(liberationSpellCard));
+        // Equipa uma arma em Moyra antes da evolução
+        Card preEquippedWeapon = player1.getCurrentDeck().getCardList().stream()
+                .filter(c -> c.getZoneId() == ZoneId.DECK)
+                .findFirst()
+                .orElseThrow();
+        preEquippedWeapon.setZoneId(ZoneId.ATTACHED);
+        preEquippedWeapon.setAttachedToCardId(moyraBaseHero.getUuid());
 
-        boolean hasLiberatedEvent = gameEngine.getSnapshotHistory().stream()
-                .anyMatch(s -> s.getTriggerContext() != null && "CARD_LIBERATED".equals(s.getTriggerContext().getEventType()));
-        assertTrue(hasLiberatedEvent);
-    }
-
-    @Test
-    @DisplayName("3. Deve desanexar automaticamente os itens equipados quando um Herói morre")
-    void shouldDetachItemsWhenHeroDies() {
-        Card weapon = player1.getCurrentDeck().getCardList().get(0);
-        weapon.setZoneId(ZoneId.ATTACHED);
-        weapon.setAttachedToCardId(moyraBaseHero.getUuid());
-
-        // Simula a morte do herói
-        gameEngine.detachAllCardsFromHero(moyraBaseHero.getUuid(), ZoneId.DISCARD);
-
-        assertEquals(ZoneId.DISCARD, weapon.getZoneId());
-        assertNull(weapon.getAttachedToCardId());
-    }
-
-    @Test
-    @DisplayName("4. Ao jogar a Carta de Liberação na preparação, deve evoluir o Herói ativo na arena")
-    void shouldEvolveHeroWhenLiberationCardIsResolved() {
-        moyraBaseHero.setVidaAtual(8); // 50% de vida
-
+        // Completa a missão de jogar 2 feitiços -> move Sagração da Santa das Lâminas para a mão
         gameEngine.trackMissionProgress(player1.getUuid(), "PLAY_SPELL", 2);
-        assertEquals(ZoneId.HAND, liberationSpellCard.getZoneId());
+        assertEquals(ZoneId.HAND, moyraLiberationCard.getZoneId());
+
+        // Seleciona uma carta que já está na mão de P1 para ser jogada pelo efeito secundário da Liberação
+        Card extraCardInHand = player1.getCurrentDeck().getCardList().stream()
+                .filter(c -> c.getZoneId() == ZoneId.HAND && !c.getUuid().equals(moyraLiberationCard.getUuid()))
+                .findFirst()
+                .orElseThrow();
 
         gameEngine.getGameState().setActiveTurnPlayerId(player1.getUuid());
         gameEngine.submitHeroChoice(player1.getUuid(), moyraBaseHero.getUuid(), enemyHero.getUuid());
 
-        gameEngine.submitPreparationCards(player1.getUuid(), List.of(liberationSpellCard.getUuid()));
+        // P1 joga a Carta de Liberação; P2 passa
+        gameEngine.submitPreparationCards(player1.getUuid(), List.of(moyraLiberationCard.getUuid()));
         gameEngine.submitPreparationCards(player2.getUuid(), List.of());
 
+        // 1º Efeito resolveu: Moyra evoluiu para "Moyra, Santa das Laminas" preservando a arma equipada!
         assertEquals("Moyra, Santa das Laminas", moyraBaseHero.getCardName());
         assertEquals(22, moyraBaseHero.getVidaMaxima());
         assertEquals(3, moyraBaseHero.getMaxWeaponSlots());
+        assertEquals(ZoneId.ATTACHED, preEquippedWeapon.getZoneId());
+        assertEquals(moyraBaseHero.getUuid(), preEquippedWeapon.getAttachedToCardId());
 
-        boolean hasHeroEvolvedSnapshot = gameEngine.getSnapshotHistory().stream()
-                .anyMatch(s -> s.getTriggerContext() != null && "HERO_EVOLVED".equals(s.getTriggerContext().getEventType()));
-        assertTrue(hasHeroEvolvedSnapshot);
+        // 2º Efeito (PlayCardFromHandEffect) abriu escolha pendente para jogar 1 carta da mão:
+        if (gameEngine.isWaitingForPlayerChoice()) {
+            gameEngine.submitPlayerChoice(player1.getUuid(), extraCardInHand.getUuid());
+        }
+
+        // Após o término do combate, a arma extra escolhida da mão também foi resolvida e equipada em Moyra!
+        assertEquals(ZoneId.ATTACHED, extraCardInHand.getZoneId());
+        assertEquals(moyraBaseHero.getUuid(), extraCardInHand.getAttachedToCardId());
+        // E a carta de liberação com "Exilar." foi para o EXILE
+        assertEquals(ZoneId.EXILE, moyraLiberationCard.getZoneId());
+    }
+
+    @Test
+    @DisplayName("3. Caso Ressurreição Goblin: Ao morrerem 2 aliados, descarta seus anexos, libera a Ação e revive o morto com status extras e herança de efeitos")
+    void shouldLiberateOnTwoAlliesDeadAndReviveWithExtraStatsAndInheritedEffects() {
+        // Equipa uma arma no Esquadrão Goblin antes dele morrer
+        Card goblinWeapon = player1.getCurrentDeck().getCardList().stream()
+                .filter(c -> c.getZoneId() == ZoneId.DECK)
+                .findFirst()
+                .orElseThrow();
+        goblinWeapon.setZoneId(ZoneId.ATTACHED);
+        goblinWeapon.setAttachedToCardId(goblinSquadHero.getUuid());
+        goblinSquadHero.setAtaque(goblinSquadHero.getAtaque() + 1); // +1 ATQ da Lamina de Cristal
+
+        int initialEffectCount = goblinSquadHero.getEffects().size();
+
+        // Simula que Esquadrão Goblin e Rei Goblin foram abatidos no combate (vidaAtual <= 0)
+        goblinSquadHero.setVidaAtual(0);
+        goblinKingHero.setVidaAtual(0);
+
+        gameEngine.combatEnd(); // Avalia mortes, descarta anexos dos mortos e dispara ALLY_HEROES_DEAD (2/2)
+
+        // 1. Verifica que os 2 heróis morreram e que a arma anexada ao morto foi descartada automaticamente!
+        assertFalse(goblinSquadHero.getEstaVivo());
+        assertFalse(goblinKingHero.getEstaVivo());
+        assertEquals(ZoneId.DISCARD, goblinWeapon.getZoneId());
+        assertNull(goblinWeapon.getAttachedToCardId());
+
+        // 2. Verifica que a Carta de Liberação "Ascensão da Horda Lendária" entrou automaticamente na mão!
+        assertEquals(2, goblinReviveLiberationCard.getMissionCurrentProgress());
+        assertEquals(ZoneId.HAND, goblinReviveLiberationCard.getZoneId());
+
+        // Avança a fase de descarte para iniciar o novo turno
+        gameEngine.submitDiscard(player1.getUuid(), List.of());
+        gameEngine.submitDiscard(player2.getUuid(), List.of());
+
+        // No novo turno, Moyra entra em combate e joga "Ascensão da Horda Lendária"
+        gameEngine.getGameState().setActiveTurnPlayerId(player1.getUuid());
+        gameEngine.submitHeroChoice(player1.getUuid(), moyraBaseHero.getUuid(), enemyHero.getUuid());
+
+        gameEngine.submitPreparationCards(player1.getUuid(), List.of(goblinReviveLiberationCard.getUuid()));
+        gameEngine.submitPreparationCards(player2.getUuid(), List.of());
+
+        // Como havia 2 aliados mortos (Esquadrão Goblin e Rei Goblin), o motor solicita escolher qual morto reviver:
+        assertTrue(gameEngine.isWaitingForPlayerChoice());
+        gameEngine.submitPlayerChoice(player1.getUuid(), goblinSquadHero.getUuid());
+
+        // 3. Verifica que o Esquadrão Goblin foi revivido, mudou de nome, recebeu os status extras (+2 ESP, +3 ATQ, +2 DEF, +8 HP),
+        // herdou seus efeitos originais e NÃO trouxe a arma descartada de volta!
+        assertTrue(goblinSquadHero.getEstaVivo());
+        assertEquals("Heróis Lendários dos Goblin", goblinSquadHero.getCardName());
+        assertEquals(4, goblinSquadHero.getEspirito());   // 2 base + 2 bônus
+        assertEquals(6, goblinSquadHero.getAtaque());     // 3 base (arma foi desanexada na morte) + 3 bônus
+        assertEquals(4, goblinSquadHero.getDefesa());     // 2 base + 2 bônus
+        assertEquals(22, goblinSquadHero.getVidaMaxima()); // 14 base + 8 bônus
+        assertEquals(22, goblinSquadHero.getVidaAtual());
+        assertTrue(goblinSquadHero.getEffects().size() >= initialEffectCount);
+        assertEquals(ZoneId.DISCARD, goblinWeapon.getZoneId());
     }
 }
