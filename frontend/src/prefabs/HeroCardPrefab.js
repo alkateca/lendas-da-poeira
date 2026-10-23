@@ -279,21 +279,67 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.metaText.setText(attachedCount > 0 ? `x${attachedCount}` : '');
 
         const diffs = [];
+        const vfxToTrigger = new Set();
+
+        const triggerCtx = this.scene.currentSnapshot?.triggerContext || {};
+        const eventType = triggerCtx.eventType || '';
+        const effectClass = triggerCtx.effectClassName || '';
+
         if (newHeroDto.espirito !== prev.espirito) {
             const d = newHeroDto.espirito - prev.espirito;
             diffs.push({ text: `${d > 0 ? '+' : ''}${d} ESP`, color: d > 0 ? '#c084fc' : '#f87171' });
+            vfxToTrigger.add(d > 0 ? 'buff' : 'debuff');
         }
         if (newHeroDto.ataque !== prev.ataque) {
             const d = newHeroDto.ataque - prev.ataque;
             diffs.push({ text: `${d > 0 ? '+' : ''}${d} ATQ`, color: d > 0 ? '#fbbf24' : '#f87171' });
+            vfxToTrigger.add(d > 0 ? 'buff' : 'debuff');
         }
         if (newHeroDto.defesa !== prev.defesa) {
             const d = newHeroDto.defesa - prev.defesa;
             diffs.push({ text: `${d > 0 ? '+' : ''}${d} DEF`, color: d > 0 ? '#60a5fa' : '#f87171' });
+            vfxToTrigger.add(d > 0 ? 'buff' : 'debuff');
         }
+        if ((newHeroDto.danoBonus || 0) > (prev.danoBonus || 0) || (newHeroDto.reducaoDano || 0) > (prev.reducaoDano || 0)) {
+            vfxToTrigger.add('buff');
+        }
+        if ((newHeroDto.vulnerabilidade || 0) > (prev.vulnerabilidade || 0)) {
+            vfxToTrigger.add('debuff');
+        }
+
         if (newHeroDto.vidaAtual !== prev.vidaAtual) {
             const d = newHeroDto.vidaAtual - prev.vidaAtual;
             diffs.push({ text: `${d > 0 ? '+' : ''}${d} HP`, color: d > 0 ? '#4ade80' : '#ff3355' });
+
+            if (d > 0) {
+                vfxToTrigger.add('cura');
+            } else {
+                // Classifica o tipo de animação de dano igual ao dispararEventoVisual do partida.lua
+                if (eventType === 'PHYSICAL_COMBAT_EXCHANGE' || effectClass.includes('PhysicalAttack')) {
+                    if (newHeroDto.hasMagicBasicAttacks) {
+                        vfxToTrigger.add('danoMagico');
+                    } else {
+                        vfxToTrigger.add('danoFisico');
+                    }
+                } else if (
+                    effectClass.includes('DirectDamage') ||
+                    effectClass.includes('TrueDamage') ||
+                    effectClass.includes('SelfDamage')
+                ) {
+                    vfxToTrigger.add('danoDireto');
+                } else {
+                    vfxToTrigger.add('danoMagico');
+                }
+            }
+        }
+
+        // Dispara as animações de spritesheet sobre a posição atual do Herói (seja em BATTLE ou na BENCH!)
+        if (this.scene && typeof this.scene.playVisualEffect === 'function') {
+            Array.from(vfxToTrigger).forEach((vfxKey, idx) => {
+                this.scene.time.delayedCall(idx * 180, () => {
+                    this.scene.playVisualEffect(vfxKey, this.x, this.y);
+                });
+            });
         }
 
         diffs.forEach((item, idx) => {

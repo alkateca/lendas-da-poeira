@@ -37,13 +37,48 @@ export default class MatchScene extends Phaser.Scene {
     preload() {
         this.load.setPath('assets');
         if (!this.textures.exists('card_back')) {
-            this.load.image('card_back', 'modeloBaralho.png');
+            this.load.image('card_back', 'images/modeloBaralho.png');
         }
         if (!this.textures.exists('card_frame_playable')) {
-            this.load.image('card_frame_playable', 'modeloAlfaCartas.jpeg');
+            this.load.image('card_frame_playable', 'images/modeloAlfaCartas.jpeg');
         }
         if (!this.textures.exists('card_frame_hero')) {
-            this.load.image('card_frame_hero', 'modeloAlfa.jpeg');
+            this.load.image('card_frame_hero', 'images/modeloAlfa.jpeg');
+        }
+
+        // Spritesheets de Efeitos Visuais portadas do partida.lua
+        if (!this.textures.exists('vfx_danoMagico')) {
+            this.load.spritesheet('vfx_danoMagico', 'images/BlueExplosionA_spritesheet.png', {
+                frameWidth: 65,
+                frameHeight: 63
+            });
+        }
+        if (!this.textures.exists('vfx_danoFisico')) {
+            this.load.spritesheet('vfx_danoFisico', 'images/DustExplosion_spritesheet.png', {
+                frameWidth: 65,
+                frameHeight: 63
+            });
+        }
+        if (!this.textures.exists('vfx_danoDireto')) {
+            this.load.spritesheet('vfx_danoDireto', 'images/SimpleExplosionC_spritesheet.png', {
+                frameWidth: 59,
+                frameHeight: 63
+            });
+        }
+        if (!this.textures.exists('vfx_buff')) {
+            this.load.spritesheet('vfx_buff', 'images/1712.png', {
+                frameWidth: 64,
+                frameHeight: 72
+            });
+        }
+        if (!this.textures.exists('vfx_debuff')) {
+            this.load.spritesheet('vfx_debuff', 'images/debuff.png', {
+                frameWidth: 64,
+                frameHeight: 72
+            });
+        }
+        if (!this.textures.exists('vfx_cura_raw')) {
+            this.load.image('vfx_cura_raw', 'images/HealingEffect_spritesheet.png');
         }
 
         const cardKeys = [
@@ -60,9 +95,54 @@ export default class MatchScene extends Phaser.Scene {
                 this.load.image(key, `images/cartas/${key}.png`);
             }
         });
+
+        // Mapeamento das artes de cartas existentes em assets/images/cartas/
+        const cardArtFiles = {
+            'Ataque Mágico': 'ataqueMagico.png',
+            'Atmosfera Pesada': 'atmosferaPesada.png',
+            'Auto Defesa Magica': 'autoDefesaMagica.png',
+            'Banir!': 'banir.png',
+            'Barreira de Gelo': 'barreiraDeGelo.png',
+            'Bola de fogo': 'bolaDeFogo.png',
+            'Bola de Fogo': 'bolaDeFogo.png',
+            'Broche de Cristal': 'brocheCristal.png',
+            'Convocação': 'convocacao.png',
+            'Determinação Cristalina': 'determinacaoCristalina.png',
+            'Dragão de Cristal': 'dragaoCristal.png',
+            'Dragast': 'dragast.png',
+            'Estatica': 'estatica.png',
+            'Exumação': 'exumacao.png',
+            'Fragmento Afiado': 'fragmentoAfiado.png',
+            'Garra espectral': 'garraEspectral.png',
+            'Golpes Pesados': 'golpesPesados.png',
+            'Grande Machado Sombrio': 'grandeMachadoSombrio.png',
+            'Homunculo Carniceiro': 'homunculoCarniceiro.png',
+            'Lamina de Cristal': 'laminaDeCristal.png',
+            'Maestria com Chamas': 'maestriaComChamas.png',
+            'Massacre Cristalino': 'massacreCristalino.png',
+            'Mirar na cabeça': 'mirarNaCabeca.png',
+            'Para-raios': 'paraRaios.png',
+            'Ponto Final': 'pontoFinal.png',
+            'Quebra!': 'quebra.png',
+            'Quimera': 'quimera.png',
+            'Quimera Negra': 'quimeraNegra.png',
+            'Ração de emergencia': 'racaoDeEmergencia.png',
+            'Rapieira de Cristal': 'rapieiraDeCristal.png',
+            'Risada Sarcástica': 'risadaSarcastica.png',
+            'Ritos Fúnebres': 'ritosFunebres.png',
+            'Tristeza': 'tristeza.png',
+            'Vendaval Arcano': 'vendavalArcano.png'
+        };
+
+        Object.entries(cardArtFiles).forEach(([cardName, fileName]) => {
+            if (!this.textures.exists(cardName)) {
+                this.load.image(cardName, `images/cartas/${fileName}`);
+            }
+        });
     }
 
     create() {
+        this.registerCombatAnimations();
         this.heroPrefabs.clear();
         this.spawnedCardPrefabs = new Map();
         this.handCardPrefabs = [];
@@ -93,6 +173,68 @@ export default class MatchScene extends Phaser.Scene {
             delay: 2000,
             loop: true,
             callback: () => this.pollServerStateIfWaiting()
+        });
+    }
+
+    registerCombatAnimations() {
+        const frameRate = Math.round(1 / 0.06); // 0.06s por frame no Lua (~16.6 FPS)
+
+        // Equivalente ao criarQuadsGrid(imgCurarPersonagem, 5, 3) do partida.lua
+        if (this.textures.exists('vfx_cura_raw') && !this.textures.exists('vfx_cura')) {
+            const rawImg = this.textures.get('vfx_cura_raw').getSourceImage();
+            const frameW = Math.floor(rawImg.width / 5);
+            const frameH = Math.floor(rawImg.height / 3);
+            this.textures.addSpriteSheet('vfx_cura', rawImg, {
+                frameWidth: frameW,
+                frameHeight: frameH
+            });
+        }
+
+        const vfxDefinitions = [
+            { key: 'danoMagico', texture: 'vfx_danoMagico', scale: 3.2 },
+            { key: 'danoFisico', texture: 'vfx_danoFisico', scale: 4.2 },
+            { key: 'danoDireto', texture: 'vfx_danoDireto', scale: 2.6 },
+            { key: 'cura',       texture: 'vfx_cura',       scale: 0.75 },
+            { key: 'buff',       texture: 'vfx_buff',       scale: 2.2 },
+            { key: 'debuff',     texture: 'vfx_debuff',     scale: 2.2 }
+        ];
+
+        this.vfxScales = {};
+
+        vfxDefinitions.forEach(def => {
+            this.vfxScales[def.key] = def.scale;
+            if (this.textures.exists(def.texture)) {
+                this.textures.get(def.texture).setFilter(Phaser.Textures.FilterMode.NEAREST);
+                if (!this.anims.exists(def.key)) {
+                    this.anims.create({
+                        key: def.key,
+                        frames: this.anims.generateFrameNumbers(def.texture, {}),
+                        frameRate: frameRate,
+                        repeat: 0
+                    });
+                }
+            }
+        });
+    }
+
+    /**
+     * Equivalente ao Partida.tocarAnimacao(nomeAnimacao, x, y) do partida.lua
+     */
+    playVisualEffect(animKey, x, y) {
+        if (!this.anims.exists(animKey)) return;
+
+        const anim = this.anims.get(animKey);
+        const firstFrame = anim.frames[0];
+        if (!firstFrame) return;
+
+        const vfxSprite = this.add.sprite(x, y, firstFrame.textureKey)
+            .setDepth(175)
+            .setOrigin(0.5, 0.5)
+            .setScale(this.vfxScales?.[animKey] || 2.0);
+
+        vfxSprite.play(animKey);
+        vfxSprite.once('animationcomplete', () => {
+            vfxSprite.destroy();
         });
     }
 
@@ -357,6 +499,26 @@ export default class MatchScene extends Phaser.Scene {
                 .setStyle({ fontSize: '12px', color: '#000000', fontFamily: 'monospace', align: 'center', wordWrap: { width: width * 0.84 } })
                 .setText(cardOrHeroDto.descricao || '');
             this.lpFooterStats.setText(cardOrHeroDto.itemType && cardOrHeroDto.itemType !== 'NENHUM' ? `Item: ${cardOrHeroDto.itemType}` : '');
+        }
+
+        const artKey = cardOrHeroDto.imagem && this.textures.exists(cardOrHeroDto.imagem)
+            ? cardOrHeroDto.imagem
+            : (this.textures.exists(cardOrHeroDto.cardName) ? cardOrHeroDto.cardName : null);
+
+        if (artKey) {
+            if (!this.lpArtSprite) {
+                this.lpArtSprite = this.add.image(this.lpArtBox.x, this.lpArtBox.y, artKey);
+                this.lpArtSprite.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+                const boxIdx = this.largePreviewContainer.getIndex(this.lpArtLabel);
+                this.largePreviewContainer.addAt(this.lpArtSprite, boxIdx);
+            } else {
+                this.lpArtSprite.setTexture(artKey).setVisible(true);
+            }
+            this.lpArtSprite.setDisplaySize(this.lpArtBox.width, this.lpArtBox.height);
+            this.lpArtLabel.setVisible(false);
+        } else {
+            if (this.lpArtSprite) this.lpArtSprite.setVisible(false);
+            this.lpArtLabel.setVisible(true);
         }
 
         this.largePreviewContainer.setVisible(true);
@@ -1002,11 +1164,10 @@ export default class MatchScene extends Phaser.Scene {
             sourceCardUuid,
             spawnedCardUuid,
             spawnedCardData,
-            targetHeroId,
-            targetZone
+            targetHeroId
         } = triggerContext;
 
-        // 1. Destaca a carta ou Herói invocador (se existir)
+        // 1. Determina a posição de origem (Herói invocador, Carta invocadora na pilha ou Centro da Arena)
         let originX = BOARD_LAYOUT.ARENA_CIRCLE.x;
         let originY = BOARD_LAYOUT.ARENA_CIRCLE.y;
 
@@ -1019,12 +1180,18 @@ export default class MatchScene extends Phaser.Scene {
                 originX = sourceObj.x;
                 originY = sourceObj.y;
             }
+        } else if (targetHeroId) {
+            const targetHero = this.heroPrefabs.get(targetHeroId);
+            if (targetHero) {
+                originX = targetHero.x;
+                originY = targetHero.y;
+            }
         }
 
-        // 2. Verifica se a carta invocada já está nos slots de resolução (resolveCardPrefabs)
+        // 2. Localiza a carta invocada que foi alocada na pilha de resolução (resolveCardPrefabs)
         let spawnedPrefab = this.resolveCardPrefabs.find(c => c.uuid === spawnedCardUuid);
 
-        // 3. Caso a carta tenha ido direto para ATTACHED ou não esteja nos 4 slots, instancia dinamicamente e registra!
+        // 3. Fallback caso tenha sido invocada fora da pilha
         if (!spawnedPrefab && spawnedCardData) {
             const targetHeroPrefab = targetHeroId ? this.heroPrefabs.get(targetHeroId) : null;
             const destX = targetHeroPrefab ? targetHeroPrefab.x : BOARD_LAYOUT.ARENA_CIRCLE.x;
@@ -1039,40 +1206,12 @@ export default class MatchScene extends Phaser.Scene {
                 'MEDIUM',
                 0
             );
-            spawnedPrefab.setDepth(145);
+            spawnedPrefab.targetPos = { x: destX, y: destY };
             this.spawnedCardPrefabs.set(spawnedPrefab.uuid, spawnedPrefab);
-
-            spawnedPrefab.setScale(0.25).setAlpha(0);
-            this.tweens.add({
-                targets: spawnedPrefab,
-                x: destX,
-                y: destY,
-                scaleX: 1.05,
-                scaleY: 1.05,
-                alpha: 1,
-                duration: 380,
-                ease: 'Back.easeOut',
-                onComplete: () => {
-                    if (targetZone === 'ATTACHED' && targetHeroPrefab) {
-                        this.tweens.add({
-                            targets: spawnedPrefab,
-                            scaleX: 0.35,
-                            scaleY: 0.35,
-                            alpha: 0,
-                            delay: 320,
-                            duration: 240,
-                            ease: 'Cubic.easeIn',
-                            onComplete: () => spawnedPrefab.destroy()
-                        });
-                    } else {
-                        spawnedPrefab.destroy();
-                    }
-                }
-            });
-            return;
+            this.resolveCardPrefabs.push(spawnedPrefab);
         }
 
-        // 4. Se a carta está no slot de resolução, anima seu surgimento a partir do invocador (ou do nada) até o slot!
+        // 4. Anima a entrada da carta invocada para o seu slot na pilha de resolução e a mantém visível!
         if (spawnedPrefab) {
             const finalX = spawnedPrefab.targetPos ? spawnedPrefab.targetPos.x : spawnedPrefab.x;
             const finalY = spawnedPrefab.targetPos ? spawnedPrefab.targetPos.y : spawnedPrefab.y;

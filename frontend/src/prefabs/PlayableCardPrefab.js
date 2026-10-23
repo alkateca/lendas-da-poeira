@@ -100,7 +100,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
     }
 
     resolveArtTextureKey(cardDto) {
-        if (!cardDto) return null;
+        if (!cardDto || cardDto.faceUp === false) return null;
         if (cardDto.imagem && this.scene.textures.exists(cardDto.imagem)) return cardDto.imagem;
         if (cardDto.cardName && this.scene.textures.exists(cardDto.cardName)) return cardDto.cardName;
         const camelKey = this.toCamelCaseKey(cardDto.cardName);
@@ -305,12 +305,13 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         } else {
             this.frameImage.setVisible(true);
 
-            // Lazy creation ou atualização dinâmica de textura ao desvirar a carta
+            // Cria ou atualiza dinamicamente o sprite de arte quando a carta é revelada ou invocada
             const artKey = this.resolveArtTextureKey(cardDto);
             if (artKey) {
                 if (!this.artSprite) {
                     this.artSprite = this.scene.add.image(0, 0, artKey);
                     this.artSprite.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+                    // Insere logo acima de this.frameImage para não cobrir os textos
                     const frameIdx = this.getIndex(this.frameImage);
                     this.addAt(this.artSprite, frameIdx + 1);
                 } else {
