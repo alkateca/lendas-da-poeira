@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 380" width="280" height="380">
+  <defs>
+    <!-- Retícula diagonal estilo Persona 5 -->
+    <pattern id="backDots" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <circle cx="3" cy="3" r="1.5" fill="#e60012" fill-opacity="0.22" />
+    </pattern>
+  </defs>
+
+  <!-- Sombra Externa Dura -->
+  <polygon points="10,8 276,4 272,376 6,374" fill="#090d16" />
+
+  <!-- Moldura Externa Clara (Mesma cor #e6dec8 e espessura da frente da carta) -->
+  <polygon points="4,4 272,2 268,372 2,370" fill="#e6dec8" stroke="#090d16" stroke-width="3.5" />
+
+  <!-- Painel Interno Creme com Retícula P5 -->
+  <rect x="14" y="14" width="248" height="346" fill="#faf8f5" stroke="#090d16" stroke-width="3" />
+  <rect x="18" y="18" width="240" height="338" fill="url(#backDots)" />
+
+  <!-- Faixas Diagonais Assimétricas (Corte Rebelde Vermelho e Preto) -->
+  <polygon points="18,75 258,28 258,72 18,120" fill="#e60012" />
+  <polygon points="18,295 258,250 258,294 18,340" fill="#e60012" />
+  <polygon points="18,108 258,62 258,300 18,260" fill="#0f172a" stroke="#090d16" stroke-width="3" />
+
+  <!-- Linhas de Mira de Terminal CRT no Centro -->
+  <line x1="138" y1="22" x2="138" y2="352" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,6" />
+  <line x1="22" y1="187" x2="254" y2="187" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,6" />
+
+  <!-- Anéis do Radar / Selo Central -->
+  <circle cx="138" cy="187" r="78" fill="#090d16" stroke="#ffe600" stroke-width="3" />
+  <circle cx="138" cy="187" r="68" fill="none" stroke="#e60012" stroke-width="2.5" stroke-dasharray="28,10,8,10" />
+  <circle cx="138" cy="187" r="54" fill="#faf8f5" stroke="#090d16" stroke-width="2.5" />
+
+  <!-- Estrela de 8 Pontas / Rosa dos Ventos Estilo Persona -->
+  <polygon points="138,96 154,168 226,187 154,206 138,278 122,206 50,187 122,168" fill="#ffe600" stroke="#090d16" stroke-width="2.5" />
+  <polygon points="92,141 138,172 184,141 153,187 184,233 138,202 92,233 123,187" fill="#e60012" stroke="#090d16" stroke-width="2" />
+
+  <!-- Ampulheta Central ("Lendas da Poeira") -->
+  <polygon points="112,145 164,145 138,187" fill="#faf8f5" stroke="#090d16" stroke-width="2.5" />
+  <polygon points="112,229 164,229 138,187" fill="#faf8f5" stroke="#090d16" stroke-width="2.5" />
+  <!-- Grãos de Poeira Dourada no Centro -->
+  <circle cx="138" cy="187" r="6" fill="#ffe600" stroke="#090d16" stroke-width="2" />
+  <circle cx="138" cy="166" r="3" fill="#e60012" />
+  <circle cx="138" cy="208" r="3" fill="#e60012" />
+
+  <!-- Placa de Telemetria Superior (Clara com Texto Preto Forte) -->
+  <polygon points="36,24 244,20 238,50 30,52" fill="#ffffff" stroke="#090d16" stroke-width="2.5" />
+  <rect x="34" y="45" width="204" height="4" fill="#ffe600" />
+  <text x="138" y="40" font-family="monospace" font-size="13" font-weight="bold" fill="#090d16" text-anchor="middle" letter-spacing="1.5">LENDAS DA POEIRA</text>
+
+  <!-- Placa de Telemetria Inferior Espelhada -->
+  <polygon points="36,324 244,322 238,352 30,350" fill="#ffffff" stroke="#090d16" stroke-width="2.5" />
+  <rect x="36" y="324" width="204" height="4" fill="#ffe600" />
+  <text x="138" y="343" font-family="monospace" font-size="13" font-weight="bold" fill="#090d16" text-anchor="middle" letter-spacing="1.5">LENDAS DA POEIRA</text>
+
+  <!-- 4 Gemas / Cantoneiras Metálicas nos Cantos -->
+  <polygon points="8,8 42,8 30,34 8,34" fill="#cbd5e1" stroke="#090d16" stroke-width="2.5" />
+  <polygon points="234,8 268,8 268,34 246,34" fill="#e60012" stroke="#090d16" stroke-width="2.5" />
+  <polygon points="8,340 30,340 42,366 8,366" fill="#e60012" stroke="#090d16" stroke-width="2.5" />
+  <polygon points="246,340 268,340 268,366 234,366" fill="#cbd5e1" stroke="#090d16" stroke-width="2.5" />
+</svg>

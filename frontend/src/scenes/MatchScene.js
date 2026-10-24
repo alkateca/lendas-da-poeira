@@ -43,7 +43,7 @@ export default class MatchScene extends Phaser.Scene {
         this.load.setPath('assets');
 
         if (!this.textures.exists('card_back')) {
-            this.load.image('card_back', 'images/modeloBaralho.png');
+            this.load.svg('card_back', 'images/ui/card_back.svg', { width: 280, height: 380 });
         }
 
         // Novos SVGs em /assets/images/ui/
@@ -58,6 +58,9 @@ export default class MatchScene extends Phaser.Scene {
         }
         if (!this.textures.exists('ui_slot_frame')) {
             this.load.svg('ui_slot_frame', 'images/ui/ui_slot_frame.svg', { width: 160, height: 210 });
+        }
+        if (!this.textures.exists('ui_liberation_frame')) {
+            this.load.svg('ui_liberation_frame', 'images/ui/ui_liberation_frame.svg', { width: 280, height: 380 });
         }
         if (!this.textures.exists('ui_banner_player')) {
             this.load.svg('ui_banner_player', 'images/ui/ui_banner_player.svg', { width: 360, height: 76 });
@@ -480,13 +483,35 @@ export default class MatchScene extends Phaser.Scene {
     }
 
     createMiniDeckIcon(x, y) {
-        const { COLORS } = BOARD_LAYOUT;
+        const { width, height } = BOARD_LAYOUT.MEDIUM_CARD; // 140 x 190
         const container = this.add.container(x, y);
-        const outer = this.add.rectangle(0, 0, 82, 96, COLORS.ZONE_SURFACE);
-        const inner = this.add.rectangle(0, 0, 70, 84, COLORS.SLOT_SURFACE);
-        const lbl = this.add.text(0, -16, 'BARALHO', { fontSize: '9.5px', color: '#94a3b8', fontStyle: 'bold' }).setOrigin(0.5);
-        const countTxt = this.add.text(0, 12, '15/30', { fontSize: '14px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
-        container.add([outer, inner, lbl, countTxt]);
+
+        // Sombra da pilha e 3 camadas do verso da carta no tamanho dos Heróis do banco
+        const shadow = this.add.rectangle(6, 8, width, height, 0x090d16, 0.7);
+        const cardBottom = this.add.image(-6, 6, 'card_back').setDisplaySize(width, height).setTint(0x94a3b8);
+        const cardMiddle = this.add.image(-3, 3, 'card_back').setDisplaySize(width, height).setTint(0xcbd5e1);
+        const cardTop    = this.add.image(0, 0, 'card_back').setDisplaySize(width, height);
+
+        // Faixa clara de leitura para o contador de cartas (ex: 15/30)
+        const badgeShadow = this.add.rectangle(3, 52, width - 16, 44, 0xe60012, 1);
+        const badgeBg = this.add.rectangle(0, 49, width - 16, 44, 0xfaf8f5, 0.98)
+            .setStrokeStyle(3, 0x090d16);
+
+        const lbl = this.add.text(0, 38, 'BARALHO', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '10px',
+            color: '#475569',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
+
+        const countTxt = this.add.text(0, 56, '15/30', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '16px',
+            color: '#090d16',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
+
+        container.add([shadow, cardBottom, cardMiddle, cardTop, badgeShadow, badgeBg, lbl, countTxt]);
         return countTxt;
     }
 
@@ -2009,7 +2034,7 @@ export default class MatchScene extends Phaser.Scene {
         const { COLORS } = BOARD_LAYOUT;
 
         // 1. Botão de Engrenagem no canto superior direito
-        this.gearBtnContainer = this.add.container(1860, 48).setDepth(210);
+        this.gearBtnContainer = this.add.container(425, 72).setDepth(210);
         const gearBg = this.add.rectangle(0, 0, 54, 54, COLORS.ZONE_SURFACE, 0.95)
             .setStrokeStyle(2, COLORS.GOLD_DUST)
             .setInteractive({ useHandCursor: true })
@@ -2487,8 +2512,8 @@ export default class MatchScene extends Phaser.Scene {
     // =========================================================================
 
     createLiberationZonePanels() {
-        const localPos = BOARD_LAYOUT.LIBERATION_PANEL?.LOCAL || { x: 525, y: 1018 };
-        const oppPos = BOARD_LAYOUT.LIBERATION_PANEL?.OPPONENT || { x: 525, y: 62 };
+        const localPos = BOARD_LAYOUT.LIBERATION_PANEL?.LOCAL || { x: 1525, y: 945 };
+        const oppPos = BOARD_LAYOUT.LIBERATION_PANEL?.OPPONENT || { x: 1525, y: 135 };
 
         this.localLiberationContainer = this.add.container(localPos.x, localPos.y).setDepth(50);
         this.oppLiberationContainer = this.add.container(oppPos.x, oppPos.y).setDepth(50);
@@ -2503,23 +2528,35 @@ export default class MatchScene extends Phaser.Scene {
         if (!container) return;
         container.removeAll(true);
 
-        const bg = this.add.rectangle(0, 0, 224, 96, BOARD_LAYOUT.COLORS.ZONE_SURFACE, 0.95)
-            .setStrokeStyle(2, liberationCards.length > 0 ? BOARD_LAYOUT.COLORS.GOLD_DUST : 0x334155);
+        const { width, height } = BOARD_LAYOUT.MEDIUM_CARD; // 140 x 190 (Mesmo tamanho dos Heróis no banco)
 
-        const headerTxt = this.add.text(0, -34, isLocal ? '📜 ZONA DE LIBERAÇÃO' : '📜 MISSÃO INIMIGA', {
-            fontSize: '10.5px',
-            color: liberationCards.length > 0 ? '#ffd700' : '#64748b',
-            fontStyle: 'bold',
-            fontFamily: 'monospace'
-        }).setOrigin(0.5);
+        const shadow = this.add.rectangle(5, 7, width, height, 0x090d16, 0.7);
+        const backFill = this.add.rectangle(0, 0, width - 4, height - 4, 0xe6dec8, 1);
 
-        container.add([bg, headerTxt]);
+        container.add([shadow, backFill]);
 
         if (liberationCards.length === 0) {
-            const emptyTxt = this.add.text(0, 8, 'Nenhuma missão ativa\n(Liberada ou ausente)', {
-                fontSize: '10px', color: '#475569', align: 'center', fontFamily: 'monospace'
-            }).setOrigin(0.5);
-            container.add(emptyTxt);
+            // Estado Vazio / Já Liberada
+            const emptyFrame = this.add.image(0, 0, 'ui_liberation_frame')
+                .setDisplaySize(width, height)
+                .setTint(0x64748b);
+
+            const headerTxt = this.add.text(0, -height / 2 + 13, isLocal ? 'LIBERAÇÃO' : 'MISSÃO INIMIGA', {
+                fontFamily: 'IoskeleyMono, monospace',
+                fontSize: '10px',
+                color: '#090d16',
+                fontStyle: 'bold'
+            }).setOrigin(0.5).setResolution(2);
+
+            const emptyTxt = this.add.text(0, 0, '✨ SELO\nLIBERADO\nOU AUSENTE', {
+                fontFamily: 'IoskeleyMono, monospace',
+                fontSize: '11px',
+                color: '#334155',
+                fontStyle: 'bold',
+                align: 'center'
+            }).setOrigin(0.5).setResolution(2);
+
+            container.add([emptyFrame, headerTxt, emptyTxt]);
             return;
         }
 
@@ -2528,31 +2565,85 @@ export default class MatchScene extends Phaser.Scene {
         const target = Math.max(1, activeMission.missionTargetValue ?? 1);
         const ratio = Phaser.Math.Clamp(current / target, 0, 1);
 
-        const cardTitle = this.add.text(0, -14, activeMission.cardName || 'Carta de Liberação', {
-            fontSize: '11.5px', color: '#ffffff', fontStyle: 'bold', fontFamily: 'monospace'
-        }).setOrigin(0.5);
+        // 1. Arte da Carta de Liberação na janela superior (se existir textura)
+        const artKey = activeMission.imagem && this.textures.exists(activeMission.imagem)
+            ? activeMission.imagem
+            : (this.textures.exists(activeMission.cardName) ? activeMission.cardName : null);
 
+        if (artKey) {
+            const artSprite = this.add.image(0, -height * 0.14, artKey)
+                .setDisplaySize(width * 0.86, height * 0.44);
+            artSprite.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+            container.add(artSprite);
+        } else {
+            const placeholderTxt = this.add.text(0, -height * 0.14, '★ MISSÃO ★', {
+                fontFamily: 'IoskeleyMono, monospace',
+                fontSize: '12px',
+                color: '#b45309',
+                fontStyle: 'bold'
+            }).setOrigin(0.5).setResolution(2);
+            container.add(placeholderTxt);
+        }
+
+        // 2. Moldura SVG de Liberação do tamanho do Herói
+        const frame = this.add.image(0, 0, 'ui_liberation_frame').setDisplaySize(width, height);
+
+        // 3. Título no Topo Claro
+        const headerTxt = this.add.text(0, -height / 2 + 12, isLocal ? '★ LIBERAÇÃO' : '★ MISSÃO INIMIGA', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '9.5px',
+            color: '#090d16',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
+
+        // 4. Faixa Central Preta: Nome da Carta de Liberação
+        const cardTitle = this.add.text(0, height * 0.10, activeMission.cardName || 'Carta de Liberação', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '8.5px',
+            color: '#ffe600',
+            fontStyle: 'bold',
+            align: 'center',
+            wordWrap: { width: width - 16 }
+        }).setOrigin(0.5).setResolution(2);
+
+        // 5. Caixa Clara Inferior: Nome da Evolução + Barra de Progresso Grande
         const targetHeroHint = activeMission.evolvesIntoHeroName
             ? `➜ ${activeMission.evolvesIntoHeroName}`
             : (activeMission.missionType || 'Missão');
-        const subTxt = this.add.text(0, 3, targetHeroHint, {
-            fontSize: '9.5px', color: '#38bdf8', fontFamily: 'monospace'
-        }).setOrigin(0.5);
 
-        const barWidth = 188;
-        const barBg = this.add.rectangle(0, 24, barWidth, 14, 0x1e293b)
-            .setStrokeStyle(1, 0x475569);
-        const barFill = this.add.rectangle(-barWidth / 2, 24, barWidth * ratio, 14, 0x22c55e)
+        const subTxt = this.add.text(0, height * 0.25, targetHeroHint, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '8.5px',
+            color: '#090d16',
+            fontStyle: 'bold',
+            align: 'center',
+            wordWrap: { width: width - 20 }
+        }).setOrigin(0.5).setResolution(2);
+
+        const barWidth = width - 26;
+        const barY = height * 0.40;
+        const barBg = this.add.rectangle(0, barY, barWidth, 16, 0x090d16)
+            .setStrokeStyle(1.5, 0x475569);
+        const barFill = this.add.rectangle(-barWidth / 2, barY, barWidth * ratio, 16, 0x16a34a)
             .setOrigin(0, 0.5);
-        const progLabel = this.add.text(0, 24, `${current} / ${target}`, {
-            fontSize: '10px', color: '#ffffff', fontStyle: 'bold', fontFamily: 'monospace'
-        }).setOrigin(0.5);
+        const progLabel = this.add.text(0, barY, `${current} / ${target}`, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '10.5px',
+            color: '#ffffff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
 
-        bg.setInteractive({ useHandCursor: true })
-            .on('pointerover', () => this.showLargeCardPreview(activeMission, false))
-            .on('pointerout', () => this.hideLargeCardPreview());
+        frame.setInteractive({ useHandCursor: true })
+            .on('pointerover', () => {
+                this.tweens.add({ targets: container, scaleX: 1.05, scaleY: 1.05, duration: 120 });
+                this.showLargeCardPreview(activeMission, false);
+            })
+            .on('pointerout', () => {
+                this.tweens.add({ targets: container, scaleX: 1.0, scaleY: 1.0, duration: 120 });
+                this.hideLargeCardPreview();
+            });
 
-        container.add([cardTitle, subTxt, barBg, barFill, progLabel]);
+        container.add([frame, headerTxt, cardTitle, subTxt, barBg, barFill, progLabel]);
     }
 
     handleMissionProgressEvent(triggerContext) {

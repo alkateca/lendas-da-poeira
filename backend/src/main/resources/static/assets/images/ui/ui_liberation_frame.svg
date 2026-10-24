@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 380" width="280" height="380">
+  <!-- Sombra Dura Vermelha P5 -->
+  <polygon points="10,8 276,4 272,376 6,374" fill="#e60012" />
+
+  <!-- Moldura Externa Dourada / Creme com Janela Vazada (fill-rule="evenodd") -->
+  <path fill-rule="evenodd" d="M 4,4 L 272,2 L 268,372 L 2,370 Z
+           M 16,46 L 260,44 L 258,218 L 14,220 Z" fill="#f59e0b" stroke="#090d16" stroke-width="4" />
+
+  <!-- Borda Interna da Janela da Missão -->
+  <rect x="15" y="45" width="244" height="174" fill="none" stroke="#090d16" stroke-width="2.5" />
+
+  <!-- Barra de Topo Clara ("ZONA DE LIBERAÇÃO") -->
+  <polygon points="4,6 270,4 266,42 6,42" fill="#fef9c3" stroke="#090d16" stroke-width="3" />
+  <rect x="6" y="36" width="260" height="5" fill="#e60012" />
+
+  <!-- Faixa Diagonal de Selo / Missão no Meio -->
+  <polygon points="8,214 268,206 264,242 10,248" fill="#090d16" stroke="#ffe600" stroke-width="2.5" />
+
+  <!-- Caixa Inferior Clara para Nome da Evolução e Barra de Progresso -->
+  <rect x="10" y="246" width="254" height="118" fill="#faf8f5" stroke="#090d16" stroke-width="3" />
+
+  <!-- Detalhes de Cantoneiras Douradas -->
+  <polygon points="4,344 32,356 24,374 2,370" fill="#ffe600" stroke="#090d16" stroke-width="2.5" />
+  <polygon points="248,356 272,344 268,372 242,372" fill="#e60012" stroke="#090d16" stroke-width="2.5" />
+</svg>

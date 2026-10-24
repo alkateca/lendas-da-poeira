@@ -38,17 +38,31 @@ export const BOARD_LAYOUT = {
         { x: 1291, y: -16, angle: -8 }
     ],
 
-    // 2. TOPO E BASE ESQUERDA (Fora dos Bancos, alinhados com topo e final da tela)
-    PILES: {
-        OPPONENT_DECK:    { x: 245, y: 62 },
-        OPPONENT_DISCARD: { x: 365, y: 62 },
-        LOCAL_DECK:       { x: 245, y: 1018 },
-        LOCAL_DISCARD:    { x: 365, y: 1018 },
+    // BANNERS DOS JOGADORES -> Agora no lado ESQUERDO da tela
+    PLAYER_BANNERS: {
+        OPPONENT: { x: 215, y: 72 },
+        LOCAL:    { x: 215, y: 1008 }
+    },
 
-        // Botão Principal centralizado verticalmente na tela (Y = 540)
-        // O Hover Longo (LARGE_PREVIEW) usa a mesma coordenada, surgindo sobre o botão!
-        MAIN_BUTTON:      { x: 1730, y: 540 },
-        LARGE_PREVIEW:    { x: 1730, y: 540 }
+    // ZONA DE LIBERAÇÃO -> Agora no lado DIREITO (Tamanho MEDIUM_CARD: 140x190)
+    LIBERATION_PANEL: {
+        OPPONENT: { x: 1525, y: 135 },
+        LOCAL:    { x: 1525, y: 945 }
+    },
+
+    // BARALHO E DESCARTE (LÁPIDE) -> Agora no lado DIREITO, ao lado da Zona de Liberação
+    PILES: {
+        OPPONENT_DECK:    { x: 1695, y: 135 }, // Tamanho MEDIUM_CARD (140x190)
+        OPPONENT_DISCARD: { x: 1835, y: 135 }, // Ícone de Lápide (82x96)
+
+        LOCAL_DECK:       { x: 1695, y: 945 }, // Tamanho MEDIUM_CARD (140x190)
+        LOCAL_DISCARD:    { x: 1835, y: 945 }, // Ícone de Lápide (82x96)
+
+        // Botão Confirmar centralizado na direita (entre os recursos do oponente e os seus)
+        MAIN_BUTTON:      { x: 1695, y: 540 },
+
+        // Preview Ampliado no centro-esquerda (entre os dois banners de nome)
+        LARGE_PREVIEW:    { x: 215,  y: 540 }
     },
 
     // 3. ESQUERDA: Molduras e Slots das Bancadas de Heróis (ZoneId.BENCH - Tamanho Médio com espaçamento ampliado)
@@ -91,16 +105,5 @@ export const BOARD_LAYOUT = {
         { x: 1035, y: 964, angle: 0 },
         { x: 1167, y: 970, angle: 4 },
         { x: 1299, y: 985, angle: 8 }
-    ],
-
-    // 6. CANTOS DIREITOS: Nomes dos Jogadores Batalhando (Colados no topo-direito e base-direita)
-    PLAYER_BANNERS: {
-        OPPONENT: { x: 1730, y: 50,   width: 340, height: 64 },
-        LOCAL:    { x: 1730, y: 1030, width: 340, height: 64 }
-    },
-
-    LIBERATION_PANEL: {
-        OPPONENT: { x: 525, y: 62,   width: 220, height: 96 },
-        LOCAL:    { x: 525, y: 1018, width: 220, height: 96 }
-    }
+    ]
 };
