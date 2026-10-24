@@ -866,21 +866,30 @@ export default class DeckBuilderScene extends Phaser.Scene {
     createCatalogCardTile(x, y, data, isHero, isLiberation, validation) {
         const tile = this.add.container(x, y);
         const w = 225;
-        const h = 246;
+        const h = 248;
 
         const accentColor = isLiberation
             ? 0xca8a04
             : (BOARD_LAYOUT.COLORS.CARD_COLORS[data.color] || 0x475569);
-        const borderColor = validation.allowed ? (isLiberation ? 0xfacc15 : 0x00ff88) : 0xff3333;
+        const borderColor = validation.allowed ? (isLiberation ? 0xfacc15 : 0x16a34a) : 0xdc2626;
 
-        const bg = this.add.rectangle(0, 0, w, h, isLiberation ? 0x271a0c : 0x1e2430)
-            .setStrokeStyle(2, borderColor)
-            .setAlpha(validation.allowed ? 1.0 : 0.48);
+        // Sombra dura e fundo Papel Creme Claro (#faf8f5) para leitura fácil em preto
+        const shadow = this.add.rectangle(5, 6, w, h, 0x090d16, 0.65);
+        const bg = this.add.rectangle(0, 0, w, h, isLiberation ? 0xfef9c3 : 0xfaf8f5)
+            .setStrokeStyle(3, borderColor)
+            .setAlpha(validation.allowed ? 1.0 : 0.55);
 
-        const header = this.add.rectangle(0, -h / 2 + 18, w - 6, 28, accentColor);
+        const header = this.add.rectangle(0, -h / 2 + 18, w - 6, 30, accentColor)
+            .setStrokeStyle(1.5, 0x090d16);
+        const isLightHeader = ['WHITE', 'YELLOW'].includes(data.color) || isLiberation;
         const title = this.add.text(0, -h / 2 + 18, data.cardName, {
-            fontSize: '11.5px', color: '#ffffff', fontStyle: 'bold', align: 'center', wordWrap: { width: w - 14 }
-        }).setOrigin(0.5);
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '12px',
+            color: isLightHeader ? '#090d16' : '#ffffff',
+            fontStyle: 'bold',
+            align: 'center',
+            wordWrap: { width: w - 14 }
+        }).setOrigin(0.5).setResolution(2);
 
         const subType = isHero
             ? `HERÓI • ${data.color}${data.afinidades?.length ? ' • ' + data.afinidades.join('/') : ''}`
@@ -888,20 +897,43 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 ? `★ LIBERAÇÃO (${data.cardType})`
                 : `${data.cardType}${data.unica ? ' ★ ÚNICA' : ''}${data.itemType && data.itemType !== 'NENHUM' ? ' • ' + data.itemType : ''}`);
 
-        const badge = this.add.text(0, -h / 2 + 44, subType, {
-            fontSize: '9.5px', color: '#ffd700', fontStyle: 'bold', align: 'center', wordWrap: { width: w - 12 }
-        }).setOrigin(0.5);
+        const subBar = this.add.rectangle(0, -h / 2 + 46, w - 6, 22, 0xe6dec8)
+            .setStrokeStyle(1, 0x94a3b8);
+        const badge = this.add.text(0, -h / 2 + 46, subType, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '9.5px',
+            color: '#4a3520',
+            fontStyle: 'bold',
+            align: 'center',
+            wordWrap: { width: w - 12 }
+        }).setOrigin(0.5).setResolution(2);
 
-        const desc = this.add.text(0, 6, data.descricao || '', {
-            fontSize: '10px', color: '#e2e8f0', align: 'center', wordWrap: { width: w - 20 }
-        }).setOrigin(0.5);
+        // Se for Herói, mostra os 4 status em destaque antes da descrição
+        const statsStr = isHero
+            ? `ESP:${data.espirito}  ATQ:${data.ataque}  DEF:${data.defesa}  HP:${data.vidaMaxima}\n`
+            : '';
 
-        const statusFooter = this.add.rectangle(0, h / 2 - 18, w - 6, 30, validation.allowed ? 0x064e3b : 0x450a0a);
-        const statusTxt = this.add.text(0, h / 2 - 18, validation.allowed ? `➕ ${validation.reason}` : `🔒 ${validation.reason}`, {
-            fontSize: '9.5px', color: validation.allowed ? '#4ade80' : '#fca5a5', fontStyle: 'bold', align: 'center', wordWrap: { width: w - 10 }
-        }).setOrigin(0.5);
+        const desc = this.add.text(-w / 2 + 12, -h / 2 + 64, statsStr + (data.descricao || ''), {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '10.5px',
+            color: '#090d16',
+            fontStyle: 'bold',
+            align: 'left',
+            lineSpacing: 2,
+            wordWrap: { width: w - 24 }
+        }).setOrigin(0, 0).setResolution(2);
 
-        tile.add([bg, header, title, badge, desc, statusFooter, statusTxt]);
+        const statusFooter = this.add.rectangle(0, h / 2 - 17, w - 6, 28, validation.allowed ? 0x14532d : 0x7f1d1d);
+        const statusTxt = this.add.text(0, h / 2 - 17, validation.allowed ? `➕ ${validation.reason}` : `🔒 ${validation.reason}`, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '10px',
+            color: validation.allowed ? '#86efac' : '#fecaca',
+            fontStyle: 'bold',
+            align: 'center',
+            wordWrap: { width: w - 10 }
+        }).setOrigin(0.5).setResolution(2);
+
+        tile.add([shadow, bg, header, title, subBar, badge, desc, statusFooter, statusTxt]);
 
         bg.setInteractive({ useHandCursor: validation.allowed })
             .on('pointerdown', () => {
@@ -1067,13 +1099,28 @@ export default class DeckBuilderScene extends Phaser.Scene {
 
     createLargePreviewOverlay() {
         this.largePreview = this.add.container(1635, 560).setDepth(300).setVisible(false);
-        const bg = this.add.rectangle(0, 0, 320, 420, 0x161b26, 0.98).setStrokeStyle(4, BOARD_LAYOUT.COLORS.GOLD_DUST);
-        this.lpTitle = this.add.text(0, -175, '', { fontSize: '18px', color: '#ffd700', fontStyle: 'bold', align: 'center', wordWrap: { width: 290 } }).setOrigin(0.5);
-        this.lpMeta = this.add.text(0, -130, '', { fontSize: '12px', color: '#38bdf8', fontStyle: 'bold', align: 'center', wordWrap: { width: 290 } }).setOrigin(0.5);
-        this.lpDesc = this.add.text(0, 10, '', { fontSize: '14px', color: '#ffffff', align: 'center', wordWrap: { width: 280 } }).setOrigin(0.5);
-        this.lpStats = this.add.text(0, 170, '', { fontSize: '13px', color: '#4ade80', fontStyle: 'bold', align: 'center' }).setOrigin(0.5);
+        const shadow = this.add.rectangle(8, 10, 320, 420, 0x000000, 0.7);
+        const bg = this.add.rectangle(0, 0, 320, 420, 0xfaf8f5, 1).setStrokeStyle(4, 0x090d16);
+        const topBar = this.add.rectangle(0, -172, 312, 56, 0xe60012);
 
-        this.largePreview.add([bg, this.lpTitle, this.lpMeta, this.lpDesc, this.lpStats]);
+        this.lpTitle = this.add.text(0, -172, '', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '18px', color: '#ffffff', fontStyle: 'bold', align: 'center', wordWrap: { width: 290 }
+        }).setOrigin(0.5).setResolution(2);
+
+        this.lpMeta = this.add.text(0, -124, '', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '12.5px', color: '#4a3520', fontStyle: 'bold', align: 'center', wordWrap: { width: 290 }
+        }).setOrigin(0.5).setResolution(2);
+
+        this.lpDesc = this.add.text(-140, -90, '', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '14px', color: '#090d16', fontStyle: 'bold', align: 'left', lineSpacing: 4, wordWrap: { width: 280 }
+        }).setOrigin(0, 0).setResolution(2);
+
+        const botBar = this.add.rectangle(0, 175, 312, 46, 0x090d16);
+        this.lpStats = this.add.text(0, 175, '', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '13.5px', color: '#ffe600', fontStyle: 'bold', align: 'center'
+        }).setOrigin(0.5).setResolution(2);
+
+        this.largePreview.add([shadow, bg, topBar, this.lpTitle, this.lpMeta, this.lpDesc, botBar, this.lpStats]);
     }
 
     startLongHover(data, isHero) {

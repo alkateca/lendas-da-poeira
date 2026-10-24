@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 380" width="280" height="380">
+  <!-- Sombra Externa -->
+  <polygon points="10,8 276,4 272,376 6,374" fill="#090d16" />
+
+  <!-- Corpo Base com Janela de Arte Vazada (y: 42 a 192) -->
+  <path fill-rule="evenodd" d="M 4,4 L 272,2 L 268,372 L 2,370 Z
+           M 12,42 L 262,40 L 260,192 L 12,192 Z" fill="#e6dec8" stroke="#090d16" stroke-width="3.5" />
+
+  <!-- Contorno da Janela de Arte -->
+  <rect x="12" y="41" width="249" height="151" fill="none" stroke="#090d16" stroke-width="2" />
+
+  <!-- Barra Superior do Nome (Centro Y = 22) -->
+  <polygon points="4,6 270,4 266,40 6,40" fill="#ffffff" stroke="#090d16" stroke-width="3" />
+  <rect x="6" y="35" width="260" height="5" fill="#e60012" />
+  <!-- Detalhe Angular Superior Direito -->
+  <polygon points="246,2 276,6 266,36 240,26" fill="#cbd5e1" stroke="#090d16" stroke-width="2.5" />
+
+  <!-- Coluna Direita de Atributos (x: 214..270, dividida em 4 células iguais de 43px) -->
+  <!-- Célula 1: ESP (y: 198..241 | Centro Y = 220) -->
+  <!-- Célula 2: ATQ (y: 241..284 | Centro Y = 263) -->
+  <!-- Célula 3: DEF (y: 284..327 | Centro Y = 306) -->
+  <!-- Célula 4: HP  (y: 327..372 | Centro Y = 350) -->
+  <rect x="214" y="198" width="56" height="174" fill="#f5efe2" stroke="#090d16" stroke-width="2.5" />
+  <line x1="216" y1="241" x2="268" y2="241" stroke="#94a3b8" stroke-width="1.5" />
+  <line x1="216" y1="284" x2="268" y2="284" stroke="#94a3b8" stroke-width="1.5" />
+  <line x1="216" y1="327" x2="268" y2="327" stroke="#090d16" stroke-width="2" />
+
+  <!-- Escudo/Destaque Claro para a Célula de HP (y: 327..372) -->
+  <polygon points="214,327 272,327 270,372 214,372" fill="#e2e8f0" stroke="#090d16" stroke-width="2.5" />
+
+  <!-- Rótulos Fixos na Esquerda de Cada Célula -->
+  <text x="219" y="212" font-family="monospace" font-size="8.5" font-weight="bold" fill="#475569">ESP</text>
+  <text x="219" y="255" font-family="monospace" font-size="8.5" font-weight="bold" fill="#475569">ATQ</text>
+  <text x="219" y="298" font-family="monospace" font-size="8.5" font-weight="bold" fill="#475569">DEF</text>
+  <text x="219" y="341" font-family="monospace" font-size="8.5" font-weight="bold" fill="#b91c1c">HP</text>
+
+  <!-- Caixa de Modificadores de Dano (x: 166..274, y: 154..194 | Centro Y = 174) -->
+  <!-- 3 Casas: Verde (X = 185), Vermelho (X = 220), Roxo (X = 255) -->
+  <rect x="166" y="154" width="108" height="40" rx="3" fill="#cbd5e1" stroke="#090d16" stroke-width="3" />
+  <rect x="170" y="158" width="100" height="32" fill="#ffffff" stroke="#475569" stroke-width="1.2" />
+  <line x1="203" y1="158" x2="203" y2="190" stroke="#cbd5e1" stroke-width="1.5" />
+  <line x1="237" y1="158" x2="237" y2="190" stroke="#cbd5e1" stroke-width="1.5" />
+
+  <!-- Caixa Inferior Esquerda de Texto (Alta e Larga: x: 8..212, y: 196..372) -->
+  <rect x="8" y="196" width="204" height="176" fill="#faf8f5" stroke="#090d16" stroke-width="3" />
+  <!-- Faixa Superior Interna para os Atributos (Classe - Raça - Afinidade) -->
+  <rect x="10" y="198" width="200" height="36" fill="#efe6d5" />
+  <line x1="10" y1="234" x2="210" y2="234" stroke="#d6cbb5" stroke-width="1.5" />
+  <!-- Detalhe Vermelho no Topo da Caixa -->
+  <rect x="8" y="195" width="76" height="4" fill="#e60012" />
+</svg>

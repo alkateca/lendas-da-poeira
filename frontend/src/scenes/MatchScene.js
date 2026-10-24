@@ -47,11 +47,20 @@ export default class MatchScene extends Phaser.Scene {
         }
 
         // Novos SVGs em /assets/images/ui/
-        if (!this.textures.exists('card_frame_playable')) {
-            this.load.svg('card_frame_playable', 'images/ui/card_frame_phantom.svg', { width: 320, height: 440 });
-        }
         if (!this.textures.exists('card_frame_hero')) {
-            this.load.svg('card_frame_hero', 'images/ui/card_frame_phantom.svg', { width: 320, height: 440 });
+            this.load.svg('card_frame_hero', 'images/ui/card_frame_hero.svg', { width: 280, height: 380 });
+        }
+        if (!this.textures.exists('card_frame_playable')) {
+            this.load.svg('card_frame_playable', 'images/ui/card_frame_playable.svg', { width: 280, height: 380 });
+        }
+        if (!this.textures.exists('ui_hud_panel_light')) {
+            this.load.svg('ui_hud_panel_light', 'images/ui/ui_hud_panel_light.svg', { width: 360, height: 80 });
+        }
+        if (!this.textures.exists('ui_slot_frame')) {
+            this.load.svg('ui_slot_frame', 'images/ui/ui_slot_frame.svg', { width: 160, height: 210 });
+        }
+        if (!this.textures.exists('ui_banner_player')) {
+            this.load.svg('ui_banner_player', 'images/ui/ui_banner_player.svg', { width: 360, height: 76 });
         }
         if (!this.textures.exists('ui_p5_crt_button')) {
             this.load.svg('ui_p5_crt_button', 'images/ui/p5_crt_button.svg', { width: 520, height: 84 });
@@ -308,100 +317,83 @@ export default class MatchScene extends Phaser.Scene {
     drawBoardBackgroundAndSlots() {
         const { COLORS, MEDIUM_CARD, BENCH_BOXES, ARENA_CIRCLE } = BOARD_LAYOUT;
 
-        // Fundo preto puro sem linhas de grade
-        this.add.rectangle(960, 540, 1920, 1080, COLORS.BG_DARK, 1);
+        // Fundo mais claro que o preto puro, destacando as cartas e os painéis
+        this.add.rectangle(960, 540, 1920, 1080, 0x1b2230, 1);
 
-        // Círculo central da Arena definido apenas por tom de preto mais claro (sem linha de contorno)
-        const graphics = this.add.graphics();
-        graphics.fillStyle(COLORS.ZONE_SURFACE, 1);
-        graphics.fillCircle(ARENA_CIRCLE.x, ARENA_CIRCLE.y, ARENA_CIRCLE.radius);
-
-        const radarKey = this.textures.exists('ui_arena_crt_radar') ? 'ui_arena_crt_radar' : 'arena_crt_radar';
-        if (this.textures.exists(radarKey)) {
-            const radar = this.add.image(ARENA_CIRCLE.x, ARENA_CIRCLE.y, radarKey).setOrigin(0.5);
-            this.tweens.add({
-                targets: radar,
-                angle: 360,
-                duration: 90000,
-                repeat: -1
-            });
+        // Radar Vetorial Central
+        const diameter = ARENA_CIRCLE.radius * 2;
+        if (this.textures.exists('ui_arena_crt_radar')) {
+            this.arenaRadar = this.add.image(ARENA_CIRCLE.x, ARENA_CIRCLE.y, 'ui_arena_crt_radar')
+                .setDisplaySize(diameter, diameter)
+                .setAlpha(0.95);
+            this.tweens.add({ targets: this.arenaRadar, angle: 360, duration: 90000, repeat: -1 });
+        } else {
+            const graphics = this.add.graphics();
+            graphics.fillStyle(0x263042, 1);
+            graphics.fillCircle(ARENA_CIRCLE.x, ARENA_CIRCLE.y, ARENA_CIRCLE.radius);
         }
 
-        // Áreas das Bancadas (BENCH) em tom de preto mais claro, sem bordas
-        this.add.rectangle(BENCH_BOXES.OPPONENT.x, BENCH_BOXES.OPPONENT.y, BENCH_BOXES.OPPONENT.width, BENCH_BOXES.OPPONENT.height, COLORS.ZONE_SURFACE, 1);
-        this.add.text(BENCH_BOXES.OPPONENT.x, BENCH_BOXES.OPPONENT.y - 128, 'BANCADA INIMIGA', {
-            fontSize: '12px', color: '#64748b', fontStyle: 'bold'
+        // Bancadas com borda clara e rótulos em Branco/Amarelo de alta visibilidade
+        this.add.rectangle(BENCH_BOXES.OPPONENT.x, BENCH_BOXES.OPPONENT.y, BENCH_BOXES.OPPONENT.width, BENCH_BOXES.OPPONENT.height, 0x263042, 0.9)
+            .setStrokeStyle(2, 0x475569);
+        this.add.text(BENCH_BOXES.OPPONENT.x, BENCH_BOXES.OPPONENT.y - 128, '▲ BANCADA INIMIGA', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '14px', color: '#e2e8f0', fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        this.add.rectangle(BENCH_BOXES.LOCAL.x, BENCH_BOXES.LOCAL.y, BENCH_BOXES.LOCAL.width, BENCH_BOXES.LOCAL.height, COLORS.ZONE_SURFACE, 1);
-        this.add.text(BENCH_BOXES.LOCAL.x, BENCH_BOXES.LOCAL.y - 128, 'SUA BANCADA', {
-            fontSize: '12px', color: '#64748b', fontStyle: 'bold'
+        this.add.rectangle(BENCH_BOXES.LOCAL.x, BENCH_BOXES.LOCAL.y, BENCH_BOXES.LOCAL.width, BENCH_BOXES.LOCAL.height, 0x263042, 0.9)
+            .setStrokeStyle(2, 0x475569);
+        this.add.text(BENCH_BOXES.LOCAL.x, BENCH_BOXES.LOCAL.y - 128, '▼ SUA BANCADA', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '14px', color: '#ffe600', fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        const benchW = MEDIUM_CARD.width + 6;
-        const benchH = MEDIUM_CARD.height + 6;
-
-        // Slots individuais das bancadas com cantoneiras em L (#00F0FF oponente, #E60012 aliado)
-        this.oppBenchSlotVisuals = BOARD_LAYOUT.OPPONENT_BENCH_SLOTS.map(pos => {
-            const rect = this.add.rectangle(pos.x, pos.y, benchW, benchH, COLORS.SLOT_SURFACE, 1);
-            const g = this.add.graphics({ x: pos.x, y: pos.y });
-            this.drawSlotCornerBrackets(g, benchW, benchH, 0x00f0ff);
-            return { rect, graphics: g, x: pos.x, y: pos.y, w: benchW, h: benchH, color: 0x00f0ff };
+        // Slots das Bancadas usando ui_slot_frame.svg
+        BOARD_LAYOUT.OPPONENT_BENCH_SLOTS.forEach(pos => {
+            this.add.image(pos.x, pos.y, 'ui_slot_frame').setDisplaySize(MEDIUM_CARD.width + 8, MEDIUM_CARD.height + 8);
         });
 
-        this.localBenchSlotVisuals = BOARD_LAYOUT.LOCAL_BENCH_SLOTS.map(pos => {
-            const rect = this.add.rectangle(pos.x, pos.y, benchW, benchH, COLORS.SLOT_SURFACE, 1);
-            const g = this.add.graphics({ x: pos.x, y: pos.y });
-            this.drawSlotCornerBrackets(g, benchW, benchH, 0xe60012);
-            return { rect, graphics: g, x: pos.x, y: pos.y, w: benchW, h: benchH, color: 0xe60012 };
+        BOARD_LAYOUT.LOCAL_BENCH_SLOTS.forEach(pos => {
+            this.add.image(pos.x, pos.y, 'ui_slot_frame').setDisplaySize(MEDIUM_CARD.width + 8, MEDIUM_CARD.height + 8);
         });
 
-        // Slots de Batalha Ativa (sem contorno fixo)
+        // Slots de Batalha Ativa
         this.oppBattleSlotRect = this.add.rectangle(
             BOARD_LAYOUT.BATTLE_SLOTS.OPPONENT_ACTIVE_HERO.x,
             BOARD_LAYOUT.BATTLE_SLOTS.OPPONENT_ACTIVE_HERO.y,
-            MEDIUM_CARD.width + 10, MEDIUM_CARD.height + 10, COLORS.SLOT_ELEVATED, 1
+            MEDIUM_CARD.width + 10, MEDIUM_CARD.height + 10, 0x2d3a50, 1
         );
+        this.add.image(
+            BOARD_LAYOUT.BATTLE_SLOTS.OPPONENT_ACTIVE_HERO.x,
+            BOARD_LAYOUT.BATTLE_SLOTS.OPPONENT_ACTIVE_HERO.y,
+            'ui_slot_frame'
+        ).setDisplaySize(MEDIUM_CARD.width + 12, MEDIUM_CARD.height + 12).setTint(0x38bdf8);
+
         this.add.text(BOARD_LAYOUT.BATTLE_SLOTS.OPPONENT_ACTIVE_HERO.x, BOARD_LAYOUT.BATTLE_SLOTS.OPPONENT_ACTIVE_HERO.y, 'BATALHA\nINIMIGO', {
-            fontSize: '11px', color: '#64748b', fontStyle: 'bold', align: 'center'
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '13px', color: '#bae6fd', fontStyle: 'bold', align: 'center'
         }).setOrigin(0.5);
 
         this.localBattleSlotRect = this.add.rectangle(
             BOARD_LAYOUT.BATTLE_SLOTS.LOCAL_ACTIVE_HERO.x,
             BOARD_LAYOUT.BATTLE_SLOTS.LOCAL_ACTIVE_HERO.y,
-            MEDIUM_CARD.width + 10, MEDIUM_CARD.height + 10, COLORS.SLOT_ELEVATED, 1
+            MEDIUM_CARD.width + 10, MEDIUM_CARD.height + 10, 0x2d3a50, 1
         );
+        this.add.image(
+            BOARD_LAYOUT.BATTLE_SLOTS.LOCAL_ACTIVE_HERO.x,
+            BOARD_LAYOUT.BATTLE_SLOTS.LOCAL_ACTIVE_HERO.y,
+            'ui_slot_frame'
+        ).setDisplaySize(MEDIUM_CARD.width + 12, MEDIUM_CARD.height + 12).setTint(0xf87171);
+
         this.add.text(BOARD_LAYOUT.BATTLE_SLOTS.LOCAL_ACTIVE_HERO.x, BOARD_LAYOUT.BATTLE_SLOTS.LOCAL_ACTIVE_HERO.y, 'BATALHA\nALIADO', {
-            fontSize: '11px', color: '#64748b', fontStyle: 'bold', align: 'center'
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '13px', color: '#fecaca', fontStyle: 'bold', align: 'center'
         }).setOrigin(0.5);
 
-        // 4 Slots de Resolução Central com cantoneiras em L
-        const resolveW = MEDIUM_CARD.width + 4;
-        const resolveH = MEDIUM_CARD.height + 4;
+        // 4 Slots de Resolução Central
         this.resolveSlotVisuals = BOARD_LAYOUT.RESOLVE_SLOTS.map((pos, idx) => {
-            const rect = this.add.rectangle(pos.x, pos.y, resolveW, resolveH, COLORS.SLOT_SURFACE, 1);
-            const g = this.add.graphics({ x: pos.x, y: pos.y });
-            const initialColor = (idx % 2 === 0) ? 0xe60012 : 0x00f0ff;
-            this.drawSlotCornerBrackets(g, resolveW, resolveH, initialColor);
+            const rect = this.add.rectangle(pos.x, pos.y, MEDIUM_CARD.width + 4, MEDIUM_CARD.height + 4, COLORS.SLOT_SURFACE, 1);
+            const frame = this.add.image(pos.x, pos.y, 'ui_slot_frame').setDisplaySize(MEDIUM_CARD.width + 8, MEDIUM_CARD.height + 8);
             const label = this.add.text(pos.x, pos.y, `${idx + 1}º AÇÃO`, {
-                fontFamily: 'IoskeleyMono, monospace',
-                fontSize: '11px',
-                color: '#94a3b8',
-                fontStyle: 'bold',
-                align: 'center'
+                fontFamily: 'IoskeleyMono, monospace', fontSize: '13px', color: '#ffffff', fontStyle: 'bold', align: 'center'
             }).setOrigin(0.5);
-            return {
-                rect,
-                graphics: g,
-                label,
-                x: pos.x,
-                y: pos.y,
-                w: resolveW,
-                h: resolveH,
-                index: idx,
-                cornerColor: initialColor,
-                belongsToLocal: (idx % 2 === 0)
-            };
+            return { rect, frame, label, x: pos.x, y: pos.y, index: idx };
         });
     }
 
@@ -527,15 +519,20 @@ export default class MatchScene extends Phaser.Scene {
     }
 
     createPlayerCornerBanner(x, y, badgeCode, roleLabel, defaultName, fillColor) {
-        const { COLORS } = BOARD_LAYOUT;
         const container = this.add.container(x, y);
-        const bg = this.add.rectangle(0, 0, 360, 68, COLORS.ZONE_SURFACE, 1);
-        const avatar = this.add.circle(-142, 0, 20, fillColor);
-        const codeTxt = this.add.text(-142, 0, badgeCode, { fontSize: '13px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
-        const roleTxt = this.add.text(-108, -18, roleLabel, { fontSize: '10px', color: '#ffd700', fontStyle: 'bold' }).setOrigin(0, 0.5);
-        const nameTxt = this.add.text(-108, 0, defaultName, { fontSize: '14px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0, 0.5);
-        const eloTxt = this.add.text(-108, 18, '🏅 ELO: 1000  |  📅 Semanal: 1000', {
-            fontSize: '10.5px', color: '#38bdf8', fontStyle: 'bold', fontFamily: 'monospace'
+        const bg = this.add.image(0, 0, 'ui_banner_player').setDisplaySize(360, 74);
+        const avatar = this.add.circle(-144, 0, 20, fillColor).setStrokeStyle(2, 0xffffff);
+        const codeTxt = this.add.text(-144, 0, badgeCode, {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '14px', color: '#ffffff', fontStyle: 'bold'
+        }).setOrigin(0.5);
+        const roleTxt = this.add.text(-102, -18, roleLabel, {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '11.5px', color: '#e60012', fontStyle: 'bold'
+        }).setOrigin(0, 0.5);
+        const nameTxt = this.add.text(-102, -1, defaultName, {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '15.5px', color: '#090d16', fontStyle: 'bold'
+        }).setOrigin(0, 0.5);
+        const eloTxt = this.add.text(-102, 18, '🏅 ELO: 1000  |  📅 Semanal: 1000', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '11.5px', color: '#1e3a8a', fontStyle: 'bold'
         }).setOrigin(0, 0.5);
 
         container.add([bg, avatar, codeTxt, roleTxt, nameTxt, eloTxt]);
@@ -544,99 +541,265 @@ export default class MatchScene extends Phaser.Scene {
 
     createLargeHoverPreviewPanel() {
         const { x, y } = BOARD_LAYOUT.PILES.LARGE_PREVIEW;
-        const { width, height } = BOARD_LAYOUT.LARGE_CARD;
+        const { width, height } = BOARD_LAYOUT.LARGE_CARD; // 280 x 380
+
+        const pos = (svgX, svgY) => ({
+            x: ((svgX / 280) - 0.5) * width,
+            y: ((svgY / 380) - 0.5) * height
+        });
 
         this.largePreviewContainer = this.add.container(x, y).setDepth(190).setVisible(false);
 
-        this.lpShadow = this.add.rectangle(8, 10, width, height, 0x000000, 0.75);
-        this.lpBg = this.add.rectangle(0, 0, width + 4, height + 4, 0x000000, 0)
-            .setStrokeStyle(4, BOARD_LAYOUT.COLORS.GOLD_DUST);
+        this.lpShadow = this.add.rectangle(8, 10, width, height, 0x000000, 0.65);
 
-        const artW = width * 0.905;
-        const artH = height * 0.50;
-        const artX = -width / 2 + (width * 0.046) + (artW / 2);
-        const artY = -height / 2 + (height * 0.11) + (artH / 2);
+        // Janela de arte (SVG x: 12..261, y: 41..192 -> centro 137, 117)
+        const artCenter = pos(137, 117);
+        const artW = width * (248 / 280);
+        const artH = height * (150 / 380);
 
-        this.lpArtBox = this.add.rectangle(artX, artY, artW, artH, 0x1e2430, 0.3).setStrokeStyle(1, 0x475569);
-        this.lpArtLabel = this.add.text(artX, artY, 'ILUSTRAÇÃO AMPLIADA', {
-            fontSize: '13px', color: '#475569', fontStyle: 'bold', fontFamily: 'monospace'
-        }).setOrigin(0.5);
+        // Fundo creme suave quando não há imagem (em vez de bloco colorido forte)
+        this.lpArtBox = this.add.rectangle(artCenter.x, artCenter.y, artW, artH, 0xd6cbb5, 1);
+        this.lpArtLabel = this.add.text(artCenter.x, artCenter.y, 'ILUSTRAÇÃO', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '14px',
+            color: '#475569',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
 
-        this.lpFrame = this.add.image(0, 0, 'card_frame_playable').setDisplaySize(width, height);
+        this.lpFrame = this.add.image(0, 0, 'card_frame_hero').setDisplaySize(width, height);
 
-        const headerY = -height / 2 + (height * 0.055);
-        this.lpHeader = this.add.rectangle(0, headerY, width * 0.80, height * 0.065, 0x1d4ed8, 0.22);
-        this.lpTitle = this.add.text(0, headerY, '', {
-            fontSize: '16px', color: '#000000', fontStyle: 'bold', fontFamily: 'monospace', align: 'center', wordWrap: { width: width * 0.82 }
-        }).setOrigin(0.5);
+        // 1. Título no Topo (SVG X=132, Y=21)
+        const titlePt = pos(132, 21);
+        this.lpTitle = this.add.text(titlePt.x, titlePt.y, '', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '16px',
+            color: '#090d16',
+            fontStyle: 'bold',
+            align: 'center',
+            wordWrap: { width: width * 0.82 }
+        }).setOrigin(0.5).setResolution(2);
 
-        this.lpTypeLine = this.add.text(0, height * 0.20, '', {
-            fontSize: '11.5px', color: '#4a3520', fontStyle: 'bold', fontFamily: 'monospace', align: 'center'
-        }).setOrigin(0.5);
+        // 2. Modificadores de Dano nas 3 Casas (SVG Y=174 | X=186, 220, 254)
+        const mod1 = pos(186, 174);
+        const mod2 = pos(220, 174);
+        const mod3 = pos(254, 174);
 
-        this.lpDesc = this.add.text(0, height * 0.32, '', {
-            fontSize: '12px', color: '#000000', fontFamily: 'monospace', align: 'center', wordWrap: { width: width * 0.84 }
-        }).setOrigin(0.5);
+        this.lpModBonus = this.add.text(mod1.x, mod1.y, '0', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '18px', color: '#15803d', fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
 
-        this.lpFooterStats = this.add.text(0, height / 2 - 22, '', {
-            fontSize: '11.5px', color: '#14532d', fontStyle: 'bold', fontFamily: 'monospace', align: 'center'
-        }).setOrigin(0.5);
+        this.lpModReducao = this.add.text(mod2.x, mod2.y, '0', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '18px', color: '#dc2626', fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
+
+        this.lpModVulnerabilidade = this.add.text(mod3.x, mod3.y, '0', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '18px', color: '#7e22ce', fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
+
+        // 3. Os 4 Atributos Verticais na Coluna Direita (SVG X=264 | Y=224, 267, 310, 353)
+        const espPt = pos(264, 224);
+        const atqPt = pos(264, 267);
+        const defPt = pos(264, 310);
+        const hpPt  = pos(264, 353);
+
+        const statStyle = {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '19px',
+            color: '#090d16',
+            fontStyle: 'bold',
+            align: 'right'
+        };
+
+        this.lpStatEsp = this.add.text(espPt.x, espPt.y, '0', statStyle).setOrigin(1, 0.5).setResolution(2);
+        this.lpStatAtq = this.add.text(atqPt.x, atqPt.y, '0', statStyle).setOrigin(1, 0.5).setResolution(2);
+        this.lpStatDef = this.add.text(defPt.x, defPt.y, '0', statStyle).setOrigin(1, 0.5).setResolution(2);
+        this.lpStatHp  = this.add.text(hpPt.x,  hpPt.y,  '0', {
+            ...statStyle,
+            fontSize: '20px',
+            color: '#b91c1c'
+        }).setOrigin(1, 0.5).setResolution(2);
+
+        // 4. Caixa de Texto Inferior Esquerda
+        this.lpTypeLine = this.add.text(0, 0, '', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '12px',
+            color: '#4a3520',
+            fontStyle: 'bold',
+            align: 'left',
+            wordWrap: { width: width * (194 / 280) }
+        }).setOrigin(0, 0).setResolution(2);
+
+        this.lpDesc = this.add.text(0, 0, '', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '13px',
+            color: '#090d16',
+            fontStyle: 'bold',
+            align: 'left',
+            lineSpacing: 3,
+            wordWrap: { width: width * (194 / 280) }
+        }).setOrigin(0, 0).setResolution(2);
 
         this.largePreviewContainer.add([
-            this.lpShadow, this.lpBg, this.lpFrame, this.lpArtBox, this.lpArtLabel,
-            this.lpHeader, this.lpTitle, this.lpTypeLine, this.lpDesc, this.lpFooterStats
+            this.lpShadow,
+            this.lpArtBox,
+            this.lpArtLabel,
+            this.lpFrame,
+            this.lpTitle,
+            this.lpModBonus,
+            this.lpModReducao,
+            this.lpModVulnerabilidade,
+            this.lpStatEsp,
+            this.lpStatAtq,
+            this.lpStatDef,
+            this.lpStatHp,
+            this.lpTypeLine,
+            this.lpDesc
         ]);
+    }
+
+    formatHeroTraitsLine(heroDto) {
+        const capitalize = (str) => {
+            if (!str) return '';
+            const clean = String(str).replace(/_/g, ' ').trim();
+            return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
+        };
+
+        const formatList = (val, prefix = '') => {
+            if (!val) return [];
+            const arr = Array.isArray(val) ? val : [val];
+            return arr.filter(Boolean).map(v => `${prefix}${capitalize(v)}`);
+        };
+
+        const traits = [
+            ...formatList(heroDto.classe),
+            ...formatList(heroDto.ordem),
+            ...formatList(heroDto.racas || heroDto.raca),
+            ...formatList(heroDto.afinidades || heroDto.afinidade, 'Afinidade ')
+        ];
+
+        return traits.join(' - ');
     }
 
     showLargeCardPreview(cardOrHeroDto, isHero = false) {
         if (!cardOrHeroDto) return;
         const { width, height } = BOARD_LAYOUT.LARGE_CARD;
-        const headerColor = BOARD_LAYOUT.COLORS.CARD_COLORS[cardOrHeroDto.color] || 0x475569;
+
+        const pos = (svgX, svgY) => ({
+            x: ((svgX / 280) - 0.5) * width,
+            y: ((svgY / 380) - 0.5) * height
+        });
 
         const frameKey = isHero ? 'card_frame_hero' : 'card_frame_playable';
         if (this.textures.exists(frameKey)) {
-            this.lpFrame.setTexture(frameKey).setDisplaySize(width, height).setVisible(true);
+            this.lpFrame.setTexture(frameKey).setDisplaySize(width, height);
         }
 
-        this.lpHeader.setFillStyle(headerColor, 0.22);
-        this.lpTitle.setText(cardOrHeroDto.cardName);
+        this.lpTitle.setText(cardOrHeroDto.cardName || cardOrHeroDto.nome || '');
 
         if (isHero) {
             this.lpArtLabel.setText('⚔ ARTE DO HERÓI');
 
-            const weaponSlotsTxt = ` • Armas: ${cardOrHeroDto.usedWeaponSlots ?? 0}/${cardOrHeroDto.maxWeaponSlots ?? 2}`;
-            this.lpTypeLine.setPosition(-width * 0.12, height * 0.19).setText(`HERÓI • ${cardOrHeroDto.color}${weaponSlotsTxt}`);
+            const bonus = cardOrHeroDto.danoBonus ?? cardOrHeroDto.DanoBonus ?? 0;
+            const reducao = cardOrHeroDto.reducaoDano ?? 0;
+            const vulnerabilidade = cardOrHeroDto.vulnerabilidade ?? 0;
 
+            this.lpModBonus.setText(String(bonus)).setVisible(true);
+            this.lpModReducao.setText(String(reducao)).setVisible(true);
+            this.lpModVulnerabilidade.setText(String(vulnerabilidade)).setVisible(true);
+
+            this.lpStatEsp.setText(String(cardOrHeroDto.espirito ?? 0)).setVisible(true);
+            this.lpStatAtq.setText(String(cardOrHeroDto.ataque ?? 0)).setVisible(true);
+            this.lpStatDef.setText(String(cardOrHeroDto.defesa ?? 0)).setVisible(true);
+            this.lpStatHp.setText(String(cardOrHeroDto.vidaAtual ?? cardOrHeroDto.vidaMaxima ?? 0)).setVisible(true);
+
+            // Faixa de Atributos no topo da caixa esquerda (SVG X=14, Y=201)
+            const traitsPt = pos(14, 201);
+            const linhaAtributos = this.formatHeroTraitsLine(cardOrHeroDto);
+            this.lpTypeLine
+                .setOrigin(0, 0)
+                .setPosition(traitsPt.x, traitsPt.y)
+                .setStyle({
+                    fontFamily: 'IoskeleyMono, monospace',
+                    fontSize: '11.5px',
+                    color: '#4a3520',
+                    fontStyle: 'bold',
+                    align: 'left',
+                    wordWrap: { width: width * (194 / 280) }
+                })
+                .setText(linhaAtributos);
+
+            // Descrição logo abaixo da divisória da caixa (SVG X=14, Y=238)
+            const descPt = pos(14, 238);
             let fullDesc = cardOrHeroDto.descricao || '';
             const attached = cardOrHeroDto.attachedCards || [];
             if (attached.length > 0) {
-                const attachedLines = attached.map(item => {
-                    const emp = (item.itemType === 'ARMA' && item.empunhadura > 0) ? ` [Emp: ${item.empunhadura}]` : '';
-                    const desc = item.descricao ? `\n   ${item.descricao.replace(/\n/g, ' ')}` : '';
-                    return `🗡️ ${item.cardName}${emp}${desc}`;
-                }).join('\n');
-
-                fullDesc += (fullDesc ? '\n\n' : '') + `✦ ITENS EQUIPADOS (${attached.length}):\n${attachedLines}`;
+                const itemsList = attached.map(it => `🗡️ ${it.cardName}`).join('\n');
+                fullDesc += (fullDesc ? '\n\n' : '') + itemsList;
             }
 
-            const fontSize = fullDesc.length > 170 ? '9.5px' : '11px';
-            this.lpDesc.setPosition(-width * 0.12, height * 0.31)
-                .setStyle({ fontSize, color: '#000000', fontFamily: 'monospace', align: 'left', wordWrap: { width: width * 0.64 } })
+            this.lpDesc
+                .setOrigin(0, 0)
+                .setPosition(descPt.x, descPt.y)
+                .setStyle({
+                    fontFamily: 'IoskeleyMono, monospace',
+                    fontSize: fullDesc.length > 130 ? '11.5px' : '12.5px',
+                    color: '#090d16',
+                    fontStyle: 'bold',
+                    align: 'left',
+                    lineSpacing: 3,
+                    wordWrap: { width: width * (194 / 280) }
+                })
                 .setText(fullDesc);
 
-            this.lpFooterStats.setText(
-                `ESP:${cardOrHeroDto.espirito} | ATQ:${cardOrHeroDto.ataque} | DEF:${cardOrHeroDto.defesa} | HP:${cardOrHeroDto.vidaAtual}/${cardOrHeroDto.vidaMaxima}`
-            );
         } else {
+            // Carta Jogável (Magia, Item, Ação, Teurgia)
+            this.lpModBonus.setVisible(false);
+            this.lpModReducao.setVisible(false);
+            this.lpModVulnerabilidade.setVisible(false);
+            this.lpStatEsp.setVisible(false);
+            this.lpStatAtq.setVisible(false);
+            this.lpStatDef.setVisible(false);
+            this.lpStatHp.setVisible(false);
+
             const empTxt = (cardOrHeroDto.itemType === 'ARMA' && cardOrHeroDto.empunhadura > 0)
-                ? ` • Empunhadura: ${cardOrHeroDto.empunhadura}`
+                ? ` • EMP: ${cardOrHeroDto.empunhadura}`
                 : '';
+            const subType = (cardOrHeroDto.itemType && cardOrHeroDto.itemType !== 'NENHUM')
+                ? ` • ${cardOrHeroDto.itemType}`
+                : '';
+
             this.lpArtLabel.setText(`✦ ARTE (${cardOrHeroDto.cardType})`);
-            this.lpTypeLine.setPosition(0, height * 0.20).setText(`${cardOrHeroDto.cardType}${empTxt}`);
-            this.lpDesc.setPosition(0, height * 0.33)
-                .setStyle({ fontSize: '12px', color: '#000000', fontFamily: 'monospace', align: 'center', wordWrap: { width: width * 0.84 } })
+
+            // Faixa amarela centralizada em SVG X=138, Y=208
+            const typePt = pos(138, 208);
+            this.lpTypeLine
+                .setOrigin(0.5, 0.5)
+                .setPosition(typePt.x, typePt.y)
+                .setStyle({
+                    fontFamily: 'IoskeleyMono, monospace',
+                    fontSize: '13px',
+                    color: '#090d16',
+                    fontStyle: 'bold',
+                    align: 'center',
+                    wordWrap: { width: width * 0.88 }
+                })
+                .setText(`${cardOrHeroDto.cardType}${subType}${empTxt}`);
+
+            // Descrição na caixa inferior de largura total (SVG X=16, Y=230)
+            const descPt = pos(16, 230);
+            this.lpDesc
+                .setOrigin(0, 0)
+                .setPosition(descPt.x, descPt.y)
+                .setStyle({
+                    fontFamily: 'IoskeleyMono, monospace',
+                    fontSize: '14px',
+                    color: '#090d16',
+                    fontStyle: 'bold',
+                    align: 'left',
+                    lineSpacing: 4,
+                    wordWrap: { width: width * (244 / 280) }
+                })
                 .setText(cardOrHeroDto.descricao || '');
-            this.lpFooterStats.setText(cardOrHeroDto.itemType && cardOrHeroDto.itemType !== 'NENHUM' ? `Item: ${cardOrHeroDto.itemType}` : '');
         }
 
         const artKey = cardOrHeroDto.imagem && this.textures.exists(cardOrHeroDto.imagem)
@@ -647,8 +810,8 @@ export default class MatchScene extends Phaser.Scene {
             if (!this.lpArtSprite) {
                 this.lpArtSprite = this.add.image(this.lpArtBox.x, this.lpArtBox.y, artKey);
                 this.lpArtSprite.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
-                const boxIdx = this.largePreviewContainer.getIndex(this.lpArtLabel);
-                this.largePreviewContainer.addAt(this.lpArtSprite, boxIdx);
+                const frameIdx = this.largePreviewContainer.getIndex(this.lpFrame);
+                this.largePreviewContainer.addAt(this.lpArtSprite, frameIdx);
             } else {
                 this.lpArtSprite.setTexture(artKey).setVisible(true);
             }
@@ -660,13 +823,13 @@ export default class MatchScene extends Phaser.Scene {
         }
 
         this.largePreviewContainer.setVisible(true);
-        this.largePreviewContainer.setScale(0.92);
+        this.largePreviewContainer.setScale(0.94);
         this.tweens.killTweensOf(this.largePreviewContainer);
         this.tweens.add({
             targets: this.largePreviewContainer,
             scaleX: 1.0,
             scaleY: 1.0,
-            duration: 260,
+            duration: 200,
             ease: 'Cubic.easeOut'
         });
     }

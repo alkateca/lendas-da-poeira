@@ -37,8 +37,8 @@ export class Preloader extends Scene
         this.load.svg('ui_graveyard_glitch', 'images/ui/graveyard_glitch.svg', { width: 82, height: 96 });
 
         // Sobrescreve também as chaves de molduras de carta caso queira que os prefabs usem o SVG direto:
-        this.load.svg('card_frame_playable', 'images/ui/card_frame_phantom.svg', { width: 320, height: 440 });
-        this.load.svg('card_frame_hero', 'images/ui/card_frame_phantom.svg', { width: 320, height: 440 });
+        this.load.svg('card_frame_hero', 'images/ui/card_frame_hero.svg', { width: 280, height: 380 });
+        this.load.svg('card_frame_playable', 'images/ui/card_frame_playable.svg', { width: 280, height: 380 });
     }
 
     create ()
