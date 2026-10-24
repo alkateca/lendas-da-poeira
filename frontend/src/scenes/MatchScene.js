@@ -4,6 +4,8 @@ import HeroCardPrefab from '../prefabs/HeroCardPrefab.js';
 import PlayableCardPrefab from '../prefabs/PlayableCardPrefab.js';
 import SnapshotPlayerManager from '../managers/SnapshotPlayerManager.js';
 import SelectionManager from '../managers/SelectionManager.js';
+import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
+import PhantomUIKit from '../ui/PhantomUIKit.js';
 
 export default class MatchScene extends Phaser.Scene {
     constructor() {
@@ -18,12 +20,15 @@ export default class MatchScene extends Phaser.Scene {
         this.opponentHandDummies = [];
         this.resolveCardPrefabs = [];
         this.resolveSlotVisuals = [];
+        this.oppBenchSlotVisuals = [];
+        this.localBenchSlotVisuals = [];
 
         this.isWaitingOpponentConfirmation = false;
         this.isSubmittingAction = false;
         this.isPolling = false;
         this.isChoiceModalActive = false;
         this.isSettingsModalOpen = false;
+        this.lastCutInTime = 0;
         this.musicVolume = Number(localStorage.getItem('ldp_music_volume') ?? 0.7);
         this.sfxVolume = Number(localStorage.getItem('ldp_sfx_volume') ?? 0.8);
     }
@@ -36,14 +41,41 @@ export default class MatchScene extends Phaser.Scene {
 
     preload() {
         this.load.setPath('assets');
+
         if (!this.textures.exists('card_back')) {
             this.load.image('card_back', 'images/modeloBaralho.png');
         }
-        if (!this.textures.exists('card_frame_playable')) {
-            this.load.image('card_frame_playable', 'images/modeloAlfaCartas.jpeg');
-        }
+
+        // Novos SVGs em /assets/images/ui/
         if (!this.textures.exists('card_frame_hero')) {
-            this.load.image('card_frame_hero', 'images/modeloAlfa.jpeg');
+            this.load.svg('card_frame_hero', 'images/ui/card_frame_hero.svg', { width: 280, height: 380 });
+        }
+        if (!this.textures.exists('card_frame_playable')) {
+            this.load.svg('card_frame_playable', 'images/ui/card_frame_playable.svg', { width: 280, height: 380 });
+        }
+        if (!this.textures.exists('ui_hud_panel_light')) {
+            this.load.svg('ui_hud_panel_light', 'images/ui/ui_hud_panel_light.svg', { width: 360, height: 80 });
+        }
+        if (!this.textures.exists('ui_slot_frame')) {
+            this.load.svg('ui_slot_frame', 'images/ui/ui_slot_frame.svg', { width: 160, height: 210 });
+        }
+        if (!this.textures.exists('ui_banner_player')) {
+            this.load.svg('ui_banner_player', 'images/ui/ui_banner_player.svg', { width: 360, height: 76 });
+        }
+        if (!this.textures.exists('ui_p5_crt_button')) {
+            this.load.svg('ui_p5_crt_button', 'images/ui/p5_crt_button.svg', { width: 520, height: 84 });
+        }
+        if (!this.textures.exists('ui_arena_crt_radar')) {
+            this.load.svg('ui_arena_crt_radar', 'images/ui/arena_crt_radar.svg', { width: 800, height: 800 });
+        }
+        if (!this.textures.exists('ui_graveyard_glitch')) {
+            this.load.svg('ui_graveyard_glitch', 'images/ui/graveyard_glitch.svg', { width: 82, height: 96 });
+        }
+        if (!this.textures.exists('card_discard_back')) {
+            this.load.image('card_discard_back', 'images/modeloBaralhoDescarte.png');
+        }
+        if (!this.textures.exists('arena_crt_radar')) {
+            this.load.svg('arena_crt_radar', 'images/ui/arena_crt_radar.svg', { width: 800, height: 800 });
         }
 
         // Spritesheets de Efeitos Visuais portadas do partida.lua
@@ -142,6 +174,11 @@ export default class MatchScene extends Phaser.Scene {
     }
 
     create() {
+        if (this.renderer.pipelines) {
+            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
+            this.cameras.main.setPostPipeline('CRTPostFX');
+        }
+
         this.registerCombatAnimations();
         this.heroPrefabs.clear();
         this.spawnedCardPrefabs = new Map();
@@ -149,6 +186,8 @@ export default class MatchScene extends Phaser.Scene {
         this.opponentHandDummies = [];
         this.resolveCardPrefabs = [];
         this.resolveSlotVisuals = [];
+        this.oppBenchSlotVisuals = [];
+        this.localBenchSlotVisuals = [];
         this.currentSnapshot = null;
         this.isWaitingOpponentConfirmation = false;
         this.isSubmittingAction = false;
@@ -239,63 +278,122 @@ export default class MatchScene extends Phaser.Scene {
         });
     }
 
+    drawSlotCornerBrackets(graphics, w, h, color, arm = 18, lineWidth = 2.5) {
+        graphics.clear();
+        const hw = w / 2;
+        const hh = h / 2;
+
+        graphics.lineStyle(lineWidth, color, 1);
+
+        // Top-Left (L)
+        graphics.beginPath();
+        graphics.moveTo(-hw + arm, -hh);
+        graphics.lineTo(-hw, -hh);
+        graphics.lineTo(-hw, -hh + arm);
+        graphics.strokePath();
+
+        // Top-Right (L)
+        graphics.beginPath();
+        graphics.moveTo(hw - arm, -hh);
+        graphics.lineTo(hw, -hh);
+        graphics.lineTo(hw, -hh + arm);
+        graphics.strokePath();
+
+        // Bottom-Left (L)
+        graphics.beginPath();
+        graphics.moveTo(-hw + arm, hh);
+        graphics.lineTo(-hw, hh);
+        graphics.lineTo(-hw, hh - arm);
+        graphics.strokePath();
+
+        // Bottom-Right (L)
+        graphics.beginPath();
+        graphics.moveTo(hw - arm, hh);
+        graphics.lineTo(hw, hh);
+        graphics.lineTo(hw, hh - arm);
+        graphics.strokePath();
+    }
+
     drawBoardBackgroundAndSlots() {
         const { COLORS, MEDIUM_CARD, BENCH_BOXES, ARENA_CIRCLE } = BOARD_LAYOUT;
 
-        // Fundo preto puro sem linhas de grade
-        this.add.rectangle(960, 540, 1920, 1080, COLORS.BG_DARK, 1);
+        // Fundo mais claro que o preto puro, destacando as cartas e os painéis
+        this.add.rectangle(960, 540, 1920, 1080, 0x1b2230, 1);
 
-        // Círculo central da Arena definido apenas por tom de preto mais claro (sem linha de contorno)
-        const graphics = this.add.graphics();
-        graphics.fillStyle(COLORS.ZONE_SURFACE, 1);
-        graphics.fillCircle(ARENA_CIRCLE.x, ARENA_CIRCLE.y, ARENA_CIRCLE.radius);
+        // Radar Vetorial Central
+        const diameter = ARENA_CIRCLE.radius * 2;
+        if (this.textures.exists('ui_arena_crt_radar')) {
+            this.arenaRadar = this.add.image(ARENA_CIRCLE.x, ARENA_CIRCLE.y, 'ui_arena_crt_radar')
+                .setDisplaySize(diameter, diameter)
+                .setAlpha(0.95);
+            this.tweens.add({ targets: this.arenaRadar, angle: 360, duration: 90000, repeat: -1 });
+        } else {
+            const graphics = this.add.graphics();
+            graphics.fillStyle(0x263042, 1);
+            graphics.fillCircle(ARENA_CIRCLE.x, ARENA_CIRCLE.y, ARENA_CIRCLE.radius);
+        }
 
-        // Áreas das Bancadas (BENCH) em tom de preto mais claro, sem bordas
-        this.add.rectangle(BENCH_BOXES.OPPONENT.x, BENCH_BOXES.OPPONENT.y, BENCH_BOXES.OPPONENT.width, BENCH_BOXES.OPPONENT.height, COLORS.ZONE_SURFACE, 1);
-        this.add.text(BENCH_BOXES.OPPONENT.x, BENCH_BOXES.OPPONENT.y - 128, 'BANCADA INIMIGA', {
-            fontSize: '12px', color: '#64748b', fontStyle: 'bold'
+        // Bancadas com borda clara e rótulos em Branco/Amarelo de alta visibilidade
+        this.add.rectangle(BENCH_BOXES.OPPONENT.x, BENCH_BOXES.OPPONENT.y, BENCH_BOXES.OPPONENT.width, BENCH_BOXES.OPPONENT.height, 0x263042, 0.9)
+            .setStrokeStyle(2, 0x475569);
+        this.add.text(BENCH_BOXES.OPPONENT.x, BENCH_BOXES.OPPONENT.y - 128, '▲ BANCADA INIMIGA', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '14px', color: '#e2e8f0', fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        this.add.rectangle(BENCH_BOXES.LOCAL.x, BENCH_BOXES.LOCAL.y, BENCH_BOXES.LOCAL.width, BENCH_BOXES.LOCAL.height, COLORS.ZONE_SURFACE, 1);
-        this.add.text(BENCH_BOXES.LOCAL.x, BENCH_BOXES.LOCAL.y - 128, 'SUA BANCADA', {
-            fontSize: '12px', color: '#64748b', fontStyle: 'bold'
+        this.add.rectangle(BENCH_BOXES.LOCAL.x, BENCH_BOXES.LOCAL.y, BENCH_BOXES.LOCAL.width, BENCH_BOXES.LOCAL.height, 0x263042, 0.9)
+            .setStrokeStyle(2, 0x475569);
+        this.add.text(BENCH_BOXES.LOCAL.x, BENCH_BOXES.LOCAL.y - 128, '▼ SUA BANCADA', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '14px', color: '#ffe600', fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        // Slots individuais das bancadas em tom grafite escuro sem contorno
+        // Slots das Bancadas usando ui_slot_frame.svg
         BOARD_LAYOUT.OPPONENT_BENCH_SLOTS.forEach(pos => {
-            this.add.rectangle(pos.x, pos.y, MEDIUM_CARD.width + 6, MEDIUM_CARD.height + 6, COLORS.SLOT_SURFACE, 1);
+            this.add.image(pos.x, pos.y, 'ui_slot_frame').setDisplaySize(MEDIUM_CARD.width + 8, MEDIUM_CARD.height + 8);
         });
 
         BOARD_LAYOUT.LOCAL_BENCH_SLOTS.forEach(pos => {
-            this.add.rectangle(pos.x, pos.y, MEDIUM_CARD.width + 6, MEDIUM_CARD.height + 6, COLORS.SLOT_SURFACE, 1);
+            this.add.image(pos.x, pos.y, 'ui_slot_frame').setDisplaySize(MEDIUM_CARD.width + 8, MEDIUM_CARD.height + 8);
         });
 
-        // Slots de Batalha Ativa (sem contorno fixo)
+        // Slots de Batalha Ativa
         this.oppBattleSlotRect = this.add.rectangle(
             BOARD_LAYOUT.BATTLE_SLOTS.OPPONENT_ACTIVE_HERO.x,
             BOARD_LAYOUT.BATTLE_SLOTS.OPPONENT_ACTIVE_HERO.y,
-            MEDIUM_CARD.width + 10, MEDIUM_CARD.height + 10, COLORS.SLOT_ELEVATED, 1
+            MEDIUM_CARD.width + 10, MEDIUM_CARD.height + 10, 0x2d3a50, 1
         );
+        this.add.image(
+            BOARD_LAYOUT.BATTLE_SLOTS.OPPONENT_ACTIVE_HERO.x,
+            BOARD_LAYOUT.BATTLE_SLOTS.OPPONENT_ACTIVE_HERO.y,
+            'ui_slot_frame'
+        ).setDisplaySize(MEDIUM_CARD.width + 12, MEDIUM_CARD.height + 12).setTint(0x38bdf8);
+
         this.add.text(BOARD_LAYOUT.BATTLE_SLOTS.OPPONENT_ACTIVE_HERO.x, BOARD_LAYOUT.BATTLE_SLOTS.OPPONENT_ACTIVE_HERO.y, 'BATALHA\nINIMIGO', {
-            fontSize: '11px', color: '#64748b', fontStyle: 'bold', align: 'center'
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '13px', color: '#bae6fd', fontStyle: 'bold', align: 'center'
         }).setOrigin(0.5);
 
         this.localBattleSlotRect = this.add.rectangle(
             BOARD_LAYOUT.BATTLE_SLOTS.LOCAL_ACTIVE_HERO.x,
             BOARD_LAYOUT.BATTLE_SLOTS.LOCAL_ACTIVE_HERO.y,
-            MEDIUM_CARD.width + 10, MEDIUM_CARD.height + 10, COLORS.SLOT_ELEVATED, 1
+            MEDIUM_CARD.width + 10, MEDIUM_CARD.height + 10, 0x2d3a50, 1
         );
+        this.add.image(
+            BOARD_LAYOUT.BATTLE_SLOTS.LOCAL_ACTIVE_HERO.x,
+            BOARD_LAYOUT.BATTLE_SLOTS.LOCAL_ACTIVE_HERO.y,
+            'ui_slot_frame'
+        ).setDisplaySize(MEDIUM_CARD.width + 12, MEDIUM_CARD.height + 12).setTint(0xf87171);
+
         this.add.text(BOARD_LAYOUT.BATTLE_SLOTS.LOCAL_ACTIVE_HERO.x, BOARD_LAYOUT.BATTLE_SLOTS.LOCAL_ACTIVE_HERO.y, 'BATALHA\nALIADO', {
-            fontSize: '11px', color: '#64748b', fontStyle: 'bold', align: 'center'
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '13px', color: '#fecaca', fontStyle: 'bold', align: 'center'
         }).setOrigin(0.5);
 
-        // 4 Slots de Resolução Central (sem contorno fixo)
+        // 4 Slots de Resolução Central
         this.resolveSlotVisuals = BOARD_LAYOUT.RESOLVE_SLOTS.map((pos, idx) => {
             const rect = this.add.rectangle(pos.x, pos.y, MEDIUM_CARD.width + 4, MEDIUM_CARD.height + 4, COLORS.SLOT_SURFACE, 1);
+            const frame = this.add.image(pos.x, pos.y, 'ui_slot_frame').setDisplaySize(MEDIUM_CARD.width + 8, MEDIUM_CARD.height + 8);
             const label = this.add.text(pos.x, pos.y, `${idx + 1}º AÇÃO`, {
-                fontSize: '11px', color: '#94a3b8', fontStyle: 'bold', align: 'center'
+                fontFamily: 'IoskeleyMono, monospace', fontSize: '13px', color: '#ffffff', fontStyle: 'bold', align: 'center'
             }).setOrigin(0.5);
-            return { rect, label, x: pos.x, y: pos.y, index: idx };
+            return { rect, frame, label, x: pos.x, y: pos.y, index: idx };
         });
     }
 
@@ -304,13 +402,18 @@ export default class MatchScene extends Phaser.Scene {
 
         this.resolveSlotVisuals.forEach((slot, idx) => {
             const belongsToLocal = localHasInitiative ? (idx % 2 === 0) : (idx % 2 !== 0);
+            const cornerColor = belongsToLocal ? 0xe60012 : 0x00f0ff;
             const fillColor = belongsToLocal ? COLORS.LOCAL_SLOT_TINT : COLORS.OPP_SLOT_TINT;
             const labelColor = belongsToLocal ? '#fca5a5' : '#7dd3fc';
             const ownerTag = belongsToLocal ? 'VOCÊ' : 'OPONENTE';
 
             slot.belongsToLocal = belongsToLocal;
+            slot.cornerColor = cornerColor;
             slot.baseFill = fillColor;
             slot.rect.setFillStyle(fillColor, 1).setStrokeStyle(0);
+            if (slot.graphics) {
+                this.drawSlotCornerBrackets(slot.graphics, slot.w, slot.h, cornerColor);
+            }
             slot.label.setText(`${idx + 1}º AÇÃO\n(${ownerTag})`).setColor(labelColor);
         });
     }
@@ -350,13 +453,29 @@ export default class MatchScene extends Phaser.Scene {
             fontSize: '13px', color: '#e2e8f0', align: 'center', wordWrap: { width: 650 }
         }).setOrigin(0.5);
 
-        this.mainButtonBg = this.add.rectangle(PILES.MAIN_BUTTON.x, PILES.MAIN_BUTTON.y, 280, 74, 0x16a34a)
+        this.mainButtonBg = this.add.image(PILES.MAIN_BUTTON.x, PILES.MAIN_BUTTON.y, 'ui_p5_crt_button')
+            .setDisplaySize(290, 76)
             .setDepth(80)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => this.onMainButtonClicked());
 
-        this.mainButtonLabel = this.add.text(PILES.MAIN_BUTTON.x, PILES.MAIN_BUTTON.y, 'CONFIRMAR', {
-            fontSize: '15px', color: '#ffffff', fontStyle: 'bold', align: 'center'
+        this.mainButtonBg.setFillStyle = (color) => {
+            if (color === 0x475569) {
+                this.mainButtonBg.setTint(0x777777).setAlpha(0.55);
+            } else if (color === 0xd97706) {
+                this.mainButtonBg.setTint(0xffaa00).setAlpha(1.0);
+            } else {
+                this.mainButtonBg.clearTint().setAlpha(1.0);
+            }
+            return this.mainButtonBg;
+        };
+
+        this.mainButtonLabel = this.add.text(PILES.MAIN_BUTTON.x + 12, PILES.MAIN_BUTTON.y - 2, 'CONFIRMAR', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '15px',
+            color: '#ffffff',
+            fontStyle: 'bold',
+            align: 'center'
         }).setOrigin(0.5).setDepth(81);
     }
 
@@ -372,36 +491,48 @@ export default class MatchScene extends Phaser.Scene {
     }
 
     createMiniTombstoneIcon(x, y, onClickCallback) {
-        const { COLORS } = BOARD_LAYOUT;
         const container = this.add.container(x, y);
-        const outer = this.add.rectangle(0, 0, 82, 96, COLORS.SLOT_SURFACE);
 
-        const g = this.add.graphics();
-        g.fillStyle(0x475569, 1);
-        g.fillRoundedRect(-16, -28, 32, 34, { tl: 14, tr: 14, bl: 0, br: 0 });
-        g.fillStyle(0x334155, 1);
-        g.fillRect(-20, 6, 40, 5);
+        const graveSvg = this.add.image(0, 0, 'ui_graveyard_glitch')
+            .setDisplaySize(82, 96)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', onClickCallback);
 
-        const crossV = this.add.rectangle(0, -14, 3, 14, COLORS.ZONE_SURFACE);
-        const crossH = this.add.rectangle(0, -17, 11, 3, COLORS.ZONE_SURFACE);
+        graveSvg.on('pointerover', () => {
+            this.tweens.add({ targets: container, scaleX: 1.08, scaleY: 1.08, angle: -3, duration: 120 });
+        });
+        graveSvg.on('pointerout', () => {
+            this.tweens.add({ targets: container, scaleX: 1.0, scaleY: 1.0, angle: 0, duration: 120 });
+        });
 
-        const countTxt = this.add.text(0, 26, '🪦 0', { fontSize: '12px', color: '#e2e8f0', fontStyle: 'bold' }).setOrigin(0.5);
-        container.add([outer, g, crossV, crossH, countTxt]);
+        const countTxt = this.add.text(0, 32, '🪦 0', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '12px',
+            color: '#00f0ff',
+            fontStyle: 'bold',
+            stroke: '#050507',
+            strokeThickness: 3
+        }).setOrigin(0.5);
 
-        outer.setInteractive({ useHandCursor: true }).on('pointerdown', onClickCallback);
+        container.add([graveSvg, countTxt]);
         return countTxt;
     }
 
     createPlayerCornerBanner(x, y, badgeCode, roleLabel, defaultName, fillColor) {
-        const { COLORS } = BOARD_LAYOUT;
         const container = this.add.container(x, y);
-        const bg = this.add.rectangle(0, 0, 360, 68, COLORS.ZONE_SURFACE, 1);
-        const avatar = this.add.circle(-142, 0, 20, fillColor);
-        const codeTxt = this.add.text(-142, 0, badgeCode, { fontSize: '13px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
-        const roleTxt = this.add.text(-108, -18, roleLabel, { fontSize: '10px', color: '#ffd700', fontStyle: 'bold' }).setOrigin(0, 0.5);
-        const nameTxt = this.add.text(-108, 0, defaultName, { fontSize: '14px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0, 0.5);
-        const eloTxt = this.add.text(-108, 18, '🏅 ELO: 1000  |  📅 Semanal: 1000', {
-            fontSize: '10.5px', color: '#38bdf8', fontStyle: 'bold', fontFamily: 'monospace'
+        const bg = this.add.image(0, 0, 'ui_banner_player').setDisplaySize(360, 74);
+        const avatar = this.add.circle(-144, 0, 20, fillColor).setStrokeStyle(2, 0xffffff);
+        const codeTxt = this.add.text(-144, 0, badgeCode, {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '14px', color: '#ffffff', fontStyle: 'bold'
+        }).setOrigin(0.5);
+        const roleTxt = this.add.text(-102, -18, roleLabel, {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '11.5px', color: '#e60012', fontStyle: 'bold'
+        }).setOrigin(0, 0.5);
+        const nameTxt = this.add.text(-102, -1, defaultName, {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '15.5px', color: '#090d16', fontStyle: 'bold'
+        }).setOrigin(0, 0.5);
+        const eloTxt = this.add.text(-102, 18, '🏅 ELO: 1000  |  📅 Semanal: 1000', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '11.5px', color: '#1e3a8a', fontStyle: 'bold'
         }).setOrigin(0, 0.5);
 
         container.add([bg, avatar, codeTxt, roleTxt, nameTxt, eloTxt]);
@@ -410,99 +541,265 @@ export default class MatchScene extends Phaser.Scene {
 
     createLargeHoverPreviewPanel() {
         const { x, y } = BOARD_LAYOUT.PILES.LARGE_PREVIEW;
-        const { width, height } = BOARD_LAYOUT.LARGE_CARD;
+        const { width, height } = BOARD_LAYOUT.LARGE_CARD; // 280 x 380
+
+        const pos = (svgX, svgY) => ({
+            x: ((svgX / 280) - 0.5) * width,
+            y: ((svgY / 380) - 0.5) * height
+        });
 
         this.largePreviewContainer = this.add.container(x, y).setDepth(190).setVisible(false);
 
-        this.lpShadow = this.add.rectangle(8, 10, width, height, 0x000000, 0.75);
-        this.lpBg = this.add.rectangle(0, 0, width + 4, height + 4, 0x000000, 0)
-            .setStrokeStyle(4, BOARD_LAYOUT.COLORS.GOLD_DUST);
+        this.lpShadow = this.add.rectangle(8, 10, width, height, 0x000000, 0.65);
 
-        const artW = width * 0.905;
-        const artH = height * 0.50;
-        const artX = -width / 2 + (width * 0.046) + (artW / 2);
-        const artY = -height / 2 + (height * 0.11) + (artH / 2);
+        // Janela de arte (SVG x: 12..261, y: 41..192 -> centro 137, 117)
+        const artCenter = pos(137, 117);
+        const artW = width * (248 / 280);
+        const artH = height * (150 / 380);
 
-        this.lpArtBox = this.add.rectangle(artX, artY, artW, artH, 0x1e2430, 0.3).setStrokeStyle(1, 0x475569);
-        this.lpArtLabel = this.add.text(artX, artY, 'ILUSTRAÇÃO AMPLIADA', {
-            fontSize: '13px', color: '#475569', fontStyle: 'bold', fontFamily: 'monospace'
-        }).setOrigin(0.5);
+        // Fundo creme suave quando não há imagem (em vez de bloco colorido forte)
+        this.lpArtBox = this.add.rectangle(artCenter.x, artCenter.y, artW, artH, 0xd6cbb5, 1);
+        this.lpArtLabel = this.add.text(artCenter.x, artCenter.y, 'ILUSTRAÇÃO', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '14px',
+            color: '#475569',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
 
-        this.lpFrame = this.add.image(0, 0, 'card_frame_playable').setDisplaySize(width, height);
+        this.lpFrame = this.add.image(0, 0, 'card_frame_hero').setDisplaySize(width, height);
 
-        const headerY = -height / 2 + (height * 0.055);
-        this.lpHeader = this.add.rectangle(0, headerY, width * 0.80, height * 0.065, 0x1d4ed8, 0.22);
-        this.lpTitle = this.add.text(0, headerY, '', {
-            fontSize: '16px', color: '#000000', fontStyle: 'bold', fontFamily: 'monospace', align: 'center', wordWrap: { width: width * 0.82 }
-        }).setOrigin(0.5);
+        // 1. Título no Topo (SVG X=132, Y=21)
+        const titlePt = pos(132, 21);
+        this.lpTitle = this.add.text(titlePt.x, titlePt.y, '', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '16px',
+            color: '#090d16',
+            fontStyle: 'bold',
+            align: 'center',
+            wordWrap: { width: width * 0.82 }
+        }).setOrigin(0.5).setResolution(2);
 
-        this.lpTypeLine = this.add.text(0, height * 0.20, '', {
-            fontSize: '11.5px', color: '#4a3520', fontStyle: 'bold', fontFamily: 'monospace', align: 'center'
-        }).setOrigin(0.5);
+        // 2. Modificadores de Dano nas 3 Casas (SVG Y=174 | X=186, 220, 254)
+        const mod1 = pos(186, 174);
+        const mod2 = pos(220, 174);
+        const mod3 = pos(254, 174);
 
-        this.lpDesc = this.add.text(0, height * 0.32, '', {
-            fontSize: '12px', color: '#000000', fontFamily: 'monospace', align: 'center', wordWrap: { width: width * 0.84 }
-        }).setOrigin(0.5);
+        this.lpModBonus = this.add.text(mod1.x, mod1.y, '0', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '18px', color: '#15803d', fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
 
-        this.lpFooterStats = this.add.text(0, height / 2 - 22, '', {
-            fontSize: '11.5px', color: '#14532d', fontStyle: 'bold', fontFamily: 'monospace', align: 'center'
-        }).setOrigin(0.5);
+        this.lpModReducao = this.add.text(mod2.x, mod2.y, '0', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '18px', color: '#dc2626', fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
+
+        this.lpModVulnerabilidade = this.add.text(mod3.x, mod3.y, '0', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '18px', color: '#7e22ce', fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
+
+        // 3. Os 4 Atributos Verticais na Coluna Direita (SVG X=264 | Y=224, 267, 310, 353)
+        const espPt = pos(264, 224);
+        const atqPt = pos(264, 267);
+        const defPt = pos(264, 310);
+        const hpPt  = pos(264, 353);
+
+        const statStyle = {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '19px',
+            color: '#090d16',
+            fontStyle: 'bold',
+            align: 'right'
+        };
+
+        this.lpStatEsp = this.add.text(espPt.x, espPt.y, '0', statStyle).setOrigin(1, 0.5).setResolution(2);
+        this.lpStatAtq = this.add.text(atqPt.x, atqPt.y, '0', statStyle).setOrigin(1, 0.5).setResolution(2);
+        this.lpStatDef = this.add.text(defPt.x, defPt.y, '0', statStyle).setOrigin(1, 0.5).setResolution(2);
+        this.lpStatHp  = this.add.text(hpPt.x,  hpPt.y,  '0', {
+            ...statStyle,
+            fontSize: '20px',
+            color: '#b91c1c'
+        }).setOrigin(1, 0.5).setResolution(2);
+
+        // 4. Caixa de Texto Inferior Esquerda
+        this.lpTypeLine = this.add.text(0, 0, '', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '12px',
+            color: '#4a3520',
+            fontStyle: 'bold',
+            align: 'left',
+            wordWrap: { width: width * (194 / 280) }
+        }).setOrigin(0, 0).setResolution(2);
+
+        this.lpDesc = this.add.text(0, 0, '', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '13px',
+            color: '#090d16',
+            fontStyle: 'bold',
+            align: 'left',
+            lineSpacing: 3,
+            wordWrap: { width: width * (194 / 280) }
+        }).setOrigin(0, 0).setResolution(2);
 
         this.largePreviewContainer.add([
-            this.lpShadow, this.lpBg, this.lpFrame, this.lpArtBox, this.lpArtLabel,
-            this.lpHeader, this.lpTitle, this.lpTypeLine, this.lpDesc, this.lpFooterStats
+            this.lpShadow,
+            this.lpArtBox,
+            this.lpArtLabel,
+            this.lpFrame,
+            this.lpTitle,
+            this.lpModBonus,
+            this.lpModReducao,
+            this.lpModVulnerabilidade,
+            this.lpStatEsp,
+            this.lpStatAtq,
+            this.lpStatDef,
+            this.lpStatHp,
+            this.lpTypeLine,
+            this.lpDesc
         ]);
+    }
+
+    formatHeroTraitsLine(heroDto) {
+        const capitalize = (str) => {
+            if (!str) return '';
+            const clean = String(str).replace(/_/g, ' ').trim();
+            return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
+        };
+
+        const formatList = (val, prefix = '') => {
+            if (!val) return [];
+            const arr = Array.isArray(val) ? val : [val];
+            return arr.filter(Boolean).map(v => `${prefix}${capitalize(v)}`);
+        };
+
+        const traits = [
+            ...formatList(heroDto.classe),
+            ...formatList(heroDto.ordem),
+            ...formatList(heroDto.racas || heroDto.raca),
+            ...formatList(heroDto.afinidades || heroDto.afinidade, 'Afinidade ')
+        ];
+
+        return traits.join(' - ');
     }
 
     showLargeCardPreview(cardOrHeroDto, isHero = false) {
         if (!cardOrHeroDto) return;
         const { width, height } = BOARD_LAYOUT.LARGE_CARD;
-        const headerColor = BOARD_LAYOUT.COLORS.CARD_COLORS[cardOrHeroDto.color] || 0x475569;
+
+        const pos = (svgX, svgY) => ({
+            x: ((svgX / 280) - 0.5) * width,
+            y: ((svgY / 380) - 0.5) * height
+        });
 
         const frameKey = isHero ? 'card_frame_hero' : 'card_frame_playable';
         if (this.textures.exists(frameKey)) {
-            this.lpFrame.setTexture(frameKey).setDisplaySize(width, height).setVisible(true);
+            this.lpFrame.setTexture(frameKey).setDisplaySize(width, height);
         }
 
-        this.lpHeader.setFillStyle(headerColor, 0.22);
-        this.lpTitle.setText(cardOrHeroDto.cardName);
+        this.lpTitle.setText(cardOrHeroDto.cardName || cardOrHeroDto.nome || '');
 
         if (isHero) {
             this.lpArtLabel.setText('⚔ ARTE DO HERÓI');
 
-            const weaponSlotsTxt = ` • Armas: ${cardOrHeroDto.usedWeaponSlots ?? 0}/${cardOrHeroDto.maxWeaponSlots ?? 2}`;
-            this.lpTypeLine.setPosition(-width * 0.12, height * 0.19).setText(`HERÓI • ${cardOrHeroDto.color}${weaponSlotsTxt}`);
+            const bonus = cardOrHeroDto.danoBonus ?? cardOrHeroDto.DanoBonus ?? 0;
+            const reducao = cardOrHeroDto.reducaoDano ?? 0;
+            const vulnerabilidade = cardOrHeroDto.vulnerabilidade ?? 0;
 
+            this.lpModBonus.setText(String(bonus)).setVisible(true);
+            this.lpModReducao.setText(String(reducao)).setVisible(true);
+            this.lpModVulnerabilidade.setText(String(vulnerabilidade)).setVisible(true);
+
+            this.lpStatEsp.setText(String(cardOrHeroDto.espirito ?? 0)).setVisible(true);
+            this.lpStatAtq.setText(String(cardOrHeroDto.ataque ?? 0)).setVisible(true);
+            this.lpStatDef.setText(String(cardOrHeroDto.defesa ?? 0)).setVisible(true);
+            this.lpStatHp.setText(String(cardOrHeroDto.vidaAtual ?? cardOrHeroDto.vidaMaxima ?? 0)).setVisible(true);
+
+            // Faixa de Atributos no topo da caixa esquerda (SVG X=14, Y=201)
+            const traitsPt = pos(14, 201);
+            const linhaAtributos = this.formatHeroTraitsLine(cardOrHeroDto);
+            this.lpTypeLine
+                .setOrigin(0, 0)
+                .setPosition(traitsPt.x, traitsPt.y)
+                .setStyle({
+                    fontFamily: 'IoskeleyMono, monospace',
+                    fontSize: '11.5px',
+                    color: '#4a3520',
+                    fontStyle: 'bold',
+                    align: 'left',
+                    wordWrap: { width: width * (194 / 280) }
+                })
+                .setText(linhaAtributos);
+
+            // Descrição logo abaixo da divisória da caixa (SVG X=14, Y=238)
+            const descPt = pos(14, 238);
             let fullDesc = cardOrHeroDto.descricao || '';
             const attached = cardOrHeroDto.attachedCards || [];
             if (attached.length > 0) {
-                const attachedLines = attached.map(item => {
-                    const emp = (item.itemType === 'ARMA' && item.empunhadura > 0) ? ` [Emp: ${item.empunhadura}]` : '';
-                    const desc = item.descricao ? `\n   ${item.descricao.replace(/\n/g, ' ')}` : '';
-                    return `🗡️ ${item.cardName}${emp}${desc}`;
-                }).join('\n');
-
-                fullDesc += (fullDesc ? '\n\n' : '') + `✦ ITENS EQUIPADOS (${attached.length}):\n${attachedLines}`;
+                const itemsList = attached.map(it => `🗡️ ${it.cardName}`).join('\n');
+                fullDesc += (fullDesc ? '\n\n' : '') + itemsList;
             }
 
-            const fontSize = fullDesc.length > 170 ? '9.5px' : '11px';
-            this.lpDesc.setPosition(-width * 0.12, height * 0.31)
-                .setStyle({ fontSize, color: '#000000', fontFamily: 'monospace', align: 'left', wordWrap: { width: width * 0.64 } })
+            this.lpDesc
+                .setOrigin(0, 0)
+                .setPosition(descPt.x, descPt.y)
+                .setStyle({
+                    fontFamily: 'IoskeleyMono, monospace',
+                    fontSize: fullDesc.length > 130 ? '11.5px' : '12.5px',
+                    color: '#090d16',
+                    fontStyle: 'bold',
+                    align: 'left',
+                    lineSpacing: 3,
+                    wordWrap: { width: width * (194 / 280) }
+                })
                 .setText(fullDesc);
 
-            this.lpFooterStats.setText(
-                `ESP:${cardOrHeroDto.espirito} | ATQ:${cardOrHeroDto.ataque} | DEF:${cardOrHeroDto.defesa} | HP:${cardOrHeroDto.vidaAtual}/${cardOrHeroDto.vidaMaxima}`
-            );
         } else {
+            // Carta Jogável (Magia, Item, Ação, Teurgia)
+            this.lpModBonus.setVisible(false);
+            this.lpModReducao.setVisible(false);
+            this.lpModVulnerabilidade.setVisible(false);
+            this.lpStatEsp.setVisible(false);
+            this.lpStatAtq.setVisible(false);
+            this.lpStatDef.setVisible(false);
+            this.lpStatHp.setVisible(false);
+
             const empTxt = (cardOrHeroDto.itemType === 'ARMA' && cardOrHeroDto.empunhadura > 0)
-                ? ` • Empunhadura: ${cardOrHeroDto.empunhadura}`
+                ? ` • EMP: ${cardOrHeroDto.empunhadura}`
                 : '';
+            const subType = (cardOrHeroDto.itemType && cardOrHeroDto.itemType !== 'NENHUM')
+                ? ` • ${cardOrHeroDto.itemType}`
+                : '';
+
             this.lpArtLabel.setText(`✦ ARTE (${cardOrHeroDto.cardType})`);
-            this.lpTypeLine.setPosition(0, height * 0.20).setText(`${cardOrHeroDto.cardType}${empTxt}`);
-            this.lpDesc.setPosition(0, height * 0.33)
-                .setStyle({ fontSize: '12px', color: '#000000', fontFamily: 'monospace', align: 'center', wordWrap: { width: width * 0.84 } })
+
+            // Faixa amarela centralizada em SVG X=138, Y=208
+            const typePt = pos(138, 208);
+            this.lpTypeLine
+                .setOrigin(0.5, 0.5)
+                .setPosition(typePt.x, typePt.y)
+                .setStyle({
+                    fontFamily: 'IoskeleyMono, monospace',
+                    fontSize: '13px',
+                    color: '#090d16',
+                    fontStyle: 'bold',
+                    align: 'center',
+                    wordWrap: { width: width * 0.88 }
+                })
+                .setText(`${cardOrHeroDto.cardType}${subType}${empTxt}`);
+
+            // Descrição na caixa inferior de largura total (SVG X=16, Y=230)
+            const descPt = pos(16, 230);
+            this.lpDesc
+                .setOrigin(0, 0)
+                .setPosition(descPt.x, descPt.y)
+                .setStyle({
+                    fontFamily: 'IoskeleyMono, monospace',
+                    fontSize: '14px',
+                    color: '#090d16',
+                    fontStyle: 'bold',
+                    align: 'left',
+                    lineSpacing: 4,
+                    wordWrap: { width: width * (244 / 280) }
+                })
                 .setText(cardOrHeroDto.descricao || '');
-            this.lpFooterStats.setText(cardOrHeroDto.itemType && cardOrHeroDto.itemType !== 'NENHUM' ? `Item: ${cardOrHeroDto.itemType}` : '');
         }
 
         const artKey = cardOrHeroDto.imagem && this.textures.exists(cardOrHeroDto.imagem)
@@ -513,8 +810,8 @@ export default class MatchScene extends Phaser.Scene {
             if (!this.lpArtSprite) {
                 this.lpArtSprite = this.add.image(this.lpArtBox.x, this.lpArtBox.y, artKey);
                 this.lpArtSprite.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
-                const boxIdx = this.largePreviewContainer.getIndex(this.lpArtLabel);
-                this.largePreviewContainer.addAt(this.lpArtSprite, boxIdx);
+                const frameIdx = this.largePreviewContainer.getIndex(this.lpFrame);
+                this.largePreviewContainer.addAt(this.lpArtSprite, frameIdx);
             } else {
                 this.lpArtSprite.setTexture(artKey).setVisible(true);
             }
@@ -526,13 +823,13 @@ export default class MatchScene extends Phaser.Scene {
         }
 
         this.largePreviewContainer.setVisible(true);
-        this.largePreviewContainer.setScale(0.92);
+        this.largePreviewContainer.setScale(0.94);
         this.tweens.killTweensOf(this.largePreviewContainer);
         this.tweens.add({
             targets: this.largePreviewContainer,
             scaleX: 1.0,
             scaleY: 1.0,
-            duration: 260,
+            duration: 200,
             ease: 'Cubic.easeOut'
         });
     }
@@ -616,12 +913,42 @@ export default class MatchScene extends Phaser.Scene {
     }
 
     highlightValidDropZonesForHandCard(active) {
-        const phase = this.currentSnapshot?.turnPhase;
-        if (phase === 'PREPARATION') {
+        const targetScale = active ? 1.15 : 1.0;
+
+        // Slots de Resolução Aliados (#E60012)
+        if (this.resolveSlotVisuals) {
             this.resolveSlotVisuals.forEach(slot => {
                 if (slot.belongsToLocal) {
-                    slot.rect.setFillStyle(active ? 0x1e3a2f : slot.baseFill, 1);
-                    slot.rect.setStrokeStyle(0);
+                    if (slot.rect) {
+                        slot.rect.setFillStyle(active ? 0x1e3a2f : slot.baseFill, 1);
+                        slot.rect.setStrokeStyle(0);
+                    }
+                    if (slot.graphics) {
+                        this.tweens.killTweensOf(slot.graphics);
+                        this.tweens.add({
+                            targets: slot.graphics,
+                            scaleX: targetScale,
+                            scaleY: targetScale,
+                            duration: active ? 160 : 120,
+                            ease: active ? 'Back.easeOut' : 'Sine.easeOut'
+                        });
+                    }
+                }
+            });
+        }
+
+        // Slots de Bancada Aliada (#E60012)
+        if (this.localBenchSlotVisuals) {
+            this.localBenchSlotVisuals.forEach(slot => {
+                if (slot.graphics) {
+                    this.tweens.killTweensOf(slot.graphics);
+                    this.tweens.add({
+                        targets: slot.graphics,
+                        scaleX: targetScale,
+                        scaleY: targetScale,
+                        duration: active ? 160 : 120,
+                        ease: active ? 'Back.easeOut' : 'Sine.easeOut'
+                    });
                 }
             });
         }
@@ -633,10 +960,13 @@ export default class MatchScene extends Phaser.Scene {
         this.resolveSlotVisuals.forEach(slot => {
             if (!slot.belongsToLocal) {
                 slot.rect.setScale(1.0);
+                if (slot.graphics) slot.graphics.setScale(1.0);
                 return;
             }
             const d = Phaser.Math.Distance.Between(cardPrefab.x, cardPrefab.y, slot.x, slot.y);
-            slot.rect.setScale(d < 190 ? 1.07 : 1.0);
+            const targetScale = d < 190 ? 1.22 : 1.15;
+            slot.rect.setScale(targetScale);
+            if (slot.graphics) slot.graphics.setScale(targetScale);
         });
     }
 
@@ -663,7 +993,15 @@ export default class MatchScene extends Phaser.Scene {
         const phase = this.currentSnapshot?.turnPhase;
         const hasInitiative = String(this.currentSnapshot?.activeTurnPlayerId) === String(this.localPlayerId);
 
-        this.resolveSlotVisuals.forEach(s => s.rect.setScale(1.0));
+        this.resolveSlotVisuals.forEach(s => {
+            s.rect.setScale(1.0);
+            if (s.graphics) s.graphics.setScale(1.0);
+        });
+        if (this.localBenchSlotVisuals) {
+            this.localBenchSlotVisuals.forEach(s => {
+                if (s.graphics) s.graphics.setScale(1.0);
+            });
+        }
 
         if (phase === 'PREPARATION') {
             let bestRedSlot = null;
@@ -727,12 +1065,15 @@ export default class MatchScene extends Phaser.Scene {
         });
     }
 
-    renderSnapshot(snapshot, isLastInQueue = true) {
+    renderSnapshot(snapshot, isLastInQueue = true, options = {}) {
         if (!snapshot) return;
 
-        const previousPhase = this.currentSnapshot ? this.currentSnapshot.turnPhase : null;
-        this.currentSnapshot = snapshot;
+        const previousPhase = options.previousPhase !== undefined
+            ? options.previousPhase
+            : (this.currentSnapshot ? this.currentSnapshot.turnPhase : null);
+        const deferPhaseAnnouncement = Boolean(options.deferPhaseAnnouncement);
 
+        this.currentSnapshot = snapshot;
         this.hideLargeCardPreview();
 
         if (previousPhase !== snapshot.turnPhase) {
@@ -742,7 +1083,11 @@ export default class MatchScene extends Phaser.Scene {
 
         const localHasInitiative = String(snapshot.activeTurnPlayerId) === String(this.localPlayerId);
 
-        this.phaseBanner.setText(`FASE: ${snapshot.turnPhase}`);
+        // Se o anúncio da nova fase/turno NÃO foi adiado para depois dos VFX, atualiza o texto imediatamente
+        if (!deferPhaseAnnouncement) {
+            this.phaseBanner.setText(`FASE: ${snapshot.turnPhase}`);
+        }
+
         this.updateInterleavedResolveSlots(localHasInitiative);
 
         if (snapshot.triggerContext?.logMessage) {
@@ -811,6 +1156,112 @@ export default class MatchScene extends Phaser.Scene {
         if (snapshot.turnPhase === 'GAME_OVER') {
             this.showGameOverModal(snapshot);
         }
+    }
+
+    /**
+     * Chamado pelo SnapshotPlayerManager DEPOIS que os efeitos visuais (dano, cura, mortes, fim de combate)
+     * do turno anterior já terminaram na tela.
+     */
+    triggerDeferredPhaseAnnouncement(snapshot, previousPhase) {
+        if (!snapshot) return;
+
+        const phase = snapshot.turnPhase;
+        this.phaseBanner.setText(`FASE: ${phase}`);
+
+        // Proteção contra faixas repetidas em intervalos muito curtos (< 900ms)
+        const now = this.time.now;
+        if (this.lastCutInTime && (now - this.lastCutInTime) < 900) {
+            return;
+        }
+        this.lastCutInTime = now;
+
+        const localHasInitiative = String(snapshot.activeTurnPlayerId) === String(this.localPlayerId);
+        const initiativeOwner = localHasInitiative ? 'INICIATIVA: VOCÊ' : 'INICIATIVA: OPONENTE';
+
+        // Mapeamento amigável e temático das fases principais
+        const phaseDisplayConfig = {
+            CHOICE:      { title: 'NOVO TURNO // ESCOLHA DE HERÓIS', sub: initiativeOwner, color: 0xe60012 },
+            PREPARATION: { title: 'FASE DE PREPARAÇÃO',              sub: 'PROGRAME ATÉ 2 CARTAS NA PILHA', color: 0x2563eb },
+            RESOLUTION:  { title: 'RESOLUÇÃO DE CARTAS',             sub: 'EXECUTANDO PILHA DE EFEITOS', color: 0xca8a04 },
+            COMBAT:      { title: 'EMBATE FÍSICO',                   sub: 'COLISÃO DE HERÓIS ATIVOS', color: 0xb91c1c },
+            DISCARD:     { title: 'FASE DE DESCARTE',                sub: 'RECICLAGEM DE MÃO E COMPRA', color: 0x475569 }
+        };
+
+        const cfg = phaseDisplayConfig[phase];
+        if (!cfg) return;
+
+        // Se você já importou o PhantomUIKit, use-o; caso contrário, este bloco já desenha a faixa P5+CRT nativa:
+        this.playPhaseTransitionBanner(cfg.title, cfg.sub, cfg.color);
+    }
+
+    playPhaseTransitionBanner(titleText, subText, accentColor = 0xe60012) {
+        const cutIn = this.add.container(960, 540).setDepth(280).setAngle(-6);
+
+        const bgSlash = this.add.rectangle(0, 0, 2400, 130, 0x050507, 0.94)
+            .setStrokeStyle(4, 0xf8fafc);
+        const topAccent = this.add.rectangle(0, -46, 2400, 18, accentColor, 1);
+        const botAccent = this.add.rectangle(0, 50, 2400, 8, 0xffe600, 1);
+
+        const titleObj = this.add.text(-800, -6, `>> ${titleText} <<`, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '36px',
+            color: '#ffffff',
+            fontStyle: 'italic bold',
+            stroke: '#000000',
+            strokeThickness: 5
+        }).setOrigin(0.5);
+
+        const subObj = this.add.text(800, 30, `[SYS.PHASE_SYNC // ${subText}]`, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '14px',
+            color: '#00f0ff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        cutIn.add([bgSlash, topAccent, botAccent, titleObj, subObj]);
+        cutIn.setScale(1, 0);
+
+        // 1. Abre a faixa (150ms)
+        this.tweens.add({
+            targets: cutIn,
+            scaleY: 1,
+            duration: 150,
+            ease: 'Cubic.easeOut'
+        });
+
+        // 2. Desliza os textos com desaceleração suave no centro (700ms de leitura confortável)
+        this.tweens.add({
+            targets: titleObj,
+            x: 0,
+            duration: 220,
+            ease: 'Expo.easeOut',
+            onComplete: () => {
+                this.tweens.add({
+                    targets: titleObj,
+                    x: 45,
+                    duration: 550,
+                    ease: 'Linear'
+                });
+            }
+        });
+
+        this.tweens.add({
+            targets: subObj,
+            x: 0,
+            duration: 250,
+            ease: 'Expo.easeOut'
+        });
+
+        // 3. Fecha a faixa (180ms)
+        this.tweens.add({
+            targets: cutIn,
+            scaleY: 0,
+            alpha: 0,
+            delay: 820,
+            duration: 180,
+            ease: 'Cubic.easeIn',
+            onComplete: () => cutIn.destroy()
+        });
     }
 
     checkAndShowPendingChoiceModal(snapshot) {
@@ -1293,7 +1744,7 @@ export default class MatchScene extends Phaser.Scene {
 
         if (this.snapshotPlayer.isPlaying || this.isSubmittingAction) {
             this.mainButtonLabel.setText('RESOLVENDO...');
-            this.mainButtonBg.setFillStyle(0x475569);
+            this.mainButtonBg.setTint(0x64748b);
             this.mainButtonBg.input.enabled = false;
             return;
         }
@@ -1301,14 +1752,14 @@ export default class MatchScene extends Phaser.Scene {
         if (this.currentSnapshot.pendingChoice) {
             const isMyChoice = String(this.currentSnapshot.pendingChoice.choosingPlayerId) === String(this.localPlayerId);
             this.mainButtonLabel.setText(isMyChoice ? 'ESCOLHA UM ALVO NO MODAL' : 'OPONENTE ESCOLHENDO ALVO...');
-            this.mainButtonBg.setFillStyle(0xd97706);
+            this.mainButtonBg.setTint(0xfbbf24);
             this.mainButtonBg.input.enabled = isMyChoice;
             return;
         }
 
         if (this.isWaitingOpponentConfirmation) {
             this.mainButtonLabel.setText('AGUARDANDO OPONENTE...');
-            this.mainButtonBg.setFillStyle(0x475569);
+            this.mainButtonBg.setTint(0x64748b);
             this.mainButtonBg.input.enabled = false;
             return;
         }
@@ -1335,7 +1786,11 @@ export default class MatchScene extends Phaser.Scene {
         const canClick = !isAutomaticPhase && this.selectionManager.canConfirmAction(phase, isMyInitiative);
 
         this.mainButtonLabel.setText(labels[phase] || 'EM COMBATE');
-        this.mainButtonBg.setFillStyle(canClick ? 0x16a34a : 0x475569);
+        if (canClick) {
+            this.mainButtonBg.clearTint();
+        } else {
+            this.mainButtonBg.setTint(0x64748b);
+        }
         this.mainButtonBg.input.enabled = canClick;
     }
 
@@ -1355,6 +1810,7 @@ export default class MatchScene extends Phaser.Scene {
         const payload = this.selectionManager.buildActionRequestDTO(this.matchId, this.localPlayerId, phase);
 
         this.isSubmittingAction = true;
+        this.mainButtonBg.setTint(0x64748b);
         this.mainButtonBg.input.enabled = false;
         this.mainButtonLabel.setText('ENVIANDO...');
 

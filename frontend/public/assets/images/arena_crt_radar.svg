@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
+  <defs>
+    <!-- Sweep gradient -->
+    <linearGradient id="sweepGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f0ff" stop-opacity="0" />
+      <stop offset="70%" stop-color="#00f0ff" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#00f0ff" stop-opacity="0.28" />
+    </linearGradient>
+    <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.22" />
+      <stop offset="50%" stop-color="#00f0ff" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Fundo central sutil com glow -->
+  <circle cx="400" cy="400" r="380" fill="url(#centerGlow)" />
+
+  <!-- Setor de varredura do radar (Sweep Cone) -->
+  <path d="M 400 400 L 400 20 A 380 380 0 0 1 668 131 Z" fill="url(#sweepGrad)" />
+
+  <!-- Círculos concêntricos CRT -->
+  <circle cx="400" cy="400" r="95" fill="none" stroke="#00f0ff" stroke-width="1" stroke-opacity="0.25" stroke-dasharray="4 4" />
+  <circle cx="400" cy="400" r="190" fill="none" stroke="#00f0ff" stroke-width="1.2" stroke-opacity="0.3" />
+  <circle cx="400" cy="400" r="285" fill="none" stroke="#00f0ff" stroke-width="1.2" stroke-opacity="0.25" stroke-dasharray="6 6" />
+  <circle cx="400" cy="400" r="380" fill="none" stroke="#00f0ff" stroke-width="2" stroke-opacity="0.5" />
+  <circle cx="400" cy="400" r="384" fill="none" stroke="#ffe600" stroke-width="1" stroke-opacity="0.3" stroke-dasharray="12 12" />
+
+  <!-- Linhas axiais (Mira Crosshair) -->
+  <line x1="20" y1="400" x2="780" y2="400" stroke="#00f0ff" stroke-width="1" stroke-opacity="0.25" stroke-dasharray="6 8" />
+  <line x1="400" y1="20" x2="400" y2="780" stroke="#00f0ff" stroke-width="1" stroke-opacity="0.25" stroke-dasharray="6 8" />
+
+  <!-- Linhas diagonais (45 e 135 graus) -->
+  <line x1="131" y1="131" x2="668" y2="668" stroke="#00f0ff" stroke-width="0.8" stroke-opacity="0.18" stroke-dasharray="4 6" />
+  <line x1="131" y1="668" x2="668" y2="131" stroke="#00f0ff" stroke-width="0.8" stroke-opacity="0.18" stroke-dasharray="4 6" />
+
+  <!-- Notches e Brackets angulares estilo Persona / Cyberpunk nos 4 cantos -->
+  <path d="M 380 20 L 420 20 M 400 15 L 400 35" stroke="#ffe600" stroke-width="2" stroke-opacity="0.7" />
+  <path d="M 380 780 L 420 780 M 400 765 L 400 785" stroke="#ffe600" stroke-width="2" stroke-opacity="0.7" />
+  <path d="M 20 380 L 20 420 M 15 400 L 35 400" stroke="#ffe600" stroke-width="2" stroke-opacity="0.7" />
+  <path d="M 780 380 L 780 420 M 765 400 L 785 400" stroke="#ffe600" stroke-width="2" stroke-opacity="0.7" />
+
+  <!-- Marcadores de perigo / Acentos Vermelhos nos 45 graus -->
+  <circle cx="668" cy="131" r="5" fill="#e60012" opacity="0.8" />
+  <circle cx="131" cy="668" r="5" fill="#e60012" opacity="0.8" />
+  <circle cx="131" cy="131" r="4" fill="#00f0ff" opacity="0.7" />
+  <circle cx="668" cy="668" r="4" fill="#00f0ff" opacity="0.7" />
+
+  <!-- Ticks periféricos a cada 30 graus -->
+  <g stroke="#00f0ff" stroke-width="1.5" stroke-opacity="0.45">
+    <line x1="400" y1="20" x2="400" y2="32" />
+    <line x1="590" y1="71" x2="584" y2="81" />
+    <line x1="729" y1="210" x2="719" y2="216" />
+    <line x1="780" y1="400" x2="768" y2="400" />
+    <line x1="729" y1="590" x2="719" y2="584" />
+    <line x1="590" y1="729" x2="584" y2="719" />
+    <line x1="400" y1="780" x2="400" y2="768" />
+    <line x1="210" y1="729" x2="216" y2="719" />
+    <line x1="71" y1="590" x2="81" y2="584" />
+    <line x1="20" y1="400" x2="32" y2="400" />
+    <line x1="71" y1="210" x2="81" y2="216" />
+    <line x1="210" y1="71" x2="216" y2="81" />
+  </g>
+
+  <!-- Textos de Telemetria e Retícula CRT -->
+  <text x="400" y="55" fill="#00f0ff" font-family="monospace" font-size="9" font-weight="bold" text-anchor="middle" letter-spacing="2" opacity="0.65">SYS.RADAR // ARENA_CRT_V2</text>
+  <text x="745" y="404" fill="#ffe600" font-family="monospace" font-size="8" font-weight="bold" opacity="0.6">090°</text>
+  <text x="400" y="755" fill="#00f0ff" font-family="monospace" font-size="8" font-weight="bold" text-anchor="middle" opacity="0.6">180° // SECTOR_B</text>
+  <text x="55" y="404" fill="#ffe600" font-family="monospace" font-size="8" font-weight="bold" opacity="0.6">270°</text>
+
+  <!-- Ponto central de retículo -->
+  <circle cx="400" cy="400" r="14" fill="none" stroke="#e60012" stroke-width="1.5" stroke-opacity="0.75" />
+  <circle cx="400" cy="400" r="3" fill="#ffe600" opacity="0.9" />
+</svg>

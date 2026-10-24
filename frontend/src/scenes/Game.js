@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 
 export class Game extends Scene
 {
@@ -9,6 +10,11 @@ export class Game extends Scene
 
     create ()
     {
+        if (this.renderer.pipelines) {
+            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
+            this.cameras.main.setPostPipeline('CRTPostFX');
+        }
+
         this.cameras.main.setBackgroundColor(0x00ff00);
 
         this.add.image(512, 384, 'background').setAlpha(0.5);

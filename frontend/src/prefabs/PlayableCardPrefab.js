@@ -10,6 +10,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         this.homePos = { x, y };
         this.homeAngle = homeAngle;
         this.dragStartPos = { x, y };
+        this.prevDragX = x;
         this.isDraggableCard = isDraggable;
         this.isDragging = false;
         this.isMarkedForDiscard = false;
@@ -20,15 +21,12 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
 
         const { width, height } = BOARD_LAYOUT.COMPACT_CARD;
 
-        // Sombra e Borda externa transparente (usada apenas quando precisa brilhar em snap/pulse)
-        this.shadow = scene.add.rectangle(4, 6, width, height, 0x000000, 0.55);
-        this.bg = scene.add.rectangle(0, 0, width + 4, height + 4, 0x000000, 0)
+        // Sombra dura e fundo claro cor de papel (#f5efe2) para preencher a janela caso a carta não tenha arte
+        this.shadow = scene.add.rectangle(5, 7, width, height, 0x090d16, 0.75);
+        this.bg = scene.add.rectangle(0, 0, width, height, 0xf5efe2, 1)
             .setStrokeStyle(0, BOARD_LAYOUT.COLORS.GOLD_DUST);
 
-        // 1. Moldura de Pergaminho (modeloAlfaCartas.jpeg) desenhada SEMPRE na base (igual ao partida.lua)
-        this.frameImage = scene.add.image(0, 0, 'card_frame_playable').setDisplaySize(width, height);
-
-        // 2. Arte da Carta (Sobrepõe apenas a janela superior do pergaminho se existir textura!)
+        // 1. Arte da Carta (Posiciona-se ATRÁS da moldura SVG vazada)
         this.artSprite = null;
         const artKey = this.resolveArtTextureKey(cardDto);
         if (artKey) {
@@ -36,46 +34,62 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             this.artSprite.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
         }
 
-        // 3. Título na Barra Metálica Superior em PRETO (#000000)
+        // 2. Moldura Clara SVG (card_frame_playable.svg)
+        this.frameImage = scene.add.image(0, 0, 'card_frame_playable').setDisplaySize(width, height);
+
+        // 3. Título em PRETO forte na barra branca superior
         this.titleText = scene.add.text(0, -height * 0.43, '', {
-            fontSize: '9px',
-            color: '#000000',
+            fontSize: '10.5px',
+            color: '#090d16',
             fontStyle: 'bold',
-            fontFamily: 'monospace',
-            align: 'center',
-            wordWrap: { width: width * 0.82 }
-        }).setOrigin(0.5);
-
-        // 4. Textos na Aba Inferior Rasgada do Pergaminho (y = 275/380 no Lua -> ~72% da altura)
-        this.typeBadge = scene.add.text(0, height * 0.21, '', {
-            fontSize: '8px',
-            color: '#3b2816',
-            fontStyle: 'bold',
-            fontFamily: 'monospace',
-            align: 'center'
-        }).setOrigin(0.5).setVisible(false);
-
-        this.descText = scene.add.text(0, height * 0.32, '', {
-            fontSize: '8.5px',
-            color: '#000000',
-            fontFamily: 'monospace',
+            fontFamily: 'IoskeleyMono, monospace',
             align: 'center',
             wordWrap: { width: width * 0.84 }
-        }).setOrigin(0.5).setVisible(false);
+        }).setOrigin(0.5).setResolution(2);
 
-        // 5. Selo de Descarte
+        // 4. Faixa Central Amarela: Tipo e Empunhadura em PRETO
+        this.typeBadge = scene.add.text(0, height * 0.06, '', {
+            fontSize: '9px',
+            color: '#090d16',
+            fontStyle: 'bold',
+            fontFamily: 'IoskeleyMono, monospace',
+            align: 'center'
+        }).setOrigin(0.5).setResolution(2);
+
+        // 5. Caixa Clara Inferior: Descrição do Efeito em PRETO
+        this.descText = scene.add.text(0, height * 0.25, '', {
+            fontSize: '9.5px',
+            color: '#090d16',
+            fontStyle: 'bold',
+            fontFamily: 'IoskeleyMono, monospace',
+            align: 'center',
+            lineSpacing: 1,
+            wordWrap: { width: width * 0.82 }
+        }).setOrigin(0.5).setResolution(2);
+
+        // 6. Selo de Descarte
         this.discardBadge = scene.add.text(0, -height / 2 - 14, '✖ DESCARTAR', {
-            fontSize: '10px', color: '#ffffff', backgroundColor: '#dc2626', padding: { x: 6, y: 3 }, fontStyle: 'bold'
-        }).setOrigin(0.5).setVisible(false);
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '11px',
+            color: '#ffffff',
+            backgroundColor: '#e60012',
+            padding: { x: 8, y: 4 },
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setVisible(false).setResolution(2);
 
-        // 6. Verso da Carta Puro (modeloBaralho.jpg)
+        // 7. Verso da Carta
         this.cardBackPattern = scene.add.image(0, 0, 'card_back').setDisplaySize(width, height);
 
         const children = [
-            this.shadow, this.bg, this.frameImage,
+            this.shadow,
+            this.bg,
             ...(this.artSprite ? [this.artSprite] : []),
-            this.titleText, this.typeBadge, this.descText,
-            this.discardBadge, this.cardBackPattern
+            this.frameImage,
+            this.titleText,
+            this.typeBadge,
+            this.descText,
+            this.discardBadge,
+            this.cardBackPattern
         ];
         this.add(children);
 
@@ -114,44 +128,55 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         const isFaceUp = this.cardData && this.cardData.faceUp !== false;
         const dim = (mode === 'MEDIUM') ? BOARD_LAYOUT.MEDIUM_CARD : BOARD_LAYOUT.COMPACT_CARD;
 
+        const pos = (svgX, svgY) => ({
+            x: ((svgX / 280) - 0.5) * dim.width,
+            y: ((svgY / 380) - 0.5) * dim.height
+        });
+
         this.shadow.setSize(dim.width, dim.height);
-        this.bg.setSize(dim.width + 4, dim.height + 4);
+        this.bg.setSize(dim.width, dim.height);
         this.frameImage.setDisplaySize(dim.width, dim.height);
         this.cardBackPattern.setDisplaySize(dim.width, dim.height);
         this.setSize(dim.width, dim.height);
 
         if (!isFaceUp) return;
 
-        // Janela de arte idêntica ao desenharImagemCarta do partida.lua:
-        // margemEsq = 4.6%, margemTopo = 11%, larguraArte = 90.5%, alturaArte = 56%
         if (this.artSprite) {
-            const artW = dim.width * 0.905;
-            const artH = dim.height * 0.56;
-            const artCenterX = -dim.width / 2 + (dim.width * 0.046) + (artW / 2);
-            const artCenterY = -dim.height / 2 + (dim.height * 0.11) + (artH / 2);
-            this.artSprite.setDisplaySize(artW, artH).setPosition(artCenterX, artCenterY);
+            const artCenter = pos(137, 117);
+            const artW = dim.width * (247 / 280);
+            const artH = dim.height * (150 / 380);
+            this.artSprite.setDisplaySize(artW, artH).setPosition(artCenter.x, artCenter.y);
         }
 
-        const headerY = -dim.height / 2 + (dim.height * (22 / 380));
+        const headerPt = pos(138, 22);
+        const typePt   = pos(138, 208);
+        const descPt   = pos(138, 294);
 
         if (mode === 'MEDIUM') {
-            this.titleText.setPosition(0, headerY).setStyle({
-                fontSize: '9.5px',
-                wordWrap: { width: dim.width * 0.82 }
+            this.titleText.setPosition(headerPt.x, headerPt.y).setStyle({
+                fontSize: '10.5px',
+                wordWrap: { width: dim.width * 0.86 }
             });
-            this.typeBadge.setPosition(0, dim.height * 0.21).setVisible(true);
-            this.descText.setPosition(0, dim.height * 0.33).setStyle({
-                fontSize: '8px',
+            this.typeBadge.setPosition(typePt.x, typePt.y).setStyle({
+                fontSize: '8.5px'
+            }).setVisible(true);
+            this.descText.setPosition(descPt.x, descPt.y).setStyle({
+                fontSize: '8.8px',
                 wordWrap: { width: dim.width * 0.84 }
             }).setVisible(true);
             this.discardBadge.setPosition(0, -dim.height / 2 - 14);
         } else {
-            this.titleText.setPosition(0, headerY).setStyle({
-                fontSize: '8.5px',
-                wordWrap: { width: dim.width * 0.82 }
+            this.titleText.setPosition(headerPt.x, headerPt.y).setStyle({
+                fontSize: '9.5px',
+                wordWrap: { width: dim.width * 0.86 }
             });
-            this.typeBadge.setVisible(false);
-            this.descText.setVisible(false);
+            this.typeBadge.setPosition(typePt.x, typePt.y).setStyle({
+                fontSize: '7.5px'
+            }).setVisible(true);
+            this.descText.setPosition(descPt.x, descPt.y).setStyle({
+                fontSize: '7.5px',
+                wordWrap: { width: dim.width * 0.84 }
+            }).setVisible(true);
             this.discardBadge.setPosition(0, -dim.height / 2 - 14);
         }
     }
@@ -163,26 +188,27 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             if (!isFaceUp) return;
 
             this.setDepth(90);
+            this.shadow.setPosition(10, 12).setFillStyle(0xe60012, 0.9);
 
             if (this.isDraggableCard) {
                 this.applySizeLayout('MEDIUM');
                 const isAllocatedInResolve = this.scene.selectionManager.playedCardSlotMap.has(this.uuid);
-                const hoverY = isAllocatedInResolve ? this.y : (this.homePos.y - 48);
+                const hoverY = isAllocatedInResolve ? this.y : (this.homePos.y - 54);
 
                 this.scene.tweens.killTweensOf(this);
                 this.scene.tweens.add({
                     targets: this,
                     y: hoverY,
                     angle: 0,
-                    scaleX: 1.0,
-                    scaleY: 1.0,
+                    scaleX: 1.05,
+                    scaleY: 1.05,
                     duration: 140,
-                    ease: 'Power2'
+                    ease: 'Back.easeOut'
                 });
             }
 
             this.clearLongHoverTimer();
-            this.longHoverTimer = this.scene.time.delayedCall(600, () => {
+            this.longHoverTimer = this.scene.time.delayedCall(450, () => {
                 if (!this.isDragging) {
                     this.scene.showLargeCardPreview(this.cardData, false);
                 }
@@ -195,6 +221,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             if (this.isDragging) return;
 
             this.setDepth(15);
+            this.shadow.setPosition(5, 7).setFillStyle(0x090d16, 0.75);
 
             if (this.isDraggableCard) {
                 const isAllocatedInResolve = this.scene.selectionManager.playedCardSlotMap.has(this.uuid);
@@ -226,6 +253,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             if (!this.scene.canDragHandCard()) return;
             this.isDragging = true;
             this.dragStartPos = { x: this.x, y: this.y };
+            this.prevDragX = this.x;
             this.scene.tweens.killTweensOf(this);
             this.applySizeLayout('MEDIUM');
             this.setAngle(0);
@@ -235,6 +263,9 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
 
         this.on('drag', (pointer, dragX, dragY) => {
             if (!this.scene.canDragHandCard()) return;
+            const vx = dragX - this.prevDragX;
+            this.prevDragX = dragX;
+            this.setAngle(Phaser.Math.Clamp(vx * 0.75, -16, 16));
             this.x = dragX;
             this.y = dragY;
             this.scene.checkMagneticHoverOnSlots(this);
@@ -243,6 +274,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         this.on('dragend', () => {
             if (!this.scene.canDragHandCard()) return;
             this.isDragging = false;
+            this.shadow.setPosition(5, 7).setFillStyle(0x090d16, 0.75);
             this.scene.highlightValidDropZonesForHandCard(false);
 
             const dragDist = Phaser.Math.Distance.Between(this.dragStartPos.x, this.dragStartPos.y, this.x, this.y);
@@ -265,7 +297,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         this.scene.tweens.killTweensOf(this);
         this.applySizeLayout(sizeMode);
         if (highlightColor && highlightColor !== BOARD_LAYOUT.COLORS.GOLD_DUST) {
-            this.bg.setStrokeStyle(3, highlightColor);
+            this.bg.setStrokeStyle(4, highlightColor);
         } else {
             this.bg.setStrokeStyle(0, 0x000000);
         }
@@ -287,7 +319,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         this.discardBadge.setVisible(isSelected);
 
         const targetY = isSelected ? this.homePos.y - 30 : this.homePos.y;
-        const strokeColor = isSelected ? 0xff3333 : null;
+        const strokeColor = isSelected ? 0xe60012 : null;
         this.snapToPosition(this.homePos.x, targetY, strokeColor, this.homeAngle, 'COMPACT');
     }
 
@@ -296,6 +328,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         const isFaceUp = cardDto && cardDto.faceUp !== false;
 
         if (!isFaceUp) {
+            this.bg.setVisible(false);
             this.frameImage.setVisible(false);
             if (this.artSprite) this.artSprite.setVisible(false);
             this.titleText.setVisible(false);
@@ -303,17 +336,17 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             this.descText.setVisible(false);
             this.cardBackPattern.setVisible(true);
         } else {
+            this.bg.setVisible(true);
             this.frameImage.setVisible(true);
 
-            // Cria ou atualiza dinamicamente o sprite de arte quando a carta é revelada ou invocada
             const artKey = this.resolveArtTextureKey(cardDto);
             if (artKey) {
                 if (!this.artSprite) {
                     this.artSprite = this.scene.add.image(0, 0, artKey);
                     this.artSprite.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
-                    // Insere logo acima de this.frameImage para não cobrir os textos
+                    // Insere ANTES de this.frameImage para ficar dentro da janela vazada!
                     const frameIdx = this.getIndex(this.frameImage);
-                    this.addAt(this.artSprite, frameIdx + 1);
+                    this.addAt(this.artSprite, frameIdx);
                 } else {
                     this.artSprite.setTexture(artKey);
                 }
@@ -325,9 +358,12 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             this.titleText.setText(cardDto.cardName || '').setVisible(true);
 
             const empInfo = (cardDto.itemType === 'ARMA' && cardDto.empunhadura > 0)
-                ? ` • Emp:${cardDto.empunhadura}`
+                ? ` • EMP:${cardDto.empunhadura}`
                 : '';
-            this.typeBadge.setText(`${cardDto.cardType || ''}${empInfo}`);
+            const subInfo = (cardDto.itemType && cardDto.itemType !== 'NENHUM')
+                ? ` • ${cardDto.itemType}`
+                : '';
+            this.typeBadge.setText(`${cardDto.cardType || ''}${subInfo}${empInfo}`);
             this.descText.setText(cardDto.descricao || '');
             this.cardBackPattern.setVisible(false);
 

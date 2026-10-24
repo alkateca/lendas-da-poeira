@@ -10,100 +10,132 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.heroData = heroDto;
         this.homePos = { x, y };
         this.dragStartPos = { x, y };
+        this.prevDragX = x;
         this.isDragging = false;
         this.longHoverTimer = null;
 
-        const { width, height } = BOARD_LAYOUT.MEDIUM_CARD;
+        const { width, height } = BOARD_LAYOUT.MEDIUM_CARD; // 140 x 190
+        this.cardW = width;
+        this.cardH = height;
+
+        // Converte coordenadas do SVG (280x380) para coordenadas locais do Container (-width/2 .. +width/2)
+        const pos = (svgX, svgY) => ({
+            x: ((svgX / 280) - 0.5) * width,
+            y: ((svgY / 380) - 0.5) * height
+        });
+
         const teamColor = isOpponent ? BOARD_LAYOUT.COLORS.OPP_BLUE : BOARD_LAYOUT.COLORS.LOCAL_RED;
 
-        // Sombra e Borda externa discreta (para indicar seleção/snap sem tapar o pergaminho)
-        this.shadow = scene.add.rectangle(5, 7, width, height, 0x000000, 0.55);
-        this.bg = scene.add.rectangle(0, 0, width + 4, height + 4, 0x000000, 0).setStrokeStyle(2, teamColor);
+        this.shadow = scene.add.rectangle(4, 6, width, height, 0x090d16, 0.65);
 
-        // 1. Moldura Base de Pergaminho do Herói (modeloAlfa.jpeg - 747x1024)
-        this.frameImage = scene.add.image(0, 0, 'card_frame_hero').setDisplaySize(width, height);
+        // Fundo suave cor de pergaminho (evita aquele bloco vermelho berrante quando não há arte)
+        this.bg = scene.add.rectangle(0, 0, width, height, 0xd6cbb5, 1)
+            .setStrokeStyle(3, teamColor);
 
-        // 2. Arte Customizada do Herói (Só aparece se o Herói tiver textura de arte própria carregada!)
-        const artW = width * 0.905;
-        const artH = height * 0.45;
-        const artX = -width / 2 + (width * 0.046) + (artW / 2);
-        const artY = -height / 2 + (height * 0.11) + (artH / 2);
+        // 1. Arte do Herói na janela (x: 12..261, y: 41..192 -> centro 136.5, 116.5)
+        const artCenter = pos(137, 117);
+        const artW = width * (248 / 280);
+        const artH = height * (150 / 380);
 
         this.artSprite = null;
         const artKey = this.resolveHeroArtKey(heroDto);
         if (artKey) {
-            this.artSprite = scene.add.image(artX, artY, artKey).setDisplaySize(artW, artH);
+            this.artSprite = scene.add.image(artCenter.x, artCenter.y, artKey).setDisplaySize(artW, artH);
             this.artSprite.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
         }
 
-        // 3. Nome do Herói em PRETO na barra metálica superior (igual ao Lua: finalY + 10/190)
-        const nameY = -height / 2 + (height * (14 / 190));
-        this.nameText = scene.add.text(0, nameY, heroDto.cardName, {
-            fontSize: '9.5px',
-            color: '#000000',
+        // 2. Moldura SVG (280x380 escalada para width x height)
+        this.frameImage = scene.add.image(0, 0, 'card_frame_hero').setDisplaySize(width, height);
+
+        // 3. Nome do Herói no Topo (Centro SVG: X=132, Y=21)
+        const namePt = pos(132, 21);
+        this.nameText = scene.add.text(namePt.x, namePt.y, heroDto.cardName, {
+            fontSize: '10px',
+            color: '#090d16',
             fontStyle: 'bold',
-            fontFamily: 'monospace',
+            fontFamily: 'IoskeleyMono, monospace',
             align: 'center',
-            wordWrap: { width: width * 0.84 }
-        }).setOrigin(0.5);
+            wordWrap: { width: width * 0.82 }
+        }).setOrigin(0.5).setResolution(2);
 
-        // 4. Modificadores de Combate (DanoBonus verde, Reducao vermelho, Vulnerabilidade roxo)
-        const modY = -height / 2 + (height * (100 / 190));
-        this.modBonusText = scene.add.text(width * 0.18, modY, '', {
-            fontSize: '8.5px', color: '#16a34a', fontStyle: 'bold', fontFamily: 'monospace'
-        }).setOrigin(0.5);
-        this.modReducaoText = scene.add.text(width * 0.29, modY, '', {
-            fontSize: '8.5px', color: '#dc2626', fontStyle: 'bold', fontFamily: 'monospace'
-        }).setOrigin(0.5);
-        this.modVulnText = scene.add.text(width * 0.40, modY, '', {
-            fontSize: '8.5px', color: '#9333ea', fontStyle: 'bold', fontFamily: 'monospace'
-        }).setOrigin(0.5);
+        // 4. Modificadores de Dano Centralizados nas 3 Casas (SVG Y=174 | X=186, 220, 254)
+        const mod1 = pos(186, 174);
+        const mod2 = pos(220, 174);
+        const mod3 = pos(254, 174);
 
-        // 5. Texto na Aba Rasgada Inferior Esquerda (largura máxima: 68% para não invadir a coluna direita!)
-        const leftTextX = -width / 2 + (width * 0.06);
-        const leftTextY = -height / 2 + (height * (132 / 190));
-        this.descText = scene.add.text(leftTextX, leftTextY, heroDto.descricao || '', {
+        this.modBonusText = scene.add.text(mod1.x, mod1.y, '0', {
+            fontSize: '11px', color: '#15803d', fontStyle: 'bold', fontFamily: 'IoskeleyMono, monospace'
+        }).setOrigin(0.5).setResolution(2);
+
+        this.modReducaoText = scene.add.text(mod2.x, mod2.y, '0', {
+            fontSize: '11px', color: '#dc2626', fontStyle: 'bold', fontFamily: 'IoskeleyMono, monospace'
+        }).setOrigin(0.5).setResolution(2);
+
+        this.modVulnText = scene.add.text(mod3.x, mod3.y, '0', {
+            fontSize: '11px', color: '#7e22ce', fontStyle: 'bold', fontFamily: 'IoskeleyMono, monospace'
+        }).setOrigin(0.5).setResolution(2);
+
+        // 5. Caixa de Texto Inferior Esquerda (Começa no topo da caixa em SVG X=14, Y=201)
+        const traitsPt = pos(14, 201);
+        const descPt = pos(14, 238);
+        this.descBasePos = descPt;
+        const textMaxW = width * (194 / 280);
+
+        this.traitsText = scene.add.text(traitsPt.x, traitsPt.y, '', {
             fontSize: '7.5px',
-            color: '#000000',
-            fontFamily: 'monospace',
+            color: '#4a3520',
+            fontStyle: 'bold',
+            fontFamily: 'IoskeleyMono, monospace',
             align: 'left',
-            wordWrap: { width: width * 0.65 }
-        }).setOrigin(0, 0);
+            wordWrap: { width: textMaxW }
+        }).setOrigin(0, 0).setResolution(2);
 
-        // 6. Miniatura do Item Equipado no Canto Inferior Esquerdo (igual ao desenharMiniaturaHeroi do Lua)
-        this.equippedMiniFrame = scene.add.image(
-            -width / 2 + (width * (28 / 140)),
-            height / 2 - (height * (18 / 190)),
-            'card_frame_playable'
-        ).setDisplaySize(width * (34 / 140), height * (42 / 190)).setVisible(false);
+        this.descText = scene.add.text(descPt.x, descPt.y, heroDto.descricao || '', {
+            fontSize: '8px',
+            color: '#090d16',
+            fontStyle: 'bold',
+            fontFamily: 'IoskeleyMono, monospace',
+            align: 'left',
+            lineSpacing: 1,
+            wordWrap: { width: textMaxW }
+        }).setOrigin(0, 0).setResolution(2);
 
-        this.metaText = scene.add.text(leftTextX, height / 2 - (height * (12 / 190)), '', {
-            fontSize: '7.5px', color: '#3b2816', fontStyle: 'bold', fontFamily: 'monospace'
-        }).setOrigin(0, 0.5);
+        // 6. Indicador de Itens Equipados no rodapé da caixa esquerda (SVG X=14, Y=358)
+        const equipPt = pos(14, 358);
+        this.equippedMiniFrame = scene.add.rectangle(equipPt.x + 28, equipPt.y, 56, 13, 0xffe600)
+            .setStrokeStyle(1, 0x090d16).setVisible(false);
+        this.metaText = scene.add.text(equipPt.x + 28, equipPt.y, '', {
+            fontSize: '7.5px',
+            color: '#090d16',
+            fontStyle: 'bold',
+            fontFamily: 'IoskeleyMono, monospace'
+        }).setOrigin(0.5).setResolution(2);
 
-        // 7. Os 4 Atributos em PRETO na Coluna Direita (Coordenadas exatas do Lua: 110/190, 130/190, 150/190, 170/190)
-        const statRightX = -width / 2 + (width * (130 / 140));
-        const espY = -height / 2 + (height * (115 / 190));
-        const atqY = -height / 2 + (height * (135 / 190));
-        const defY = -height / 2 + (height * (155 / 190));
-        const hpY  = -height / 2 + (height * (175 / 190));
+        // 7. Os 4 Atributos na Coluna Direita (SVG X=264, Centros Y = 224, 267, 310, 353)
+        const espPt = pos(264, 224);
+        const atqPt = pos(264, 267);
+        const defPt = pos(264, 310);
+        const hpPt  = pos(264, 353);
 
-        this.espBadge = this.createStatNumber(statRightX, espY);
-        this.atqBadge = this.createStatNumber(statRightX, atqY);
-        this.defBadge = this.createStatNumber(statRightX, defY);
-        this.hpBadge  = this.createStatNumber(statRightX, hpY);
+        this.espBadge = this.createStatNumber(espPt.x, espPt.y, '12px', '#090d16');
+        this.atqBadge = this.createStatNumber(atqPt.x, atqPt.y, '12px', '#090d16');
+        this.defBadge = this.createStatNumber(defPt.x, defPt.y, '12px', '#090d16');
+        this.hpBadge  = this.createStatNumber(hpPt.x, hpPt.y, '13px', '#b91c1c');
 
-        // 8. Ícones de Status do Lua (💤 e 💀)
-        this.sleepStatusIcon = scene.add.text(0, -height * 0.05, '💤', { fontSize: '24px' }).setOrigin(0.5).setVisible(false);
-        this.deadOverlayBg = scene.add.rectangle(0, 0, width, height, 0x000000, 0.35).setVisible(false);
-        this.deadOverlayText = scene.add.text(0, -height * 0.05, '💀', { fontSize: '28px' }).setOrigin(0.5).setVisible(false);
+        // 8. Ícones de Status (💤 e 💀)
+        this.sleepStatusIcon = scene.add.text(0, -height * 0.12, '💤', { fontSize: '24px' }).setOrigin(0.5).setVisible(false);
+        this.deadOverlayBg = scene.add.rectangle(0, 0, width, height, 0x090d16, 0.5).setVisible(false);
+        this.deadOverlayText = scene.add.text(0, -height * 0.12, '💀', { fontSize: '30px' }).setOrigin(0.5).setVisible(false);
 
         this.add([
-            this.shadow, this.bg, this.frameImage,
+            this.shadow,
+            this.bg,
             ...(this.artSprite ? [this.artSprite] : []),
+            this.frameImage,
             this.nameText,
             this.modBonusText, this.modReducaoText, this.modVulnText,
-            this.descText, this.equippedMiniFrame, this.metaText,
+            this.traitsText, this.descText,
+            this.equippedMiniFrame, this.metaText,
             ...this.espBadge.elements, ...this.atqBadge.elements,
             ...this.defBadge.elements, ...this.hpBadge.elements,
             this.sleepStatusIcon, this.deadOverlayBg, this.deadOverlayText
@@ -125,14 +157,33 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         return null;
     }
 
-    createStatNumber(rightEdgeX, y) {
+    formatHeroTraits(heroDto) {
+        const cap = (s) => {
+            if (!s) return '';
+            const clean = String(s).replace(/_/g, ' ').trim();
+            return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
+        };
+        const list = (val, prefix = '') => {
+            if (!val) return [];
+            const arr = Array.isArray(val) ? val : [val];
+            return arr.filter(Boolean).map(v => `${prefix}${cap(v)}`);
+        };
+        return [
+            ...list(heroDto.classe),
+            ...list(heroDto.ordem),
+            ...list(heroDto.racas || heroDto.raca),
+            ...list(heroDto.afinidades || heroDto.afinidade, 'Afinidade ')
+        ].join(' - ');
+    }
+
+    createStatNumber(rightEdgeX, y, fontSize = '12px', color = '#090d16') {
         const val = this.scene.add.text(rightEdgeX, y, '0', {
-            fontSize: '12px',
-            color: '#000000',
+            fontSize: fontSize,
+            color: color,
             fontStyle: 'bold',
-            fontFamily: 'monospace',
+            fontFamily: 'IoskeleyMono, monospace',
             align: 'right'
-        }).setOrigin(1, 0.5);
+        }).setOrigin(1, 0.5).setResolution(2);
         return { elements: [val], valueText: val };
     }
 
@@ -166,7 +217,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             }
 
             this.clearLongHoverTimer();
-            this.longHoverTimer = this.scene.time.delayedCall(600, () => {
+            this.longHoverTimer = this.scene.time.delayedCall(350, () => {
                 if (!this.isDragging) {
                     this.scene.showLargeCardPreview(this.heroData, true);
                 }
@@ -196,6 +247,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             if (!this.scene.canDragHero(this)) return;
             this.isDragging = true;
             this.dragStartPos = { x: this.x, y: this.y };
+            this.prevDragX = this.x;
             this.scene.tweens.killTweensOf(this);
             this.setAngle(0);
             this.setScale(1.08);
@@ -205,6 +257,9 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
 
         this.on('drag', (pointer, dragX, dragY) => {
             if (!this.scene.canDragHero(this)) return;
+            const vx = dragX - this.prevDragX;
+            this.prevDragX = dragX;
+            this.setAngle(Phaser.Math.Clamp(vx * 0.5, -10, 10));
             this.x = dragX;
             this.y = dragY;
             this.scene.checkMagneticHoverOnBattleSlot(this);
@@ -237,7 +292,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             this.bg.setStrokeStyle(4, borderColor);
         } else {
             const teamColor = this.isOpponent ? BOARD_LAYOUT.COLORS.OPP_BLUE : BOARD_LAYOUT.COLORS.LOCAL_RED;
-            this.bg.setStrokeStyle(2, teamColor);
+            this.bg.setStrokeStyle(3, teamColor);
         }
 
         const posture = this.getTargetPosture();
@@ -258,25 +313,28 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.heroData = newHeroDto;
 
         this.nameText.setText(newHeroDto.cardName);
-        this.descText.setText(newHeroDto.descricao || '');
+        this.traitsText.setText(this.formatHeroTraits(newHeroDto));
+
+        const rawDesc = newHeroDto.descricao || '';
+        this.descText.setFontSize(rawDesc.length > 95 ? '7.2px' : '8px');
+        this.descText.setText(rawDesc);
 
         this.espBadge.valueText.setText(`${newHeroDto.espirito}`);
         this.atqBadge.valueText.setText(`${newHeroDto.ataque}`);
         this.defBadge.valueText.setText(`${newHeroDto.defesa}`);
         this.hpBadge.valueText.setText(`${newHeroDto.vidaAtual}`);
 
-        const bonus = newHeroDto.danoBonus || 0;
-        const reducao = newHeroDto.reducaoDano || 0;
-        const vuln = newHeroDto.vulnerabilidade || 0;
-        const showMods = (bonus !== 0 || reducao !== 0 || vuln !== 0);
+        const bonus = newHeroDto.danoBonus ?? newHeroDto.DanoBonus ?? 0;
+        const reducao = newHeroDto.reducaoDano ?? 0;
+        const vuln = newHeroDto.vulnerabilidade ?? 0;
 
-        this.modBonusText.setText(showMods ? `${bonus}` : '');
-        this.modReducaoText.setText(showMods ? `${reducao}` : '');
-        this.modVulnText.setText(showMods ? `${vuln}` : '');
+        this.modBonusText.setText(`${bonus}`);
+        this.modReducaoText.setText(`${reducao}`);
+        this.modVulnText.setText(`${vuln}`);
 
         const attachedCount = newHeroDto.attachedCards ? newHeroDto.attachedCards.length : 0;
         this.equippedMiniFrame.setVisible(attachedCount > 0);
-        this.metaText.setText(attachedCount > 0 ? `x${attachedCount}` : '');
+        this.metaText.setText(attachedCount > 0 ? `🗡️ ITENS: ${attachedCount}` : '');
 
         const diffs = [];
         const vfxToTrigger = new Set();
@@ -314,13 +372,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             if (d > 0) {
                 vfxToTrigger.add('cura');
             } else {
-                // Classifica o tipo de animação de dano igual ao dispararEventoVisual do partida.lua
                 if (eventType === 'PHYSICAL_COMBAT_EXCHANGE' || effectClass.includes('PhysicalAttack')) {
-                    if (newHeroDto.hasMagicBasicAttacks) {
-                        vfxToTrigger.add('danoMagico');
-                    } else {
-                        vfxToTrigger.add('danoFisico');
-                    }
+                    vfxToTrigger.add(newHeroDto.hasMagicBasicAttacks ? 'danoMagico' : 'danoFisico');
                 } else if (
                     effectClass.includes('DirectDamage') ||
                     effectClass.includes('TrueDamage') ||
@@ -333,7 +386,6 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             }
         }
 
-        // Dispara as animações de spritesheet sobre a posição atual do Herói (seja em BATTLE ou na BENCH!)
         if (this.scene && typeof this.scene.playVisualEffect === 'function') {
             Array.from(vfxToTrigger).forEach((vfxKey, idx) => {
                 this.scene.time.delayedCall(idx * 180, () => {
@@ -363,8 +415,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             this.deadOverlayText.setVisible(true);
             this.sleepStatusIcon.setVisible(false);
             this.setAlpha(0.75);
-            this.frameImage.setTint(0x555555);
-            if (this.artSprite) this.artSprite.setTint(0x555555);
+            this.frameImage.setTint(0x777777);
+            if (this.artSprite) this.artSprite.setTint(0x666666);
         } else {
             this.deadOverlayBg.setVisible(false);
             this.deadOverlayText.setVisible(false);
@@ -372,14 +424,19 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             if (this.artSprite) this.artSprite.clearTint();
             const inBattle = newHeroDto.zoneId === 'BATTLE';
             this.sleepStatusIcon.setVisible(!inBattle && newHeroDto.estaAtivo === false);
-            this.setAlpha(newHeroDto.estaAtivo ? 1.0 : 0.88);
+            this.setAlpha(newHeroDto.estaAtivo ? 1.0 : 0.9);
         }
     }
 
     showFloatingNumber(text, color) {
         const floatTxt = this.scene.add.text(this.x, this.y - 25, text, {
-            fontSize: '22px', color: color, fontStyle: 'bold', stroke: '#000000', strokeThickness: 4
-        }).setOrigin(0.5).setDepth(160);
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '22px',
+            color: color,
+            fontStyle: 'bold',
+            stroke: '#090d16',
+            strokeThickness: 4
+        }).setOrigin(0.5).setDepth(160).setResolution(2);
 
         this.scene.tweens.add({
             targets: floatTxt,

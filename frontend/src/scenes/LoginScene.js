@@ -1,11 +1,30 @@
 import Phaser from 'phaser';
+import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 
 export default class LoginScene extends Phaser.Scene {
     constructor() {
         super({ key: 'LoginScene' });
     }
 
+    preload() {
+        this.load.setPath('assets');
+        if (!this.textures.exists('ui_p5_crt_button')) {
+            this.load.svg('ui_p5_crt_button', 'images/ui/p5_crt_button.svg', { width: 520, height: 84 });
+        }
+        if (!this.textures.exists('ui_card_frame_phantom')) {
+            this.load.svg('ui_card_frame_phantom', 'images/ui/card_frame_phantom.svg', { width: 320, height: 440 });
+        }
+        if (!this.textures.exists('ui_arena_crt_radar')) {
+            this.load.svg('ui_arena_crt_radar', 'images/ui/arena_crt_radar.svg', { width: 800, height: 800 });
+        }
+    }
+
     create() {
+        if (this.renderer.pipelines) {
+            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
+            this.cameras.main.setPostPipeline('CRTPostFX');
+        }
+
         const { width, height } = this.scale;
 
         this.add.text(width / 2, height / 2 - 140, 'LENDAS DA POEIRA', {
@@ -17,7 +36,7 @@ export default class LoginScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Input HTML integrado via DOM Element do Phaser
-        const htmlInput = '<input type="text" id="nick-input" placeholder="Seu Nick..." style="width: 320px; height: 50px; font-size: 20px; padding: 10px; background: #0f172a; color: #38bdf8; border: 2px solid #38bdf8; border-radius: 8px; text-align: center; outline: none;" />';
+        const htmlInput = '<input type="text" id="nick-input" class="phantom-crt-input" placeholder="Seu Nick..." style="width: 320px; height: 50px; font-size: 20px; padding: 10px; text-align: center; outline: none;" />';
         this.inputElement = this.add.dom(width / 2, height / 2 - 20).createFromHTML(htmlInput);
 
         // Botão Entrar

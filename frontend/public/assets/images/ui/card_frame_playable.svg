@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 380" width="280" height="380">
+  <!-- Sombra Externa -->
+  <polygon points="10,8 276,4 272,376 6,374" fill="#090d16" />
+
+  <!-- Corpo Base com Janela de Arte Vazada (y: 42 a 192) -->
+  <path fill-rule="evenodd" d="M 4,4 L 272,2 L 268,372 L 2,370 Z
+           M 14,42 L 262,40 L 260,192 L 14,192 Z" fill="#e6dec8" stroke="#090d16" stroke-width="3.5" />
+
+  <rect x="14" y="41" width="247" height="151" fill="none" stroke="#090d16" stroke-width="2" />
+
+  <!-- Barra Superior do Nome (Centro Y = 22) -->
+  <polygon points="4,6 270,4 266,40 6,40" fill="#ffffff" stroke="#090d16" stroke-width="3" />
+  <rect x="6" y="35" width="260" height="5" fill="#e60012" />
+
+  <!-- Faixa Central de Tipo / Subtipo / Empunhadura (y: 194..222 | Centro Y = 208) -->
+  <rect x="8" y="194" width="260" height="28" fill="#ffe600" stroke="#090d16" stroke-width="2.5" />
+
+  <!-- Caixa de Descrição Ampla e Lisa (x: 8..268, y: 222..370) -->
+  <rect x="8" y="222" width="260" height="148" fill="#faf8f5" stroke="#090d16" stroke-width="3" />
+</svg>

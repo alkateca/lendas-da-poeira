@@ -8,26 +8,24 @@ export const BOARD_LAYOUT = {
     LARGE_CARD:   { width: 308, height: 418 }, // Carta em Hover Longo (surge sobre o Botão Principal)
 
     COLORS: {
-        GOLD_DUST: 0xd4af37,
-        LOCAL_RED: 0xb31b1b,
-        LOCAL_RED_GLOW: 0xff3333,
-        OPP_BLUE: 0x0066b2,
-        OPP_BLUE_GLOW: 0x38bdf8,
-        SNAP_VALID: 0x00ff88,
-        BG_DARK: 0x000000,
-        ZONE_SURFACE: 0x0d0d11,
-        SLOT_SURFACE: 0x16161d,
-        SLOT_ELEVATED: 0x1f1f29,
-        LOCAL_SLOT_TINT: 0x221416,
-        OPP_SLOT_TINT: 0x131b26,
+        BG_DARK: 0x181c24,          // Cinza-azulado médio-escuro (em vez de preto absoluto)
+        ZONE_SURFACE: 0x262d3d,     // Superfície das bancadas e da arena bem visível e clara
+        SLOT_SURFACE: 0x333d52,     // Slots das cartas mais claros para fácil identificação
+        SLOT_ELEVATED: 0x3f4b66,    // Slots de Batalha Ativa destacados
+        LOCAL_SLOT_TINT: 0x4c1d24,  // Tom avermelhado mais vivo nos slots aliados da pilha
+        OPP_SLOT_TINT: 0x1e3a5f,    // Tom azul mais vivo nos slots do oponente da pilha
+        GOLD_DUST: 0xffe600,        // Amarelo Ouro vibrante
+        SNAP_VALID: 0x22c55e,
+        LOCAL_RED: 0xe60012,
+        OPP_BLUE: 0x00f0ff,
         CARD_COLORS: {
-            WHITE: 0xe2e8f0,
-            GREEN: 0x15803d,
-            BLACK: 0x334155,
-            BLUE: 0x1d4ed8,
-            YELLOW: 0xca8a04,
-            RED: 0xb91c1c,
-            NEUTRAL: 0x64748b
+            WHITE: 0xf8fafc,
+            BLUE: 0x38bdf8,
+            RED: 0xef4444,
+            GREEN: 0x22c55e,
+            BLACK: 0x64748b,
+            YELLOW: 0xfacc15,
+            NEUTRAL: 0x94a3b8
         }
     },
 

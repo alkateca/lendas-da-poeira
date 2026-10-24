@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import DeckRestrictionValidator from '../managers/DeckRestrictionValidator.js';
 import { DEMO_MATCH_UUID, INITIAL_MATCH_SNAPSHOT } from '../config/mockSnapshots.js';
+import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 
 export default class MainMenuScene extends Phaser.Scene {
     constructor() {
@@ -16,7 +17,25 @@ export default class MainMenuScene extends Phaser.Scene {
         this.autoSearchPvp = !!data?.autoSearchPvp;
     }
 
+    preload() {
+        this.load.setPath('assets');
+        if (!this.textures.exists('ui_p5_crt_button')) {
+            this.load.svg('ui_p5_crt_button', 'images/ui/p5_crt_button.svg', { width: 520, height: 84 });
+        }
+        if (!this.textures.exists('ui_card_frame_phantom')) {
+            this.load.svg('ui_card_frame_phantom', 'images/ui/card_frame_phantom.svg', { width: 320, height: 440 });
+        }
+        if (!this.textures.exists('ui_arena_crt_radar')) {
+            this.load.svg('ui_arena_crt_radar', 'images/ui/arena_crt_radar.svg', { width: 800, height: 800 });
+        }
+    }
+
     create() {
+        if (this.renderer.pipelines) {
+            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
+            this.cameras.main.setPostPipeline('CRTPostFX');
+        }
+
         const { width, height } = this.scale;
 
         // Painel Superior de Perfil e Seletor de Baralho
@@ -170,16 +189,44 @@ export default class MainMenuScene extends Phaser.Scene {
     }
 
     createButton(x, y, label, color, callback) {
-        const bg = this.add.rectangle(x, y, 500, 72, color)
-            .setStrokeStyle(3, 0xd4af37)
+        const btnContainer = this.add.container(x, y);
+
+        const bg = this.add.image(0, 0, 'ui_p5_crt_button')
+            .setDisplaySize(520, 80)
             .setInteractive({ useHandCursor: true });
 
-        this.add.text(x, y, label, {
-            fontSize: '17px', color: '#ffffff', fontStyle: 'bold'
+        const txt = this.add.text(16, -2, label, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '16px',
+            color: '#ffffff',
+            fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        bg.on('pointerover', () => bg.setScale(1.03));
-        bg.on('pointerout', () => bg.setScale(1.0));
+        btnContainer.add([bg, txt]);
+
+        bg.on('pointerover', () => {
+            this.tweens.add({
+                targets: btnContainer,
+                scaleX: 1.05,
+                scaleY: 1.05,
+                angle: -2,
+                duration: 120,
+                ease: 'Back.easeOut'
+            });
+            txt.setColor('#ffe600');
+        });
+
+        bg.on('pointerout', () => {
+            this.tweens.add({
+                targets: btnContainer,
+                scaleX: 1.0,
+                scaleY: 1.0,
+                angle: 0,
+                duration: 120
+            });
+            txt.setColor('#ffffff');
+        });
+
         bg.on('pointerdown', callback);
     }
 

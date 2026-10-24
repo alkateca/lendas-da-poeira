@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BOARD_LAYOUT } from '../config/BoardCoordinates.js';
 import DeckRestrictionValidator from '../managers/DeckRestrictionValidator.js';
+import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 
 export default class DeckBuilderScene extends Phaser.Scene {
     constructor() {
@@ -35,7 +36,25 @@ export default class DeckBuilderScene extends Phaser.Scene {
         if (!this.player.decks) this.player.decks = [];
     }
 
+    preload() {
+        this.load.setPath('assets');
+        if (!this.textures.exists('ui_p5_crt_button')) {
+            this.load.svg('ui_p5_crt_button', 'images/ui/p5_crt_button.svg', { width: 520, height: 84 });
+        }
+        if (!this.textures.exists('ui_card_frame_phantom')) {
+            this.load.svg('ui_card_frame_phantom', 'images/ui/card_frame_phantom.svg', { width: 320, height: 440 });
+        }
+        if (!this.textures.exists('ui_arena_crt_radar')) {
+            this.load.svg('ui_arena_crt_radar', 'images/ui/arena_crt_radar.svg', { width: 800, height: 800 });
+        }
+    }
+
     async create() {
+        if (this.renderer.pipelines) {
+            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
+            this.cameras.main.setPostPipeline('CRTPostFX');
+        }
+
         this.drawBackgroundAndFrames();
         this.createTopBar();
         this.createHeroTeamSection();
@@ -88,10 +107,9 @@ export default class DeckBuilderScene extends Phaser.Scene {
         }).setOrigin(0, 0.5);
 
         const inputHtml = `
-            <input type="text" id="deck-name-input" placeholder="Nome do Baralho..."
+            <input type="text" id="deck-name-input" class="phantom-crt-input" placeholder="Nome do Baralho..."
                 style="width: 260px; height: 36px; font-size: 15px; padding: 0 12px;
-                background: #1e293b; color: #ffffff; border: 2px solid #38bdf8;
-                border-radius: 6px; font-weight: bold; outline: none;" />
+                font-weight: bold; outline: none;" />
         `;
         this.deckNameDom = this.add.dom(520, 48).createFromHTML(inputHtml);
 
@@ -200,11 +218,10 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 box-sizing: border-box;
                 font-family: sans-serif;
             ">
-                <input type="text" id="db-search-input" placeholder="🔍 Buscar nome ou efeito..."
-                    style="width: 198px; height: 28px; padding: 0 8px; background: #1e293b; color: #ffffff;
-                    border: 1px solid #38bdf8; border-radius: 4px; font-size: 12px; font-weight: bold; outline: none;" />
+                <input type="text" id="db-search-input" class="phantom-crt-input" placeholder="🔍 Buscar nome ou efeito..."
+                    style="width: 198px; height: 28px; padding: 0 8px; font-size: 12px; font-weight: bold; outline: none;" />
 
-                <select id="db-filter-color" style="width: 122px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                <select id="db-filter-color" class="phantom-crt-select" style="width: 122px; height: 28px; font-size: 11.5px; font-weight: bold; outline: none;">
                     <option value="ALL">🎨 Cor: Todas</option>
                     <option value="WHITE">Branca / Incolor</option>
                     <option value="BLUE">Azul</option>
@@ -215,7 +232,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
                     <option value="NEUTRAL">Neutra</option>
                 </select>
 
-                <select id="db-filter-type" style="width: 142px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                <select id="db-filter-type" class="phantom-crt-select" style="width: 142px; height: 28px; font-size: 11.5px; font-weight: bold; outline: none;">
                     <option value="ALL">🃏 Tipo/Sub: Todos</option>
                     <optgroup label="Tipos de Carta">
                         <option value="TYPE:SPELL">Magia / Feitiço</option>
@@ -232,23 +249,23 @@ export default class DeckBuilderScene extends Phaser.Scene {
                     </optgroup>
                 </select>
 
-                <select id="db-filter-raca" style="width: 134px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                <select id="db-filter-raca" class="phantom-crt-select" style="width: 134px; height: 28px; font-size: 11.5px; font-weight: bold; outline: none;">
                     <option value="ALL">🧬 Raça: Todas</option>
                 </select>
 
-                <select id="db-filter-afinidade" style="width: 136px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                <select id="db-filter-afinidade" class="phantom-crt-select" style="width: 136px; height: 28px; font-size: 11.5px; font-weight: bold; outline: none;">
                     <option value="ALL">🔥 Afinidade: Todas</option>
                 </select>
 
-                <select id="db-filter-classe" style="width: 134px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                <select id="db-filter-classe" class="phantom-crt-select" style="width: 134px; height: 28px; font-size: 11.5px; font-weight: bold; outline: none;">
                     <option value="ALL">⚔️ Classe: Todas</option>
                 </select>
 
-                <select id="db-filter-ordem" style="width: 134px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                <select id="db-filter-ordem" class="phantom-crt-select" style="width: 134px; height: 28px; font-size: 11.5px; font-weight: bold; outline: none;">
                     <option value="ALL">🛡️ Ordem: Todas</option>
                 </select>
 
-                <select id="db-filter-empunhadura" style="width: 110px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                <select id="db-filter-empunhadura" class="phantom-crt-select" style="width: 110px; height: 28px; font-size: 11.5px; font-weight: bold; outline: none;">
                     <option value="ALL">✋ Emp.: Todas</option>
                     <option value="1">1 Mão (Emp. 1)</option>
                     <option value="2">2 Mãos (Emp. 2)</option>
@@ -849,21 +866,30 @@ export default class DeckBuilderScene extends Phaser.Scene {
     createCatalogCardTile(x, y, data, isHero, isLiberation, validation) {
         const tile = this.add.container(x, y);
         const w = 225;
-        const h = 246;
+        const h = 248;
 
         const accentColor = isLiberation
             ? 0xca8a04
             : (BOARD_LAYOUT.COLORS.CARD_COLORS[data.color] || 0x475569);
-        const borderColor = validation.allowed ? (isLiberation ? 0xfacc15 : 0x00ff88) : 0xff3333;
+        const borderColor = validation.allowed ? (isLiberation ? 0xfacc15 : 0x16a34a) : 0xdc2626;
 
-        const bg = this.add.rectangle(0, 0, w, h, isLiberation ? 0x271a0c : 0x1e2430)
-            .setStrokeStyle(2, borderColor)
-            .setAlpha(validation.allowed ? 1.0 : 0.48);
+        // Sombra dura e fundo Papel Creme Claro (#faf8f5) para leitura fácil em preto
+        const shadow = this.add.rectangle(5, 6, w, h, 0x090d16, 0.65);
+        const bg = this.add.rectangle(0, 0, w, h, isLiberation ? 0xfef9c3 : 0xfaf8f5)
+            .setStrokeStyle(3, borderColor)
+            .setAlpha(validation.allowed ? 1.0 : 0.55);
 
-        const header = this.add.rectangle(0, -h / 2 + 18, w - 6, 28, accentColor);
+        const header = this.add.rectangle(0, -h / 2 + 18, w - 6, 30, accentColor)
+            .setStrokeStyle(1.5, 0x090d16);
+        const isLightHeader = ['WHITE', 'YELLOW'].includes(data.color) || isLiberation;
         const title = this.add.text(0, -h / 2 + 18, data.cardName, {
-            fontSize: '11.5px', color: '#ffffff', fontStyle: 'bold', align: 'center', wordWrap: { width: w - 14 }
-        }).setOrigin(0.5);
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '12px',
+            color: isLightHeader ? '#090d16' : '#ffffff',
+            fontStyle: 'bold',
+            align: 'center',
+            wordWrap: { width: w - 14 }
+        }).setOrigin(0.5).setResolution(2);
 
         const subType = isHero
             ? `HERÓI • ${data.color}${data.afinidades?.length ? ' • ' + data.afinidades.join('/') : ''}`
@@ -871,20 +897,43 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 ? `★ LIBERAÇÃO (${data.cardType})`
                 : `${data.cardType}${data.unica ? ' ★ ÚNICA' : ''}${data.itemType && data.itemType !== 'NENHUM' ? ' • ' + data.itemType : ''}`);
 
-        const badge = this.add.text(0, -h / 2 + 44, subType, {
-            fontSize: '9.5px', color: '#ffd700', fontStyle: 'bold', align: 'center', wordWrap: { width: w - 12 }
-        }).setOrigin(0.5);
+        const subBar = this.add.rectangle(0, -h / 2 + 46, w - 6, 22, 0xe6dec8)
+            .setStrokeStyle(1, 0x94a3b8);
+        const badge = this.add.text(0, -h / 2 + 46, subType, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '9.5px',
+            color: '#4a3520',
+            fontStyle: 'bold',
+            align: 'center',
+            wordWrap: { width: w - 12 }
+        }).setOrigin(0.5).setResolution(2);
 
-        const desc = this.add.text(0, 6, data.descricao || '', {
-            fontSize: '10px', color: '#e2e8f0', align: 'center', wordWrap: { width: w - 20 }
-        }).setOrigin(0.5);
+        // Se for Herói, mostra os 4 status em destaque antes da descrição
+        const statsStr = isHero
+            ? `ESP:${data.espirito}  ATQ:${data.ataque}  DEF:${data.defesa}  HP:${data.vidaMaxima}\n`
+            : '';
 
-        const statusFooter = this.add.rectangle(0, h / 2 - 18, w - 6, 30, validation.allowed ? 0x064e3b : 0x450a0a);
-        const statusTxt = this.add.text(0, h / 2 - 18, validation.allowed ? `➕ ${validation.reason}` : `🔒 ${validation.reason}`, {
-            fontSize: '9.5px', color: validation.allowed ? '#4ade80' : '#fca5a5', fontStyle: 'bold', align: 'center', wordWrap: { width: w - 10 }
-        }).setOrigin(0.5);
+        const desc = this.add.text(-w / 2 + 12, -h / 2 + 64, statsStr + (data.descricao || ''), {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '10.5px',
+            color: '#090d16',
+            fontStyle: 'bold',
+            align: 'left',
+            lineSpacing: 2,
+            wordWrap: { width: w - 24 }
+        }).setOrigin(0, 0).setResolution(2);
 
-        tile.add([bg, header, title, badge, desc, statusFooter, statusTxt]);
+        const statusFooter = this.add.rectangle(0, h / 2 - 17, w - 6, 28, validation.allowed ? 0x14532d : 0x7f1d1d);
+        const statusTxt = this.add.text(0, h / 2 - 17, validation.allowed ? `➕ ${validation.reason}` : `🔒 ${validation.reason}`, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '10px',
+            color: validation.allowed ? '#86efac' : '#fecaca',
+            fontStyle: 'bold',
+            align: 'center',
+            wordWrap: { width: w - 10 }
+        }).setOrigin(0.5).setResolution(2);
+
+        tile.add([shadow, bg, header, title, subBar, badge, desc, statusFooter, statusTxt]);
 
         bg.setInteractive({ useHandCursor: validation.allowed })
             .on('pointerdown', () => {
@@ -1050,13 +1099,28 @@ export default class DeckBuilderScene extends Phaser.Scene {
 
     createLargePreviewOverlay() {
         this.largePreview = this.add.container(1635, 560).setDepth(300).setVisible(false);
-        const bg = this.add.rectangle(0, 0, 320, 420, 0x161b26, 0.98).setStrokeStyle(4, BOARD_LAYOUT.COLORS.GOLD_DUST);
-        this.lpTitle = this.add.text(0, -175, '', { fontSize: '18px', color: '#ffd700', fontStyle: 'bold', align: 'center', wordWrap: { width: 290 } }).setOrigin(0.5);
-        this.lpMeta = this.add.text(0, -130, '', { fontSize: '12px', color: '#38bdf8', fontStyle: 'bold', align: 'center', wordWrap: { width: 290 } }).setOrigin(0.5);
-        this.lpDesc = this.add.text(0, 10, '', { fontSize: '14px', color: '#ffffff', align: 'center', wordWrap: { width: 280 } }).setOrigin(0.5);
-        this.lpStats = this.add.text(0, 170, '', { fontSize: '13px', color: '#4ade80', fontStyle: 'bold', align: 'center' }).setOrigin(0.5);
+        const shadow = this.add.rectangle(8, 10, 320, 420, 0x000000, 0.7);
+        const bg = this.add.rectangle(0, 0, 320, 420, 0xfaf8f5, 1).setStrokeStyle(4, 0x090d16);
+        const topBar = this.add.rectangle(0, -172, 312, 56, 0xe60012);
 
-        this.largePreview.add([bg, this.lpTitle, this.lpMeta, this.lpDesc, this.lpStats]);
+        this.lpTitle = this.add.text(0, -172, '', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '18px', color: '#ffffff', fontStyle: 'bold', align: 'center', wordWrap: { width: 290 }
+        }).setOrigin(0.5).setResolution(2);
+
+        this.lpMeta = this.add.text(0, -124, '', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '12.5px', color: '#4a3520', fontStyle: 'bold', align: 'center', wordWrap: { width: 290 }
+        }).setOrigin(0.5).setResolution(2);
+
+        this.lpDesc = this.add.text(-140, -90, '', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '14px', color: '#090d16', fontStyle: 'bold', align: 'left', lineSpacing: 4, wordWrap: { width: 280 }
+        }).setOrigin(0, 0).setResolution(2);
+
+        const botBar = this.add.rectangle(0, 175, 312, 46, 0x090d16);
+        this.lpStats = this.add.text(0, 175, '', {
+            fontFamily: 'IoskeleyMono, monospace', fontSize: '13.5px', color: '#ffe600', fontStyle: 'bold', align: 'center'
+        }).setOrigin(0.5).setResolution(2);
+
+        this.largePreview.add([shadow, bg, topBar, this.lpTitle, this.lpMeta, this.lpDesc, botBar, this.lpStats]);
     }
 
     startLongHover(data, isHero) {

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 84" width="520" height="84">
+  <!-- Sombra deslocada vermelha rebelde -->
+  <polygon points="26,18 516,8 498,80 8,74" fill="#e60012" />
+
+  <!-- Placa secundária amarela (efeito de colagem) -->
+  <polygon points="14,6 504,14 490,72 4,66" fill="#ffe600" />
+
+  <!-- Corpo principal preto com borda branca cortante -->
+  <polygon points="18,10 508,4 492,70 10,68" fill="#07090e" stroke="#ffffff" stroke-width="3" />
+
+  <!-- Detalhe de Terminal no canto esquerdo -->
+  <polygon points="22,14 68,12 58,64 16,64" fill="#e60012" />
+  <text x="40" y="45" font-family="monospace" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">>_</text>
+
+  <!-- Marcadores de telemetria CRT no canto direito -->
+  <rect x="462" y="14" width="6" height="6" fill="#00f0ff" />
+  <rect x="472" y="14" width="6" height="6" fill="#ffe600" />
+  <rect x="482" y="14" width="6" height="6" fill="#e60012" />
+  <line x1="76" y1="58" x2="480" y2="54" stroke="#00f0ff" stroke-width="1" stroke-dasharray="6,4" opacity="0.5" />
+</svg>
