@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 
 export class Boot extends Scene
 {
@@ -17,6 +18,11 @@ export class Boot extends Scene
 
     create ()
     {
+        if (this.renderer.pipelines) {
+            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
+            this.cameras.main.setPostPipeline('CRTPostFX');
+        }
+
         this.scene.start('Preloader');
     }
 }

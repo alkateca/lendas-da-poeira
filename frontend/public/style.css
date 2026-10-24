@@ -1,3 +1,9 @@
+@font-face {
+    font-family: 'IoskeleyMono';
+    src: url('/assets/fontes/IoskeleyMonoNerdFont-CondensedBold.ttf') format('truetype');
+    font-weight: bold;
+}
+
 body {
     margin: 0;
     padding: 0;
@@ -12,4 +18,29 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+/* Estilo global para os inputs DOM do LoginScene e DeckBuilderScene */
+.phantom-crt-input, .phantom-crt-select {
+    font-family: 'IoskeleyMono', monospace;
+    background: #050508 !important;
+    color: #00F0FF !important;
+    border: 2px solid #FFE600 !important;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    box-shadow: 4px 4px 0px #E60012;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.12s ease;
+}
+
+.phantom-crt-input:focus, .phantom-crt-select:focus {
+    transform: translate(-2px, -2px) skewX(-3deg);
+    box-shadow: 6px 6px 0px #00F0FF;
+    border-color: #FFFFFF !important;
+}
+
+.phantom-crt-select option {
+    background: #050508;
+    color: #00F0FF;
+    font-family: 'IoskeleyMono', monospace;
 }

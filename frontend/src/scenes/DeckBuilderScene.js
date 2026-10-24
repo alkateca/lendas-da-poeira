@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BOARD_LAYOUT } from '../config/BoardCoordinates.js';
 import DeckRestrictionValidator from '../managers/DeckRestrictionValidator.js';
+import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 
 export default class DeckBuilderScene extends Phaser.Scene {
     constructor() {
@@ -35,7 +36,25 @@ export default class DeckBuilderScene extends Phaser.Scene {
         if (!this.player.decks) this.player.decks = [];
     }
 
+    preload() {
+        this.load.setPath('assets');
+        if (!this.textures.exists('ui_p5_crt_button')) {
+            this.load.svg('ui_p5_crt_button', 'images/ui/p5_crt_button.svg', { width: 520, height: 84 });
+        }
+        if (!this.textures.exists('ui_card_frame_phantom')) {
+            this.load.svg('ui_card_frame_phantom', 'images/ui/card_frame_phantom.svg', { width: 320, height: 440 });
+        }
+        if (!this.textures.exists('ui_arena_crt_radar')) {
+            this.load.svg('ui_arena_crt_radar', 'images/ui/arena_crt_radar.svg', { width: 800, height: 800 });
+        }
+    }
+
     async create() {
+        if (this.renderer.pipelines) {
+            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
+            this.cameras.main.setPostPipeline('CRTPostFX');
+        }
+
         this.drawBackgroundAndFrames();
         this.createTopBar();
         this.createHeroTeamSection();
@@ -88,10 +107,9 @@ export default class DeckBuilderScene extends Phaser.Scene {
         }).setOrigin(0, 0.5);
 
         const inputHtml = `
-            <input type="text" id="deck-name-input" placeholder="Nome do Baralho..."
+            <input type="text" id="deck-name-input" class="phantom-crt-input" placeholder="Nome do Baralho..."
                 style="width: 260px; height: 36px; font-size: 15px; padding: 0 12px;
-                background: #1e293b; color: #ffffff; border: 2px solid #38bdf8;
-                border-radius: 6px; font-weight: bold; outline: none;" />
+                font-weight: bold; outline: none;" />
         `;
         this.deckNameDom = this.add.dom(520, 48).createFromHTML(inputHtml);
 
@@ -200,11 +218,10 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 box-sizing: border-box;
                 font-family: sans-serif;
             ">
-                <input type="text" id="db-search-input" placeholder="🔍 Buscar nome ou efeito..."
-                    style="width: 198px; height: 28px; padding: 0 8px; background: #1e293b; color: #ffffff;
-                    border: 1px solid #38bdf8; border-radius: 4px; font-size: 12px; font-weight: bold; outline: none;" />
+                <input type="text" id="db-search-input" class="phantom-crt-input" placeholder="🔍 Buscar nome ou efeito..."
+                    style="width: 198px; height: 28px; padding: 0 8px; font-size: 12px; font-weight: bold; outline: none;" />
 
-                <select id="db-filter-color" style="width: 122px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                <select id="db-filter-color" class="phantom-crt-select" style="width: 122px; height: 28px; font-size: 11.5px; font-weight: bold; outline: none;">
                     <option value="ALL">🎨 Cor: Todas</option>
                     <option value="WHITE">Branca / Incolor</option>
                     <option value="BLUE">Azul</option>
@@ -215,7 +232,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
                     <option value="NEUTRAL">Neutra</option>
                 </select>
 
-                <select id="db-filter-type" style="width: 142px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                <select id="db-filter-type" class="phantom-crt-select" style="width: 142px; height: 28px; font-size: 11.5px; font-weight: bold; outline: none;">
                     <option value="ALL">🃏 Tipo/Sub: Todos</option>
                     <optgroup label="Tipos de Carta">
                         <option value="TYPE:SPELL">Magia / Feitiço</option>
@@ -232,23 +249,23 @@ export default class DeckBuilderScene extends Phaser.Scene {
                     </optgroup>
                 </select>
 
-                <select id="db-filter-raca" style="width: 134px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                <select id="db-filter-raca" class="phantom-crt-select" style="width: 134px; height: 28px; font-size: 11.5px; font-weight: bold; outline: none;">
                     <option value="ALL">🧬 Raça: Todas</option>
                 </select>
 
-                <select id="db-filter-afinidade" style="width: 136px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                <select id="db-filter-afinidade" class="phantom-crt-select" style="width: 136px; height: 28px; font-size: 11.5px; font-weight: bold; outline: none;">
                     <option value="ALL">🔥 Afinidade: Todas</option>
                 </select>
 
-                <select id="db-filter-classe" style="width: 134px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                <select id="db-filter-classe" class="phantom-crt-select" style="width: 134px; height: 28px; font-size: 11.5px; font-weight: bold; outline: none;">
                     <option value="ALL">⚔️ Classe: Todas</option>
                 </select>
 
-                <select id="db-filter-ordem" style="width: 134px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                <select id="db-filter-ordem" class="phantom-crt-select" style="width: 134px; height: 28px; font-size: 11.5px; font-weight: bold; outline: none;">
                     <option value="ALL">🛡️ Ordem: Todas</option>
                 </select>
 
-                <select id="db-filter-empunhadura" style="width: 110px; height: 28px; background: #1e293b; color: #e2e8f0; border: 1px solid #475569; border-radius: 4px; font-size: 11.5px; font-weight: bold;">
+                <select id="db-filter-empunhadura" class="phantom-crt-select" style="width: 110px; height: 28px; font-size: 11.5px; font-weight: bold; outline: none;">
                     <option value="ALL">✋ Emp.: Todas</option>
                     <option value="1">1 Mão (Emp. 1)</option>
                     <option value="2">2 Mãos (Emp. 2)</option>

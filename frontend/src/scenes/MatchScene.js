@@ -4,6 +4,8 @@ import HeroCardPrefab from '../prefabs/HeroCardPrefab.js';
 import PlayableCardPrefab from '../prefabs/PlayableCardPrefab.js';
 import SnapshotPlayerManager from '../managers/SnapshotPlayerManager.js';
 import SelectionManager from '../managers/SelectionManager.js';
+import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
+import PhantomUIKit from '../ui/PhantomUIKit.js';
 
 export default class MatchScene extends Phaser.Scene {
     constructor() {
@@ -18,12 +20,15 @@ export default class MatchScene extends Phaser.Scene {
         this.opponentHandDummies = [];
         this.resolveCardPrefabs = [];
         this.resolveSlotVisuals = [];
+        this.oppBenchSlotVisuals = [];
+        this.localBenchSlotVisuals = [];
 
         this.isWaitingOpponentConfirmation = false;
         this.isSubmittingAction = false;
         this.isPolling = false;
         this.isChoiceModalActive = false;
         this.isSettingsModalOpen = false;
+        this.lastCutInTime = 0;
         this.musicVolume = Number(localStorage.getItem('ldp_music_volume') ?? 0.7);
         this.sfxVolume = Number(localStorage.getItem('ldp_sfx_volume') ?? 0.8);
     }
@@ -36,14 +41,32 @@ export default class MatchScene extends Phaser.Scene {
 
     preload() {
         this.load.setPath('assets');
+
         if (!this.textures.exists('card_back')) {
             this.load.image('card_back', 'images/modeloBaralho.png');
         }
+
+        // Novos SVGs em /assets/images/ui/
         if (!this.textures.exists('card_frame_playable')) {
-            this.load.image('card_frame_playable', 'images/modeloAlfaCartas.jpeg');
+            this.load.svg('card_frame_playable', 'images/ui/card_frame_phantom.svg', { width: 320, height: 440 });
         }
         if (!this.textures.exists('card_frame_hero')) {
-            this.load.image('card_frame_hero', 'images/modeloAlfa.jpeg');
+            this.load.svg('card_frame_hero', 'images/ui/card_frame_phantom.svg', { width: 320, height: 440 });
+        }
+        if (!this.textures.exists('ui_p5_crt_button')) {
+            this.load.svg('ui_p5_crt_button', 'images/ui/p5_crt_button.svg', { width: 520, height: 84 });
+        }
+        if (!this.textures.exists('ui_arena_crt_radar')) {
+            this.load.svg('ui_arena_crt_radar', 'images/ui/arena_crt_radar.svg', { width: 800, height: 800 });
+        }
+        if (!this.textures.exists('ui_graveyard_glitch')) {
+            this.load.svg('ui_graveyard_glitch', 'images/ui/graveyard_glitch.svg', { width: 82, height: 96 });
+        }
+        if (!this.textures.exists('card_discard_back')) {
+            this.load.image('card_discard_back', 'images/modeloBaralhoDescarte.png');
+        }
+        if (!this.textures.exists('arena_crt_radar')) {
+            this.load.svg('arena_crt_radar', 'images/ui/arena_crt_radar.svg', { width: 800, height: 800 });
         }
 
         // Spritesheets de Efeitos Visuais portadas do partida.lua
@@ -142,6 +165,11 @@ export default class MatchScene extends Phaser.Scene {
     }
 
     create() {
+        if (this.renderer.pipelines) {
+            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
+            this.cameras.main.setPostPipeline('CRTPostFX');
+        }
+
         this.registerCombatAnimations();
         this.heroPrefabs.clear();
         this.spawnedCardPrefabs = new Map();
@@ -149,6 +177,8 @@ export default class MatchScene extends Phaser.Scene {
         this.opponentHandDummies = [];
         this.resolveCardPrefabs = [];
         this.resolveSlotVisuals = [];
+        this.oppBenchSlotVisuals = [];
+        this.localBenchSlotVisuals = [];
         this.currentSnapshot = null;
         this.isWaitingOpponentConfirmation = false;
         this.isSubmittingAction = false;
@@ -239,6 +269,42 @@ export default class MatchScene extends Phaser.Scene {
         });
     }
 
+    drawSlotCornerBrackets(graphics, w, h, color, arm = 18, lineWidth = 2.5) {
+        graphics.clear();
+        const hw = w / 2;
+        const hh = h / 2;
+
+        graphics.lineStyle(lineWidth, color, 1);
+
+        // Top-Left (L)
+        graphics.beginPath();
+        graphics.moveTo(-hw + arm, -hh);
+        graphics.lineTo(-hw, -hh);
+        graphics.lineTo(-hw, -hh + arm);
+        graphics.strokePath();
+
+        // Top-Right (L)
+        graphics.beginPath();
+        graphics.moveTo(hw - arm, -hh);
+        graphics.lineTo(hw, -hh);
+        graphics.lineTo(hw, -hh + arm);
+        graphics.strokePath();
+
+        // Bottom-Left (L)
+        graphics.beginPath();
+        graphics.moveTo(-hw + arm, hh);
+        graphics.lineTo(-hw, hh);
+        graphics.lineTo(-hw, hh - arm);
+        graphics.strokePath();
+
+        // Bottom-Right (L)
+        graphics.beginPath();
+        graphics.moveTo(hw - arm, hh);
+        graphics.lineTo(hw, hh);
+        graphics.lineTo(hw, hh - arm);
+        graphics.strokePath();
+    }
+
     drawBoardBackgroundAndSlots() {
         const { COLORS, MEDIUM_CARD, BENCH_BOXES, ARENA_CIRCLE } = BOARD_LAYOUT;
 
@@ -249,6 +315,17 @@ export default class MatchScene extends Phaser.Scene {
         const graphics = this.add.graphics();
         graphics.fillStyle(COLORS.ZONE_SURFACE, 1);
         graphics.fillCircle(ARENA_CIRCLE.x, ARENA_CIRCLE.y, ARENA_CIRCLE.radius);
+
+        const radarKey = this.textures.exists('ui_arena_crt_radar') ? 'ui_arena_crt_radar' : 'arena_crt_radar';
+        if (this.textures.exists(radarKey)) {
+            const radar = this.add.image(ARENA_CIRCLE.x, ARENA_CIRCLE.y, radarKey).setOrigin(0.5);
+            this.tweens.add({
+                targets: radar,
+                angle: 360,
+                duration: 90000,
+                repeat: -1
+            });
+        }
 
         // Áreas das Bancadas (BENCH) em tom de preto mais claro, sem bordas
         this.add.rectangle(BENCH_BOXES.OPPONENT.x, BENCH_BOXES.OPPONENT.y, BENCH_BOXES.OPPONENT.width, BENCH_BOXES.OPPONENT.height, COLORS.ZONE_SURFACE, 1);
@@ -261,13 +338,22 @@ export default class MatchScene extends Phaser.Scene {
             fontSize: '12px', color: '#64748b', fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        // Slots individuais das bancadas em tom grafite escuro sem contorno
-        BOARD_LAYOUT.OPPONENT_BENCH_SLOTS.forEach(pos => {
-            this.add.rectangle(pos.x, pos.y, MEDIUM_CARD.width + 6, MEDIUM_CARD.height + 6, COLORS.SLOT_SURFACE, 1);
+        const benchW = MEDIUM_CARD.width + 6;
+        const benchH = MEDIUM_CARD.height + 6;
+
+        // Slots individuais das bancadas com cantoneiras em L (#00F0FF oponente, #E60012 aliado)
+        this.oppBenchSlotVisuals = BOARD_LAYOUT.OPPONENT_BENCH_SLOTS.map(pos => {
+            const rect = this.add.rectangle(pos.x, pos.y, benchW, benchH, COLORS.SLOT_SURFACE, 1);
+            const g = this.add.graphics({ x: pos.x, y: pos.y });
+            this.drawSlotCornerBrackets(g, benchW, benchH, 0x00f0ff);
+            return { rect, graphics: g, x: pos.x, y: pos.y, w: benchW, h: benchH, color: 0x00f0ff };
         });
 
-        BOARD_LAYOUT.LOCAL_BENCH_SLOTS.forEach(pos => {
-            this.add.rectangle(pos.x, pos.y, MEDIUM_CARD.width + 6, MEDIUM_CARD.height + 6, COLORS.SLOT_SURFACE, 1);
+        this.localBenchSlotVisuals = BOARD_LAYOUT.LOCAL_BENCH_SLOTS.map(pos => {
+            const rect = this.add.rectangle(pos.x, pos.y, benchW, benchH, COLORS.SLOT_SURFACE, 1);
+            const g = this.add.graphics({ x: pos.x, y: pos.y });
+            this.drawSlotCornerBrackets(g, benchW, benchH, 0xe60012);
+            return { rect, graphics: g, x: pos.x, y: pos.y, w: benchW, h: benchH, color: 0xe60012 };
         });
 
         // Slots de Batalha Ativa (sem contorno fixo)
@@ -289,13 +375,33 @@ export default class MatchScene extends Phaser.Scene {
             fontSize: '11px', color: '#64748b', fontStyle: 'bold', align: 'center'
         }).setOrigin(0.5);
 
-        // 4 Slots de Resolução Central (sem contorno fixo)
+        // 4 Slots de Resolução Central com cantoneiras em L
+        const resolveW = MEDIUM_CARD.width + 4;
+        const resolveH = MEDIUM_CARD.height + 4;
         this.resolveSlotVisuals = BOARD_LAYOUT.RESOLVE_SLOTS.map((pos, idx) => {
-            const rect = this.add.rectangle(pos.x, pos.y, MEDIUM_CARD.width + 4, MEDIUM_CARD.height + 4, COLORS.SLOT_SURFACE, 1);
+            const rect = this.add.rectangle(pos.x, pos.y, resolveW, resolveH, COLORS.SLOT_SURFACE, 1);
+            const g = this.add.graphics({ x: pos.x, y: pos.y });
+            const initialColor = (idx % 2 === 0) ? 0xe60012 : 0x00f0ff;
+            this.drawSlotCornerBrackets(g, resolveW, resolveH, initialColor);
             const label = this.add.text(pos.x, pos.y, `${idx + 1}º AÇÃO`, {
-                fontSize: '11px', color: '#94a3b8', fontStyle: 'bold', align: 'center'
+                fontFamily: 'IoskeleyMono, monospace',
+                fontSize: '11px',
+                color: '#94a3b8',
+                fontStyle: 'bold',
+                align: 'center'
             }).setOrigin(0.5);
-            return { rect, label, x: pos.x, y: pos.y, index: idx };
+            return {
+                rect,
+                graphics: g,
+                label,
+                x: pos.x,
+                y: pos.y,
+                w: resolveW,
+                h: resolveH,
+                index: idx,
+                cornerColor: initialColor,
+                belongsToLocal: (idx % 2 === 0)
+            };
         });
     }
 
@@ -304,13 +410,18 @@ export default class MatchScene extends Phaser.Scene {
 
         this.resolveSlotVisuals.forEach((slot, idx) => {
             const belongsToLocal = localHasInitiative ? (idx % 2 === 0) : (idx % 2 !== 0);
+            const cornerColor = belongsToLocal ? 0xe60012 : 0x00f0ff;
             const fillColor = belongsToLocal ? COLORS.LOCAL_SLOT_TINT : COLORS.OPP_SLOT_TINT;
             const labelColor = belongsToLocal ? '#fca5a5' : '#7dd3fc';
             const ownerTag = belongsToLocal ? 'VOCÊ' : 'OPONENTE';
 
             slot.belongsToLocal = belongsToLocal;
+            slot.cornerColor = cornerColor;
             slot.baseFill = fillColor;
             slot.rect.setFillStyle(fillColor, 1).setStrokeStyle(0);
+            if (slot.graphics) {
+                this.drawSlotCornerBrackets(slot.graphics, slot.w, slot.h, cornerColor);
+            }
             slot.label.setText(`${idx + 1}º AÇÃO\n(${ownerTag})`).setColor(labelColor);
         });
     }
@@ -350,13 +461,29 @@ export default class MatchScene extends Phaser.Scene {
             fontSize: '13px', color: '#e2e8f0', align: 'center', wordWrap: { width: 650 }
         }).setOrigin(0.5);
 
-        this.mainButtonBg = this.add.rectangle(PILES.MAIN_BUTTON.x, PILES.MAIN_BUTTON.y, 280, 74, 0x16a34a)
+        this.mainButtonBg = this.add.image(PILES.MAIN_BUTTON.x, PILES.MAIN_BUTTON.y, 'ui_p5_crt_button')
+            .setDisplaySize(290, 76)
             .setDepth(80)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => this.onMainButtonClicked());
 
-        this.mainButtonLabel = this.add.text(PILES.MAIN_BUTTON.x, PILES.MAIN_BUTTON.y, 'CONFIRMAR', {
-            fontSize: '15px', color: '#ffffff', fontStyle: 'bold', align: 'center'
+        this.mainButtonBg.setFillStyle = (color) => {
+            if (color === 0x475569) {
+                this.mainButtonBg.setTint(0x777777).setAlpha(0.55);
+            } else if (color === 0xd97706) {
+                this.mainButtonBg.setTint(0xffaa00).setAlpha(1.0);
+            } else {
+                this.mainButtonBg.clearTint().setAlpha(1.0);
+            }
+            return this.mainButtonBg;
+        };
+
+        this.mainButtonLabel = this.add.text(PILES.MAIN_BUTTON.x + 12, PILES.MAIN_BUTTON.y - 2, 'CONFIRMAR', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '15px',
+            color: '#ffffff',
+            fontStyle: 'bold',
+            align: 'center'
         }).setOrigin(0.5).setDepth(81);
     }
 
@@ -372,23 +499,30 @@ export default class MatchScene extends Phaser.Scene {
     }
 
     createMiniTombstoneIcon(x, y, onClickCallback) {
-        const { COLORS } = BOARD_LAYOUT;
         const container = this.add.container(x, y);
-        const outer = this.add.rectangle(0, 0, 82, 96, COLORS.SLOT_SURFACE);
 
-        const g = this.add.graphics();
-        g.fillStyle(0x475569, 1);
-        g.fillRoundedRect(-16, -28, 32, 34, { tl: 14, tr: 14, bl: 0, br: 0 });
-        g.fillStyle(0x334155, 1);
-        g.fillRect(-20, 6, 40, 5);
+        const graveSvg = this.add.image(0, 0, 'ui_graveyard_glitch')
+            .setDisplaySize(82, 96)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', onClickCallback);
 
-        const crossV = this.add.rectangle(0, -14, 3, 14, COLORS.ZONE_SURFACE);
-        const crossH = this.add.rectangle(0, -17, 11, 3, COLORS.ZONE_SURFACE);
+        graveSvg.on('pointerover', () => {
+            this.tweens.add({ targets: container, scaleX: 1.08, scaleY: 1.08, angle: -3, duration: 120 });
+        });
+        graveSvg.on('pointerout', () => {
+            this.tweens.add({ targets: container, scaleX: 1.0, scaleY: 1.0, angle: 0, duration: 120 });
+        });
 
-        const countTxt = this.add.text(0, 26, '🪦 0', { fontSize: '12px', color: '#e2e8f0', fontStyle: 'bold' }).setOrigin(0.5);
-        container.add([outer, g, crossV, crossH, countTxt]);
+        const countTxt = this.add.text(0, 32, '🪦 0', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '12px',
+            color: '#00f0ff',
+            fontStyle: 'bold',
+            stroke: '#050507',
+            strokeThickness: 3
+        }).setOrigin(0.5);
 
-        outer.setInteractive({ useHandCursor: true }).on('pointerdown', onClickCallback);
+        container.add([graveSvg, countTxt]);
         return countTxt;
     }
 
@@ -616,12 +750,42 @@ export default class MatchScene extends Phaser.Scene {
     }
 
     highlightValidDropZonesForHandCard(active) {
-        const phase = this.currentSnapshot?.turnPhase;
-        if (phase === 'PREPARATION') {
+        const targetScale = active ? 1.15 : 1.0;
+
+        // Slots de Resolução Aliados (#E60012)
+        if (this.resolveSlotVisuals) {
             this.resolveSlotVisuals.forEach(slot => {
                 if (slot.belongsToLocal) {
-                    slot.rect.setFillStyle(active ? 0x1e3a2f : slot.baseFill, 1);
-                    slot.rect.setStrokeStyle(0);
+                    if (slot.rect) {
+                        slot.rect.setFillStyle(active ? 0x1e3a2f : slot.baseFill, 1);
+                        slot.rect.setStrokeStyle(0);
+                    }
+                    if (slot.graphics) {
+                        this.tweens.killTweensOf(slot.graphics);
+                        this.tweens.add({
+                            targets: slot.graphics,
+                            scaleX: targetScale,
+                            scaleY: targetScale,
+                            duration: active ? 160 : 120,
+                            ease: active ? 'Back.easeOut' : 'Sine.easeOut'
+                        });
+                    }
+                }
+            });
+        }
+
+        // Slots de Bancada Aliada (#E60012)
+        if (this.localBenchSlotVisuals) {
+            this.localBenchSlotVisuals.forEach(slot => {
+                if (slot.graphics) {
+                    this.tweens.killTweensOf(slot.graphics);
+                    this.tweens.add({
+                        targets: slot.graphics,
+                        scaleX: targetScale,
+                        scaleY: targetScale,
+                        duration: active ? 160 : 120,
+                        ease: active ? 'Back.easeOut' : 'Sine.easeOut'
+                    });
                 }
             });
         }
@@ -633,10 +797,13 @@ export default class MatchScene extends Phaser.Scene {
         this.resolveSlotVisuals.forEach(slot => {
             if (!slot.belongsToLocal) {
                 slot.rect.setScale(1.0);
+                if (slot.graphics) slot.graphics.setScale(1.0);
                 return;
             }
             const d = Phaser.Math.Distance.Between(cardPrefab.x, cardPrefab.y, slot.x, slot.y);
-            slot.rect.setScale(d < 190 ? 1.07 : 1.0);
+            const targetScale = d < 190 ? 1.22 : 1.15;
+            slot.rect.setScale(targetScale);
+            if (slot.graphics) slot.graphics.setScale(targetScale);
         });
     }
 
@@ -663,7 +830,15 @@ export default class MatchScene extends Phaser.Scene {
         const phase = this.currentSnapshot?.turnPhase;
         const hasInitiative = String(this.currentSnapshot?.activeTurnPlayerId) === String(this.localPlayerId);
 
-        this.resolveSlotVisuals.forEach(s => s.rect.setScale(1.0));
+        this.resolveSlotVisuals.forEach(s => {
+            s.rect.setScale(1.0);
+            if (s.graphics) s.graphics.setScale(1.0);
+        });
+        if (this.localBenchSlotVisuals) {
+            this.localBenchSlotVisuals.forEach(s => {
+                if (s.graphics) s.graphics.setScale(1.0);
+            });
+        }
 
         if (phase === 'PREPARATION') {
             let bestRedSlot = null;
@@ -727,12 +902,15 @@ export default class MatchScene extends Phaser.Scene {
         });
     }
 
-    renderSnapshot(snapshot, isLastInQueue = true) {
+    renderSnapshot(snapshot, isLastInQueue = true, options = {}) {
         if (!snapshot) return;
 
-        const previousPhase = this.currentSnapshot ? this.currentSnapshot.turnPhase : null;
-        this.currentSnapshot = snapshot;
+        const previousPhase = options.previousPhase !== undefined
+            ? options.previousPhase
+            : (this.currentSnapshot ? this.currentSnapshot.turnPhase : null);
+        const deferPhaseAnnouncement = Boolean(options.deferPhaseAnnouncement);
 
+        this.currentSnapshot = snapshot;
         this.hideLargeCardPreview();
 
         if (previousPhase !== snapshot.turnPhase) {
@@ -742,7 +920,11 @@ export default class MatchScene extends Phaser.Scene {
 
         const localHasInitiative = String(snapshot.activeTurnPlayerId) === String(this.localPlayerId);
 
-        this.phaseBanner.setText(`FASE: ${snapshot.turnPhase}`);
+        // Se o anúncio da nova fase/turno NÃO foi adiado para depois dos VFX, atualiza o texto imediatamente
+        if (!deferPhaseAnnouncement) {
+            this.phaseBanner.setText(`FASE: ${snapshot.turnPhase}`);
+        }
+
         this.updateInterleavedResolveSlots(localHasInitiative);
 
         if (snapshot.triggerContext?.logMessage) {
@@ -811,6 +993,112 @@ export default class MatchScene extends Phaser.Scene {
         if (snapshot.turnPhase === 'GAME_OVER') {
             this.showGameOverModal(snapshot);
         }
+    }
+
+    /**
+     * Chamado pelo SnapshotPlayerManager DEPOIS que os efeitos visuais (dano, cura, mortes, fim de combate)
+     * do turno anterior já terminaram na tela.
+     */
+    triggerDeferredPhaseAnnouncement(snapshot, previousPhase) {
+        if (!snapshot) return;
+
+        const phase = snapshot.turnPhase;
+        this.phaseBanner.setText(`FASE: ${phase}`);
+
+        // Proteção contra faixas repetidas em intervalos muito curtos (< 900ms)
+        const now = this.time.now;
+        if (this.lastCutInTime && (now - this.lastCutInTime) < 900) {
+            return;
+        }
+        this.lastCutInTime = now;
+
+        const localHasInitiative = String(snapshot.activeTurnPlayerId) === String(this.localPlayerId);
+        const initiativeOwner = localHasInitiative ? 'INICIATIVA: VOCÊ' : 'INICIATIVA: OPONENTE';
+
+        // Mapeamento amigável e temático das fases principais
+        const phaseDisplayConfig = {
+            CHOICE:      { title: 'NOVO TURNO // ESCOLHA DE HERÓIS', sub: initiativeOwner, color: 0xe60012 },
+            PREPARATION: { title: 'FASE DE PREPARAÇÃO',              sub: 'PROGRAME ATÉ 2 CARTAS NA PILHA', color: 0x2563eb },
+            RESOLUTION:  { title: 'RESOLUÇÃO DE CARTAS',             sub: 'EXECUTANDO PILHA DE EFEITOS', color: 0xca8a04 },
+            COMBAT:      { title: 'EMBATE FÍSICO',                   sub: 'COLISÃO DE HERÓIS ATIVOS', color: 0xb91c1c },
+            DISCARD:     { title: 'FASE DE DESCARTE',                sub: 'RECICLAGEM DE MÃO E COMPRA', color: 0x475569 }
+        };
+
+        const cfg = phaseDisplayConfig[phase];
+        if (!cfg) return;
+
+        // Se você já importou o PhantomUIKit, use-o; caso contrário, este bloco já desenha a faixa P5+CRT nativa:
+        this.playPhaseTransitionBanner(cfg.title, cfg.sub, cfg.color);
+    }
+
+    playPhaseTransitionBanner(titleText, subText, accentColor = 0xe60012) {
+        const cutIn = this.add.container(960, 540).setDepth(280).setAngle(-6);
+
+        const bgSlash = this.add.rectangle(0, 0, 2400, 130, 0x050507, 0.94)
+            .setStrokeStyle(4, 0xf8fafc);
+        const topAccent = this.add.rectangle(0, -46, 2400, 18, accentColor, 1);
+        const botAccent = this.add.rectangle(0, 50, 2400, 8, 0xffe600, 1);
+
+        const titleObj = this.add.text(-800, -6, `>> ${titleText} <<`, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '36px',
+            color: '#ffffff',
+            fontStyle: 'italic bold',
+            stroke: '#000000',
+            strokeThickness: 5
+        }).setOrigin(0.5);
+
+        const subObj = this.add.text(800, 30, `[SYS.PHASE_SYNC // ${subText}]`, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '14px',
+            color: '#00f0ff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        cutIn.add([bgSlash, topAccent, botAccent, titleObj, subObj]);
+        cutIn.setScale(1, 0);
+
+        // 1. Abre a faixa (150ms)
+        this.tweens.add({
+            targets: cutIn,
+            scaleY: 1,
+            duration: 150,
+            ease: 'Cubic.easeOut'
+        });
+
+        // 2. Desliza os textos com desaceleração suave no centro (700ms de leitura confortável)
+        this.tweens.add({
+            targets: titleObj,
+            x: 0,
+            duration: 220,
+            ease: 'Expo.easeOut',
+            onComplete: () => {
+                this.tweens.add({
+                    targets: titleObj,
+                    x: 45,
+                    duration: 550,
+                    ease: 'Linear'
+                });
+            }
+        });
+
+        this.tweens.add({
+            targets: subObj,
+            x: 0,
+            duration: 250,
+            ease: 'Expo.easeOut'
+        });
+
+        // 3. Fecha a faixa (180ms)
+        this.tweens.add({
+            targets: cutIn,
+            scaleY: 0,
+            alpha: 0,
+            delay: 820,
+            duration: 180,
+            ease: 'Cubic.easeIn',
+            onComplete: () => cutIn.destroy()
+        });
     }
 
     checkAndShowPendingChoiceModal(snapshot) {
@@ -1293,7 +1581,7 @@ export default class MatchScene extends Phaser.Scene {
 
         if (this.snapshotPlayer.isPlaying || this.isSubmittingAction) {
             this.mainButtonLabel.setText('RESOLVENDO...');
-            this.mainButtonBg.setFillStyle(0x475569);
+            this.mainButtonBg.setTint(0x64748b);
             this.mainButtonBg.input.enabled = false;
             return;
         }
@@ -1301,14 +1589,14 @@ export default class MatchScene extends Phaser.Scene {
         if (this.currentSnapshot.pendingChoice) {
             const isMyChoice = String(this.currentSnapshot.pendingChoice.choosingPlayerId) === String(this.localPlayerId);
             this.mainButtonLabel.setText(isMyChoice ? 'ESCOLHA UM ALVO NO MODAL' : 'OPONENTE ESCOLHENDO ALVO...');
-            this.mainButtonBg.setFillStyle(0xd97706);
+            this.mainButtonBg.setTint(0xfbbf24);
             this.mainButtonBg.input.enabled = isMyChoice;
             return;
         }
 
         if (this.isWaitingOpponentConfirmation) {
             this.mainButtonLabel.setText('AGUARDANDO OPONENTE...');
-            this.mainButtonBg.setFillStyle(0x475569);
+            this.mainButtonBg.setTint(0x64748b);
             this.mainButtonBg.input.enabled = false;
             return;
         }
@@ -1335,7 +1623,11 @@ export default class MatchScene extends Phaser.Scene {
         const canClick = !isAutomaticPhase && this.selectionManager.canConfirmAction(phase, isMyInitiative);
 
         this.mainButtonLabel.setText(labels[phase] || 'EM COMBATE');
-        this.mainButtonBg.setFillStyle(canClick ? 0x16a34a : 0x475569);
+        if (canClick) {
+            this.mainButtonBg.clearTint();
+        } else {
+            this.mainButtonBg.setTint(0x64748b);
+        }
         this.mainButtonBg.input.enabled = canClick;
     }
 
@@ -1355,6 +1647,7 @@ export default class MatchScene extends Phaser.Scene {
         const payload = this.selectionManager.buildActionRequestDTO(this.matchId, this.localPlayerId, phase);
 
         this.isSubmittingAction = true;
+        this.mainButtonBg.setTint(0x64748b);
         this.mainButtonBg.input.enabled = false;
         this.mainButtonLabel.setText('ENVIANDO...');
 

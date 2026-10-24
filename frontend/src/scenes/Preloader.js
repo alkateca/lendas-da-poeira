@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 
 export class Preloader extends Scene
 {
@@ -25,14 +26,28 @@ export class Preloader extends Scene
 
         this.load.image('logo', 'logo.png');
 
-        // Os ficheiros estão diretamente em public/assets/ (sem subpasta images/)
-        this.load.image('card_back', 'modeloBaralho.png');
-        this.load.image('card_frame_playable', 'modeloAlfaCartas.jpeg');
-        this.load.image('card_frame_hero', 'modeloAlfa.jpeg');
+        // Molduras legadas / fallback em /assets/images/
+        this.load.image('card_back', 'images/modeloBaralho.png');
+        this.load.image('card_discard_back', 'images/modeloBaralhoDescarte.png');
+
+        // Novos SVGs temáticos (Persona 5 + CRT) em /assets/images/ui/
+        this.load.svg('ui_card_frame_phantom', 'images/ui/card_frame_phantom.svg', { width: 320, height: 440 });
+        this.load.svg('ui_p5_crt_button', 'images/ui/p5_crt_button.svg', { width: 520, height: 84 });
+        this.load.svg('ui_arena_crt_radar', 'images/ui/arena_crt_radar.svg', { width: 800, height: 800 });
+        this.load.svg('ui_graveyard_glitch', 'images/ui/graveyard_glitch.svg', { width: 82, height: 96 });
+
+        // Sobrescreve também as chaves de molduras de carta caso queira que os prefabs usem o SVG direto:
+        this.load.svg('card_frame_playable', 'images/ui/card_frame_phantom.svg', { width: 320, height: 440 });
+        this.load.svg('card_frame_hero', 'images/ui/card_frame_phantom.svg', { width: 320, height: 440 });
     }
 
     create ()
     {
+        if (this.renderer.pipelines) {
+            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
+            this.cameras.main.setPostPipeline('CRTPostFX');
+        }
+
         this.scene.start('MainMenu');
     }
 }

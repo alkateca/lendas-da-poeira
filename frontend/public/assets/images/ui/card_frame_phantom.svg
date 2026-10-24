@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 440" width="320" height="440">
+  <defs>
+    <!-- Padrão de Scanlines CRT -->
+    <pattern id="crtScanlines" width="4" height="4" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="4" y2="0" stroke="#00f0ff" stroke-width="1" stroke-opacity="0.12" />
+    </pattern>
+    <!-- Padrão Halftone / Retícula estilo Persona 5 -->
+    <pattern id="p5Halftone" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(25)">
+      <circle cx="2" cy="2" r="1.5" fill="#e60012" fill-opacity="0.28" />
+    </pattern>
+  </defs>
+
+  <!-- Sombra Dura Deslocada Estilo P5 -->
+  <polygon points="22,12 314,6 306,434 10,428" fill="#e60012" />
+
+  <!-- Corpo Externo Chanfrado (Preto Terminal) -->
+  <polygon points="14,4 306,0 298,426 4,420" fill="#07090e" stroke="#f8fafc" stroke-width="3.5" />
+
+  <!-- Fundo com Retícula P5 no Canto Superior e Inferior -->
+  <polygon points="18,8 300,4 294,120 14,155" fill="url(#p5Halftone)" />
+  <polygon points="10,300 295,265 292,420 8,414" fill="url(#p5Halftone)" />
+
+  <!-- Janela de Arte da Carta com Recorte Angular e Mira CRT -->
+  <polygon points="24,48 292,42 286,252 18,262" fill="#0d131f" stroke="#00f0ff" stroke-width="2" />
+  <polygon points="24,48 292,42 286,252 18,262" fill="url(#crtScanlines)" />
+
+  <!-- Cantoneiras de Telemetria CRT dentro da Janela de Arte -->
+  <path d="M 30 66 L 30 54 L 44 54 M 284 58 L 284 46 L 270 46 M 26 244 L 26 256 L 40 256 M 280 236 L 280 248 L 266 248" fill="none" stroke="#ffe600" stroke-width="2" />
+
+  <!-- Banner Superior do Nome (Corte Rebelde P5) -->
+  <polygon points="8,14 304,8 296,46 16,50" fill="#f8fafc" stroke="#050507" stroke-width="2.5" />
+  <polygon points="12,18 42,16 36,46 14,46" fill="#e60012" />
+  <text x="26" y="37" font-family="monospace" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">ID</text>
+
+  <!-- Faixa Diagonal de Tipo / Subtipo (Estilo Fita Policial / P5) -->
+  <polygon points="12,248 296,234 290,268 18,280" fill="#e60012" stroke="#050507" stroke-width="2.5" />
+  <line x1="22" y1="276" x2="288" y2="264" stroke="#ffe600" stroke-width="2" stroke-dasharray="10,4" />
+
+  <!-- Caixa de Descrição (Terminal de Fósforo) -->
+  <polygon points="20,282 290,272 284,382 16,388" fill="#05070b" stroke="#334155" stroke-width="1.5" />
+  <text x="26" y="294" font-family="monospace" font-size="8" fill="#00f0ff" opacity="0.65">> EXEC_EFFECT.SH //</text>
+
+  <!-- Barra Inferior de Atributos (ESP / ATQ / DEF / HP) -->
+  <polygon points="10,388 302,380 296,422 6,416" fill="#111827" stroke="#ffe600" stroke-width="2" />
+  <!-- Divisórias diagonais para os 4 status do Herói -->
+  <line x1="82" y1="386" x2="74" y2="418" stroke="#ffe600" stroke-width="1.5" opacity="0.6" />
+  <line x1="158" y1="384" x2="150" y2="419" stroke="#ffe600" stroke-width="1.5" opacity="0.6" />
+  <line x1="232" y1="382" x2="224" y2="420" stroke="#ffe600" stroke-width="1.5" opacity="0.6" />
+</svg>

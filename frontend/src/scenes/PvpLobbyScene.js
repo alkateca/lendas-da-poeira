@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import DeckRestrictionValidator from '../managers/DeckRestrictionValidator.js';
+import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 
 export default class PvpLobbyScene extends Phaser.Scene {
     constructor() {
@@ -19,7 +20,25 @@ export default class PvpLobbyScene extends Phaser.Scene {
         this.isTransitioning = false;
     }
 
+    preload() {
+        this.load.setPath('assets');
+        if (!this.textures.exists('ui_p5_crt_button')) {
+            this.load.svg('ui_p5_crt_button', 'images/ui/p5_crt_button.svg', { width: 520, height: 84 });
+        }
+        if (!this.textures.exists('ui_card_frame_phantom')) {
+            this.load.svg('ui_card_frame_phantom', 'images/ui/card_frame_phantom.svg', { width: 320, height: 440 });
+        }
+        if (!this.textures.exists('ui_arena_crt_radar')) {
+            this.load.svg('ui_arena_crt_radar', 'images/ui/arena_crt_radar.svg', { width: 800, height: 800 });
+        }
+    }
+
     create() {
+        if (this.renderer.pipelines) {
+            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
+            this.cameras.main.setPostPipeline('CRTPostFX');
+        }
+
         const { width, height } = this.scale;
 
         // Fundo e Cabeçalho do Salão

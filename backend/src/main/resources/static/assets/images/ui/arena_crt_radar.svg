@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
+  <defs>
+    <radialGradient id="crtGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.08" />
+      <stop offset="70%" stop-color="#e60012" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#050507" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Brilho de fósforo central -->
+  <circle cx="400" cy="400" r="380" fill="url(#crtGlow)" />
+
+  <!-- Anel externo tracejado técnico -->
+  <circle cx="400" cy="400" r="370" fill="none" stroke="#334155" stroke-width="2" stroke-dasharray="18,8,4,8" />
+
+  <!-- Anel de Combate estilo Persona (Arcos Assimétricos) -->
+  <circle cx="400" cy="400" r="345" fill="none" stroke="#e60012" stroke-width="4" stroke-dasharray="160,90,80,110" opacity="0.7" />
+  <circle cx="400" cy="400" r="260" fill="none" stroke="#00f0ff" stroke-width="1.5" stroke-dasharray="8,12" opacity="0.45" />
+
+  <!-- Eixos de Mira Osciloscópio -->
+  <line x1="20" y1="400" x2="780" y2="400" stroke="#00f0ff" stroke-width="1" opacity="0.25" />
+  <line x1="400" y1="20" x2="400" y2="780" stroke="#00f0ff" stroke-width="1" opacity="0.25" />
+
+  <!-- Estrela / Rosa dos Ventos Assimétrica P5 no Centro -->
+  <polygon points="400,310 418,382 490,400 418,418 400,490 382,418 310,400 382,382" fill="none" stroke="#ffe600" stroke-width="2" opacity="0.35" />
+
+  <!-- Textos diegéticos de telemetria -->
+  <text x="410" y="48" font-family="monospace" font-size="11" fill="#00f0ff" opacity="0.5">SYS.ARENA_GRID // SECTOR_01</text>
+  <text x="410" y="762" font-family="monospace" font-size="11" fill="#e60012" opacity="0.5">COMBAT_RESOLUTION_VECTOR</text>
+</svg>
