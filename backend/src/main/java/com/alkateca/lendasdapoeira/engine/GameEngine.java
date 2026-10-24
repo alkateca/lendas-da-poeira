@@ -782,21 +782,23 @@ public class GameEngine {
                 ? gameState.getPlayer2PlayedCards()
                 : gameState.getPlayer1PlayedCards();
 
-        int maxCards = Math.max(firstPlayerCards.size(), secondPlayerCards.size());
+        // Filtra apenas as cartas de PREPARATION que ainda não foram resolvidas/invocadas no COMBAT_START
+        List<Card> firstPlayerPending = firstPlayerCards.stream()
+                .filter(c -> !resolvedCardsInCurrentCombat.contains(c) && !invokedCardIdsInCurrentCombat.contains(c.getUuid()))
+                .toList();
+
+        List<Card> secondPlayerPending = secondPlayerCards.stream()
+                .filter(c -> !resolvedCardsInCurrentCombat.contains(c) && !invokedCardIdsInCurrentCombat.contains(c.getUuid()))
+                .toList();
+
+        int maxCards = Math.max(firstPlayerPending.size(), secondPlayerPending.size());
 
         for (int i = 0; i < maxCards; i++) {
-            if (i < firstPlayerCards.size()) {
-                Card c1 = firstPlayerCards.get(i);
-                // Não re-enfileira cartas que já foram invocadas e resolvidas em COMBAT_START
-                if (!resolvedCardsInCurrentCombat.contains(c1)) {
-                    enqueueCardAndHeroOnPlayResolution(c1, false);
-                }
+            if (i < firstPlayerPending.size()) {
+                enqueueCardAndHeroOnPlayResolution(firstPlayerPending.get(i), false);
             }
-            if (i < secondPlayerCards.size()) {
-                Card c2 = secondPlayerCards.get(i);
-                if (!resolvedCardsInCurrentCombat.contains(c2)) {
-                    enqueueCardAndHeroOnPlayResolution(c2, false);
-                }
+            if (i < secondPlayerPending.size()) {
+                enqueueCardAndHeroOnPlayResolution(secondPlayerPending.get(i), false);
             }
         }
     }
@@ -1367,6 +1369,34 @@ public class GameEngine {
     }
 
     /**
+     * Insere uma carta invocada na posição exata de execução dentro da pilha de resolução:
+     * - Em COMBAT_START / GAME_START: entra no início da lista (antes das cartas de PREPARATION),
+     *   mas logo após outras cartas que já tenham sido invocadas neste mesmo COMBAT_START.
+     * - Em RESOLUTION: entra imediatamente após a carta que acabou de resolver e antes das próximas.
+     */
+    private void insertCardIntoResolutionStack(List<Card> ownerPlayedList, Card cardToInsert) {
+        if (ownerPlayedList == null || cardToInsert == null || ownerPlayedList.contains(cardToInsert)) {
+            return;
+        }
+
+        int insertIndex = 0;
+        for (int i = 0; i < ownerPlayedList.size(); i++) {
+            Card existing = ownerPlayedList.get(i);
+            boolean alreadyResolvedOrInvoked = resolvedCardsInCurrentCombat.contains(existing)
+                    || (invokedCardIdsInCurrentCombat.contains(existing.getUuid())
+                        && !existing.getUuid().equals(cardToInsert.getUuid()));
+
+            if (alreadyResolvedOrInvoked) {
+                insertIndex = i + 1;
+            } else {
+                break;
+            }
+        }
+
+        ownerPlayedList.add(insertIndex, cardToInsert);
+    }
+
+    /**
      * Chamado por qualquer Effect que precise que o jogador escolha uma carta ou Herói na tela!
      */
     public void requestPlayerChoice(
@@ -1444,7 +1474,7 @@ public class GameEngine {
                 ? gameState.getPlayer1PlayedCards()
                 : gameState.getPlayer2PlayedCards();
 
-        if (!ownerPlayedList.contains(cardToPlay)) {
+        if (ownerPlayedList != null && !ownerPlayedList.contains(cardToPlay)) {
             ownerPlayedList.add(cardToPlay);
         }
 

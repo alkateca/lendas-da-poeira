@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 70 95" width="280" height="380">
+  <defs>
+    <!-- Padrão de Dithering Xadrez VGA (Bayer 2x2) -->
+    <pattern id="vgaDither" width="2" height="2" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="1" height="1" fill="#000000" />
+      <rect x="1" y="1" width="1" height="1" fill="#000000" />
+    </pattern>
+  </defs>
+
+  <!-- Sombra Ditherizada sobre a janela da carta -->
+  <rect x="4" y="11" width="61" height="44" fill="url(#vgaDither)" opacity="0.65" />
+
+  <!-- CORRENTE DIAGONAL 1 (Superior Esquerda -> Inferior Direita) -->
+  <!-- Contorno Preto VGA (#000000) -->
+  <path d="M4,12 h8 v4 h6 v4 h6 v4 h6 v4 h6 v4 h6 v4 h6 v4 h6 v4 h6 v4 h5 v6 h-8 v-4 h-6 v-4 h-6 v-4 h-6 v-4 h-6 v-4 h-6 v-4 h-6 v-4 h-6 v-4 h-5 z" fill="#000000" />
+  <!-- Corpo Cinza Escuro VGA (#555555) -->
+  <path d="M5,13 h6 v4 h6 v4 h6 v4 h6 v4 h6 v4 h6 v4 h6 v4 h6 v4 h6 v4 h3 v4 h-6 v-4 h-6 v-4 h-6 v-4 h-6 v-4 h-6 v-4 h-6 v-4 h-6 v-4 h-6 v-4 h-3 z" fill="#555555" />
+  <!-- Brilho dos Elos Cinza Claro (#AAAAAA) e Branco (#FFFFFF) -->
+  <path d="M6,14 h4 v2 h-4 z M12,18 h4 v2 h-4 z M18,22 h4 v2 h-4 z M24,26 h4 v2 h-4 z M42,38 h4 v2 h-4 z M48,42 h4 v2 h-4 z M54,46 h4 v2 h-4 z M60,50 h4 v2 h-4 z" fill="#ffffff" />
+  <path d="M8,16 h4 v2 h-4 z M14,20 h4 v2 h-4 z M20,24 h4 v2 h-4 z M44,40 h4 v2 h-4 z M50,44 h4 v2 h-4 z M56,48 h4 v2 h-4 z" fill="#aaaaaa" />
+
+  <!-- CORRENTE DIAGONAL 2 (Superior Direita -> Inferior Esquerda) -->
+  <!-- Contorno Preto VGA (#000000) -->
+  <path d="M58,12 h8 v6 h-5 v4 h-6 v4 h-6 v4 h-6 v4 h-6 v4 h-6 v4 h-6 v4 h-6 v4 h-6 v4 h-8 v-6 h5 v-4 h6 v-4 h6 v-4 h6 v-4 h6 v-4 h6 v-4 h6 v-4 h6 v-4 z" fill="#000000" />
+  <!-- Corpo Cinza Escuro VGA (#555555) -->
+  <path d="M59,13 h6 v4 h-3 v4 h-6 v4 h-6 v4 h-6 v4 h-6 v4 h-6 v4 h-6 v4 h-6 v4 h-6 v-4 h3 v-4 h6 v-4 h6 v-4 h6 v-4 h6 v-4 h6 v-4 h6 v-4 h6 v-4 z" fill="#555555" />
+  <!-- Brilho dos Elos (#FFFFFF e #AAAAAA) -->
+  <path d="M60,14 h4 v2 h-4 z M54,18 h4 v2 h-4 z M48,22 h4 v2 h-4 z M42,26 h4 v2 h-4 z M24,38 h4 v2 h-4 z M18,42 h4 v2 h-4 z M12,46 h4 v2 h-4 z M6,50 h4 v2 h-4 z" fill="#ffffff" />
+  <path d="M52,20 h4 v2 h-4 z M46,24 h4 v2 h-4 z M22,40 h4 v2 h-4 z M16,44 h4 v2 h-4 z M10,48 h4 v2 h-4 z" fill="#aaaaaa" />
+
+  <!-- CADEADO CENTRAL PIXELADO VGA (Centro: X=35, Y=33) -->
+  <!-- Arco do Cadeado -->
+  <path d="M29,19 h12 v8 h-12 z" fill="#000000" />
+  <path d="M30,20 h10 v7 h-2 v-5 h-6 v5 h-2 z" fill="#aaaaaa" />
+  <rect x="31" y="20" width="8" height="1" fill="#ffffff" />
+
+  <!-- Corpo do Cadeado (Ouro/Âmbar VGA #AA5500 e #FFFF55 + Vermelho #AA0000) -->
+  <rect x="26" y="26" width="18" height="16" fill="#000000" />
+  <rect x="27" y="27" width="16" height="14" fill="#aa0000" />
+  <rect x="28" y="28" width="14" height="12" fill="#aa5500" />
+  <!-- Borda iluminada superior/esquerda estilo Windows 3.1 / VGA -->
+  <path d="M27,27 h15 v1 h-14 v12 h-1 z" fill="#ffff55" />
+  <!-- Fechadura Central -->
+  <rect x="33" y="31" width="4" height="4" fill="#000000" />
+  <rect x="34" y="35" width="2" height="4" fill="#000000" />
+  <rect x="34" y="32" width="1" height="1" fill="#55ffff" />
+</svg>

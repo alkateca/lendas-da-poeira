@@ -31,6 +31,8 @@ export default class MatchScene extends Phaser.Scene {
         this.lastCutInTime = 0;
         this.musicVolume = Number(localStorage.getItem('ldp_music_volume') ?? 0.7);
         this.sfxVolume = Number(localStorage.getItem('ldp_sfx_volume') ?? 0.8);
+
+        this.combatStartSpawnedOrder = [];
     }
 
     init(data) {
@@ -79,6 +81,12 @@ export default class MatchScene extends Phaser.Scene {
         }
         if (!this.textures.exists('arena_crt_radar')) {
             this.load.svg('arena_crt_radar', 'images/ui/arena_crt_radar.svg', { width: 800, height: 800 });
+        }
+        if (!this.textures.exists('vga_chains_overlay')) {
+            this.load.svg('vga_chains_overlay', 'images/ui/vga_chains_overlay.svg', { width: 280, height: 380 });
+        }
+        if (!this.textures.exists('vga_chain_link_shard')) {
+            this.load.svg('vga_chain_link_shard', 'images/ui/vga_chain_link_shard.svg', { width: 48, height: 48 });
         }
 
         // Spritesheets de Efeitos Visuais portadas do partida.lua
@@ -196,6 +204,7 @@ export default class MatchScene extends Phaser.Scene {
         this.isSubmittingAction = false;
         this.isPolling = false;
         this.isChoiceModalActive = false;
+        this.combatStartSpawnedOrder = [];
 
         this.snapshotPlayer = new SnapshotPlayerManager(this);
         this.selectionManager = new SelectionManager(this);
@@ -1148,13 +1157,27 @@ export default class MatchScene extends Phaser.Scene {
             localPlayer.liberationZone || [],
             opponentPlayer.liberationZone || []
         );
+        if (['CHOICE', 'PREPARATION', 'DISCARD'].includes(snapshot.turnPhase)) {
+            this.combatStartSpawnedOrder = [];
+        }
+
+        const trigger = snapshot.triggerContext;
+        if (
+            (snapshot.turnPhase === 'COMBAT_START' || snapshot.turnPhase === 'GAME_START') &&
+            (trigger?.eventType === 'CARD_SPAWNED' || trigger?.eventType === 'TOKEN_SUMMONED') &&
+            trigger?.spawnedCardUuid &&
+            !this.combatStartSpawnedOrder.includes(trigger.spawnedCardUuid)
+        ) {
+            this.combatStartSpawnedOrder.push(trigger.spawnedCardUuid);
+        }
+
+        const eventType = trigger?.eventType;
+
         this.syncInterleavedResolveZone(
             localPlayer.playedCardsInResolve || [],
             opponentPlayer.playedCardsInResolve || [],
             localHasInitiative
         );
-
-        const eventType = snapshot.triggerContext?.eventType;
         if (eventType === 'CARD_SPAWNED' || eventType === 'TOKEN_SUMMONED') {
             this.handleCardSpawnEvent(snapshot.triggerContext, localHasInitiative);
         } else if (eventType === 'SPAWN_FAILED_ZONE_FULL') {
@@ -1562,9 +1585,6 @@ export default class MatchScene extends Phaser.Scene {
         const firstPlayerCards = localHasInitiative ? localPlayedDto : oppPlayedDto;
         const secondPlayerCards = localHasInitiative ? oppPlayedDto : localPlayedDto;
 
-        const hasExtraTutoredCards = firstPlayerCards.length > 2 || secondPlayerCards.length > 2;
-
-        // Identifica se este snapshot está invocando dinamicamente uma carta específica
         const trigger = this.currentSnapshot?.triggerContext;
         const isSpawnSnapshot = trigger && (
             trigger.eventType === 'CARD_SPAWNED' ||
@@ -1579,8 +1599,7 @@ export default class MatchScene extends Phaser.Scene {
                 existingByUuid.delete(cardDto.uuid);
                 existing.targetPos = { x: targetX, y: targetY };
                 existing.updateCardVisuals(cardDto);
-                const isSpawnTweenActive = this.tweens.isTweening(existing);
-                if (!isSpawnTweenActive) {
+                if (!this.tweens.isTweening(existing)) {
                     existing.snapToPosition(targetX, targetY, null, 0, 'MEDIUM');
                 }
                 nextResolvePrefabs.push(existing);
@@ -1597,7 +1616,6 @@ export default class MatchScene extends Phaser.Scene {
                 this.spawnedCardPrefabs.set(cardDto.uuid, prefab);
             }
 
-            // Garante alpha: 0 inicial para evitar flash visual no slot antes do tween de spawn
             prefab.setAlpha(0);
             if (!isJustSpawned) {
                 this.tweens.add({
@@ -1612,12 +1630,29 @@ export default class MatchScene extends Phaser.Scene {
             nextResolvePrefabs.push(prefab);
         };
 
-        if (!hasExtraTutoredCards) {
+        const combatStartSet = new Set(this.combatStartSpawnedOrder || []);
+        const allCardsMap = new Map();
+        [...firstPlayerCards, ...secondPlayerCards].forEach(c => {
+            if (c && c.uuid) allCardsMap.set(c.uuid, c);
+        });
+
+        // 1. Cartas invocadas em COMBAT_START ficam fixas no início da fila
+        const combatStartCards = (this.combatStartSpawnedOrder || [])
+            .map(uuid => allCardsMap.get(uuid))
+            .filter(Boolean);
+
+        // 2. Cartas de PREPARATION mantêm sua ordem original por jogador sem deslocar índices
+        const firstPrep = firstPlayerCards.filter(c => c && !combatStartSet.has(c.uuid));
+        const secondPrep = secondPlayerCards.filter(c => c && !combatStartSet.has(c.uuid));
+
+        const hasExtraCards = combatStartCards.length > 0 || firstPrep.length > 2 || secondPrep.length > 2;
+
+        if (!hasExtraCards) {
             const baseSlots = [
-                firstPlayerCards[0] || null,
-                secondPlayerCards[0] || null,
-                firstPlayerCards[1] || null,
-                secondPlayerCards[1] || null
+                firstPrep[0] || null,
+                secondPrep[0] || null,
+                firstPrep[1] || null,
+                secondPrep[1] || null
             ];
             baseSlots.forEach((cardDto, slotIndex) => {
                 if (cardDto) {
@@ -1626,22 +1661,31 @@ export default class MatchScene extends Phaser.Scene {
                 }
             });
         } else {
-            const maxLen = Math.max(firstPlayerCards.length, secondPlayerCards.length);
-            const activeCards = [];
-            for (let i = 0; i < maxLen; i++) {
-                if (i < firstPlayerCards.length && firstPlayerCards[i]) activeCards.push(firstPlayerCards[i]);
-                if (i < secondPlayerCards.length && secondPlayerCards[i]) activeCards.push(secondPlayerCards[i]);
+            const maxPrep = Math.max(firstPrep.length, secondPrep.length);
+            const interleavedPrep = [];
+            for (let i = 0; i < maxPrep; i++) {
+                if (i < firstPrep.length && firstPrep[i]) interleavedPrep.push(firstPrep[i]);
+                if (i < secondPrep.length && secondPrep[i]) interleavedPrep.push(secondPrep[i]);
             }
 
-            const centerX = BOARD_LAYOUT.ARENA_CIRCLE.x;
-            const centerY = BOARD_LAYOUT.RESOLVE_SLOTS[0].y;
-            const spacing = Math.max(158, Math.min(176, 840 / Math.max(1, activeCards.length)));
-            const startX = centerX - ((activeCards.length - 1) * spacing) / 2;
+            const visualQueue = [...combatStartCards, ...interleavedPrep];
 
-            activeCards.forEach((cardDto, idx) => {
-                const x = startX + idx * spacing;
-                placeOrReuseResolveCard(cardDto, x, centerY);
-            });
+            if (visualQueue.length <= BOARD_LAYOUT.RESOLVE_SLOTS.length) {
+                visualQueue.forEach((cardDto, idx) => {
+                    const pos = BOARD_LAYOUT.RESOLVE_SLOTS[idx];
+                    placeOrReuseResolveCard(cardDto, pos.x, pos.y);
+                });
+            } else {
+                const centerX = BOARD_LAYOUT.ARENA_CIRCLE.x;
+                const centerY = BOARD_LAYOUT.RESOLVE_SLOTS[0].y;
+                const spacing = Math.max(150, Math.min(172, 840 / Math.max(1, visualQueue.length)));
+                const startX = centerX - ((visualQueue.length - 1) * spacing) / 2;
+
+                visualQueue.forEach((cardDto, idx) => {
+                    const x = startX + idx * spacing;
+                    placeOrReuseResolveCard(cardDto, x, centerY);
+                });
+            }
         }
 
         existingByUuid.forEach(leftover => {
@@ -2588,6 +2632,14 @@ export default class MatchScene extends Phaser.Scene {
         // 2. Moldura SVG de Liberação do tamanho do Herói
         const frame = this.add.image(0, 0, 'ui_liberation_frame').setDisplaySize(width, height);
 
+        // Correntes VGA trancadas sobre a carta enquanto a missão não está completa
+        let chainsOverlay = null;
+        if (current < target && this.textures.exists('vga_chains_overlay')) {
+            chainsOverlay = this.add.image(0, 0, 'vga_chains_overlay').setDisplaySize(width, height);
+            container.chainsOverlay = chainsOverlay;
+            container.add(chainsOverlay);
+        }
+
         // 3. Título no Topo Claro
         const headerTxt = this.add.text(0, -height / 2 + 12, isLocal ? '★ LIBERAÇÃO' : '★ MISSÃO INIMIGA', {
             fontFamily: 'IoskeleyMono, monospace',
@@ -2650,29 +2702,41 @@ export default class MatchScene extends Phaser.Scene {
         if (!triggerContext) return;
         const isLocalOwner = String(triggerContext.ownerPlayerId) === String(this.localPlayerId);
         const targetPanel = isLocalOwner ? this.localLiberationContainer : this.oppLiberationContainer;
+        if (!targetPanel) return;
 
-        if (targetPanel) {
-            this.tweens.killTweensOf(targetPanel);
-            targetPanel.setScale(1.0);
-            this.tweens.add({
-                targets: targetPanel,
-                scaleX: 1.12,
-                scaleY: 1.12,
-                yoyo: true,
-                duration: 220,
-                ease: 'Sine.easeInOut'
+        // Ciclagem de paleta VGA (Branco -> Amarelo #FFFF55 -> Ciano #55FFFF -> Vermelho #FF5555 -> Normal)
+        const vgaPaletteCycle = [0xffffff, 0xffff55, 0x55ffff, 0xff5555, null];
+        const baseX = targetPanel.x;
+        const baseY = targetPanel.y;
+
+        vgaPaletteCycle.forEach((tintHex, stepIdx) => {
+            this.time.delayedCall(stepIdx * 65, () => {
+                if (!targetPanel || !targetPanel.scene) return;
+                // Shake pixelado em saltos inteiros de 4px (estilo DOS/VGA)
+                const offsetX = stepIdx < 4 ? (stepIdx % 2 === 0 ? -4 : 4) : 0;
+                const offsetY = stepIdx < 4 ? (stepIdx % 2 === 0 ? 2 : -2) : 0;
+                targetPanel.setPosition(baseX + offsetX, baseY + offsetY);
+
+                if (targetPanel.chainsOverlay) {
+                    if (tintHex) {
+                        targetPanel.chainsOverlay.setTintFill(tintHex);
+                    } else {
+                        targetPanel.chainsOverlay.clearTint();
+                    }
+                }
             });
-        }
+        });
     }
 
     handleCardLiberatedEvent(triggerContext) {
         if (!triggerContext) return;
         const isLocalOwner = String(triggerContext.ownerPlayerId) === String(this.localPlayerId);
         const startPos = isLocalOwner
-            ? (BOARD_LAYOUT.LIBERATION_PANEL?.LOCAL || { x: 525, y: 1018 })
-            : (BOARD_LAYOUT.LIBERATION_PANEL?.OPPONENT || { x: 525, y: 62 });
+            ? (BOARD_LAYOUT.LIBERATION_PANEL?.LOCAL || { x: 1525, y: 945 })
+            : (BOARD_LAYOUT.LIBERATION_PANEL?.OPPONENT || { x: 1525, y: 135 });
 
-        this.playVisualEffect('buff', startPos.x, startPos.y);
+        // 1. Dispara a quebra de correntes em estética VGA (16 cores, 16.6 FPS stepped)
+        this.playVgaChainShatterEffect(startPos.x, startPos.y);
 
         const cardData = triggerContext.spawnedCardData || {
             uuid: triggerContext.spawnedCardUuid,
@@ -2682,6 +2746,46 @@ export default class MatchScene extends Phaser.Scene {
             faceUp: isLocalOwner
         };
 
+        // 2. Caixa de Alerta Estilo BIOS / VGA Mode 13h com ciclagem de borda
+        const vgaBanner = this.add.container(960, 420).setDepth(215);
+        const bannerShadow = this.add.rectangle(6, 6, 620, 64, 0x000000, 1);
+        const bannerBg = this.add.rectangle(0, 0, 620, 64, 0x0000aa, 1) // Azul BIOS VGA (#0000AA)
+            .setStrokeStyle(4, 0xffff55); // Amarelo VGA (#FFFF55)
+        const bannerInnerBorder = this.add.rectangle(0, 0, 608, 52, 0x0000aa, 0)
+            .setStrokeStyle(2, 0x55ffff); // Ciano VGA (#55FFFF)
+
+        const bannerTxt = this.add.text(0, 0, `╔══ [SELO ROMPIDO // 100%] ══╗\n${cardData.cardName.toUpperCase()} LIBERADA!`, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '16px',
+            color: '#ffffff',
+            fontStyle: 'bold',
+            align: 'center',
+            lineSpacing: 4
+        }).setOrigin(0.5).setResolution(2);
+
+        vgaBanner.add([bannerShadow, bannerBg, bannerInnerBorder, bannerTxt]);
+
+        // Faz a borda e o texto piscarem na paleta VGA a cada 90ms
+        const vgaColors = ['#ffff55', '#55ffff', '#ff5555', '#55ff55', '#ffffff'];
+        this.time.addEvent({
+            delay: 90,
+            repeat: 18,
+            callback: ( () => {
+                let tick = 0;
+                return () => {
+                    if (!vgaBanner.scene) return;
+                    bannerTxt.setColor(vgaColors[tick % vgaColors.length]);
+                    bannerBg.setStrokeStyle(4, tick % 2 === 0 ? 0xffff55 : 0xff5555);
+                    tick++;
+                };
+            })()
+        });
+
+        this.time.delayedCall(1750, () => {
+            if (vgaBanner && vgaBanner.scene) vgaBanner.destroy();
+        });
+
+        // 3. Carta Liberada voa em passos discretos (Stepped Ease) com rastro fantasma VGA
         const flyingCard = new PlayableCardPrefab(
             this,
             startPos.x,
@@ -2691,28 +2795,30 @@ export default class MatchScene extends Phaser.Scene {
             'MEDIUM',
             0
         );
-        flyingCard.setDepth(200);
-        flyingCard.bg.setStrokeStyle(4, 0xfacc15);
+        flyingCard.setDepth(205);
+        flyingCard.bg.setStrokeStyle(4, 0xffff55);
+
+        // Gerador de rastro fantasma VGA (Ciano #55FFFF e Magenta #FF55FF) a cada 60ms
+        const trailTimer = this.time.addEvent({
+            delay: 60,
+            repeat: 14,
+            callback: () => {
+                if (!flyingCard.scene) return;
+                const ghost = this.add.rectangle(
+                    Math.round(flyingCard.x / 4) * 4,
+                    Math.round(flyingCard.y / 4) * 4,
+                    BOARD_LAYOUT.MEDIUM_CARD.width * flyingCard.scaleX,
+                    BOARD_LAYOUT.MEDIUM_CARD.height * flyingCard.scaleY,
+                    0x55ffff,
+                    0.45
+                ).setStrokeStyle(3, 0xff55ff).setDepth(200);
+
+                this.time.delayedCall(120, () => ghost.destroy());
+            }
+        });
 
         const destX = 1035;
         const destY = isLocalOwner ? 964 : 10;
-
-        const banner = this.add.text(960, 440, `✨ MISSÃO CONCLUÍDA: ${cardData.cardName} LIBERADA!`, {
-            fontSize: '20px',
-            color: '#fef08a',
-            backgroundColor: '#1e293b',
-            padding: { x: 18, y: 10 },
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(210);
-
-        this.tweens.add({
-            targets: banner,
-            y: 390,
-            alpha: 0,
-            delay: 1500,
-            duration: 500,
-            onComplete: () => banner.destroy()
-        });
 
         this.tweens.add({
             targets: flyingCard,
@@ -2721,7 +2827,8 @@ export default class MatchScene extends Phaser.Scene {
             scaleX: 1.25,
             scaleY: 1.25,
             duration: 420,
-            ease: 'Back.easeOut',
+            ease: 'Stepped',
+            easeParams: [7], // 7 quadros discretos estilo VGA
             onComplete: () => {
                 this.tweens.add({
                     targets: flyingCard,
@@ -2729,11 +2836,120 @@ export default class MatchScene extends Phaser.Scene {
                     y: destY,
                     scaleX: 0.75,
                     scaleY: 0.75,
-                    alpha: 0,
-                    delay: 380,
+                    delay: 420,
                     duration: 420,
-                    ease: 'Cubic.easeIn',
-                    onComplete: () => flyingCard.destroy()
+                    ease: 'Stepped',
+                    easeParams: [7],
+                    onComplete: () => {
+                        trailTimer.remove(false);
+                        flyingCard.destroy();
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Efeito de Explosão de Correntes em VGA (Mode 13h):
+     * - Flash de inversão de paleta em blocos (Branco -> Amarelo -> Vermelho -> Ciano)
+     * - 14 Elos de corrente pixelados + blocos de pixel 6x6 voando a ~16.6 FPS (intervalos de 60ms)
+     */
+    playVgaChainShatterEffect(centerX, centerY) {
+        const { width, height } = BOARD_LAYOUT.MEDIUM_CARD;
+        const vgaPalette = [0xffffff, 0xffff55, 0xff5555, 0x55ffff, 0xff55ff, 0xaaaaaa, 0x555555];
+
+        // 1. Barras de Scan / Ruptura Horizontal VGA sobre o slot
+        const scanGroup = this.add.container(centerX, centerY).setDepth(202);
+        const stripeCount = 8;
+        const stripeH = Math.floor(height / stripeCount);
+
+        for (let i = 0; i < stripeCount; i++) {
+            const sy = -height / 2 + i * stripeH + stripeH / 2;
+            const color = vgaPalette[i % vgaPalette.length];
+            const bar = this.add.rectangle(0, sy, width + 12, stripeH - 2, color, 1);
+            scanGroup.add(bar);
+        }
+
+        // Alterna as cores das barras e remove em 4 passos de 60ms
+        this.time.addEvent({
+            delay: 60,
+            repeat: 4,
+            callback: (() => {
+                let step = 0;
+                return () => {
+                    if (!scanGroup.scene) return;
+                    step++;
+                    scanGroup.list.forEach((bar, idx) => {
+                        bar.x = (idx % 2 === 0 ? 1 : -1) * step * 8;
+                        bar.scaleY = Math.max(0, 1 - step * 0.22);
+                        bar.setFillStyle(vgaPalette[(idx + step) % vgaPalette.length], 1);
+                    });
+                    if (step >= 4) scanGroup.destroy();
+                };
+            })()
+        });
+
+        // 2. Gera os elos quebrados (vga_chain_link_shard) e pixels quadrados VGA
+        const particles = [];
+        const totalShards = 16;
+
+        for (let i = 0; i < totalShards; i++) {
+            const angle = (Math.PI * 2 * i) / totalShards + (i % 2) * 0.2;
+            const speed = 10 + (i % 3) * 5;
+            const isChainLink = (i % 2 === 0) && this.textures.exists('vga_chain_link_shard');
+
+            let sprite;
+            if (isChainLink) {
+                sprite = this.add.image(centerX, centerY, 'vga_chain_link_shard')
+                    .setDisplaySize(28, 28)
+                    .setDepth(206);
+                sprite.setAngle((i * 45) % 360);
+            } else {
+                // Pixel quadrado grosso (8x8) nas cores da paleta VGA com borda preta
+                const pxColor = vgaPalette[i % vgaPalette.length];
+                sprite = this.add.rectangle(centerX, centerY, 10, 10, pxColor, 1)
+                    .setStrokeStyle(2, 0x000000)
+                    .setDepth(206);
+            }
+
+            particles.push({
+                sprite,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 6,
+                gravity: 2.2,
+                rotStep: (i % 2 === 0 ? 45 : -45),
+                colorIdx: i
+            });
+        }
+
+        // Atualiza a física dos elos em passos discretos de 60ms (autêntico 16.6 FPS e snap para múltiplos de 2px)
+        let frameTick = 0;
+        const maxTicks = 12;
+
+        this.time.addEvent({
+            delay: 60,
+            repeat: maxTicks,
+            callback: () => {
+                frameTick++;
+                particles.forEach(p => {
+                    if (!p.sprite || !p.sprite.scene) return;
+                    p.x = (p.x ?? p.sprite.x) + p.vx;
+                    p.y = (p.y ?? p.sprite.y) + p.vy;
+                    p.vy += p.gravity;
+
+                    // Snap nas coordenadas para manter o movimento pixelado (múltiplos de 3px)
+                    p.sprite.x = Math.round(p.x / 3) * 3;
+                    p.sprite.y = Math.round(p.y / 3) * 3;
+                    p.sprite.angle += p.rotStep;
+
+                    // Ciclagem de paleta nos últimos frames antes de sumir
+                    if (frameTick > 7) {
+                        p.sprite.setVisible(frameTick % 2 === 0); // Blinking estilo DOS/VGA em vez de alpha fade
+                    }
+
+                    if (frameTick >= maxTicks) {
+                        p.sprite.destroy();
+                    }
                 });
             }
         });

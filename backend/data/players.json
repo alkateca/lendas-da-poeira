@@ -29,7 +29,6 @@
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ],
       "espirito" : 2,
       "ataque" : 5,
       "defesa" : 1,
@@ -66,7 +65,6 @@
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ],
       "espirito" : 1,
       "ataque" : 4,
       "defesa" : 0,
@@ -103,7 +101,6 @@
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ],
       "espirito" : 1,
       "ataque" : 4,
       "defesa" : 0,
@@ -140,8 +137,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000004",
       "cardName" : "Dragão de Cristal",
@@ -166,8 +162,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000004",
       "cardName" : "Dragão de Cristal",
@@ -192,8 +187,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000009",
       "cardName" : "Rapieira de Cristal",
@@ -218,8 +212,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000009",
       "cardName" : "Rapieira de Cristal",
@@ -244,8 +237,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000009",
       "cardName" : "Rapieira de Cristal",
@@ -270,8 +262,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000015",
       "cardName" : "Auto Defesa Magica",
@@ -296,8 +287,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000015",
       "cardName" : "Auto Defesa Magica",
@@ -322,8 +312,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000015",
       "cardName" : "Auto Defesa Magica",
@@ -348,8 +337,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000014",
       "cardName" : "Ponto Final",
@@ -374,8 +362,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000013",
       "cardName" : "Massacre Cristalino",
@@ -400,8 +387,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000013",
       "cardName" : "Massacre Cristalino",
@@ -426,8 +412,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000013",
       "cardName" : "Massacre Cristalino",
@@ -452,8 +437,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000011",
       "cardName" : "Ataque Mágico",
@@ -478,8 +462,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000011",
       "cardName" : "Ataque Mágico",
@@ -504,8 +487,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000008",
       "cardName" : "Impulso de Poder",
@@ -530,8 +512,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000008",
       "cardName" : "Impulso de Poder",
@@ -556,8 +537,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000008",
       "cardName" : "Impulso de Poder",
@@ -582,8 +562,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000024",
       "cardName" : "Estrela do amanhã",
@@ -608,8 +587,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000001",
       "cardName" : "Ração de emergencia",
@@ -634,8 +612,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000001",
       "cardName" : "Ração de emergencia",
@@ -660,8 +637,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000001",
       "cardName" : "Ração de emergencia",
@@ -686,8 +662,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000004",
       "cardName" : "Mirar na cabeça",
@@ -712,8 +687,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000004",
       "cardName" : "Mirar na cabeça",
@@ -738,8 +712,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000004",
       "cardName" : "Mirar na cabeça",
@@ -764,8 +737,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000002",
       "cardName" : "Determinação Cristalina",
@@ -790,8 +762,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000002",
       "cardName" : "Determinação Cristalina",
@@ -816,8 +787,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000002",
       "cardName" : "Determinação Cristalina",
@@ -842,8 +812,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000012",
       "cardName" : "Golpes Pesados",
@@ -868,8 +837,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000012",
       "cardName" : "Golpes Pesados",
@@ -894,8 +862,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     } ],
     "liberationList" : [ ]
   },
@@ -927,7 +894,6 @@
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ],
       "espirito" : 2,
       "ataque" : 5,
       "defesa" : 1,
@@ -964,7 +930,6 @@
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ],
       "espirito" : 1,
       "ataque" : 4,
       "defesa" : 0,
@@ -1001,7 +966,6 @@
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ],
       "espirito" : 1,
       "ataque" : 4,
       "defesa" : 0,
@@ -1038,8 +1002,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000004",
       "cardName" : "Dragão de Cristal",
@@ -1064,8 +1027,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000004",
       "cardName" : "Dragão de Cristal",
@@ -1090,8 +1052,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000009",
       "cardName" : "Rapieira de Cristal",
@@ -1116,8 +1077,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000009",
       "cardName" : "Rapieira de Cristal",
@@ -1142,8 +1102,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000009",
       "cardName" : "Rapieira de Cristal",
@@ -1168,8 +1127,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000015",
       "cardName" : "Auto Defesa Magica",
@@ -1194,8 +1152,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000015",
       "cardName" : "Auto Defesa Magica",
@@ -1220,8 +1177,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000015",
       "cardName" : "Auto Defesa Magica",
@@ -1246,8 +1202,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000014",
       "cardName" : "Ponto Final",
@@ -1272,8 +1227,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000013",
       "cardName" : "Massacre Cristalino",
@@ -1298,8 +1252,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000013",
       "cardName" : "Massacre Cristalino",
@@ -1324,8 +1277,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000013",
       "cardName" : "Massacre Cristalino",
@@ -1350,8 +1302,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000011",
       "cardName" : "Ataque Mágico",
@@ -1376,8 +1327,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000011",
       "cardName" : "Ataque Mágico",
@@ -1402,8 +1352,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000008",
       "cardName" : "Impulso de Poder",
@@ -1428,8 +1377,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000008",
       "cardName" : "Impulso de Poder",
@@ -1454,8 +1402,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000008",
       "cardName" : "Impulso de Poder",
@@ -1480,8 +1427,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000024",
       "cardName" : "Estrela do amanhã",
@@ -1506,8 +1452,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000001",
       "cardName" : "Ração de emergencia",
@@ -1532,8 +1477,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000001",
       "cardName" : "Ração de emergencia",
@@ -1558,8 +1502,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000001",
       "cardName" : "Ração de emergencia",
@@ -1584,8 +1527,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000004",
       "cardName" : "Mirar na cabeça",
@@ -1610,8 +1552,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000004",
       "cardName" : "Mirar na cabeça",
@@ -1636,8 +1577,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000004",
       "cardName" : "Mirar na cabeça",
@@ -1662,8 +1602,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000002",
       "cardName" : "Determinação Cristalina",
@@ -1688,8 +1627,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000002",
       "cardName" : "Determinação Cristalina",
@@ -1714,8 +1652,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000002",
       "cardName" : "Determinação Cristalina",
@@ -1740,8 +1677,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000012",
       "cardName" : "Golpes Pesados",
@@ -1766,8 +1702,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000012",
       "cardName" : "Golpes Pesados",
@@ -1792,8 +1727,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     } ],
     "liberationList" : [ ]
   } ],
@@ -1831,7 +1765,6 @@
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ],
       "espirito" : 2,
       "ataque" : 7,
       "defesa" : 2,
@@ -1868,7 +1801,6 @@
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ],
       "espirito" : 2,
       "ataque" : 5,
       "defesa" : 2,
@@ -1905,7 +1837,6 @@
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ],
       "espirito" : 3,
       "ataque" : 4,
       "defesa" : 2,
@@ -1942,8 +1873,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000021",
       "cardName" : "Escudo ardente",
@@ -1968,8 +1898,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000021",
       "cardName" : "Escudo ardente",
@@ -1994,8 +1923,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000023",
       "cardName" : "Cauterizar",
@@ -2020,8 +1948,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000023",
       "cardName" : "Cauterizar",
@@ -2046,8 +1973,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000023",
       "cardName" : "Cauterizar",
@@ -2072,8 +1998,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000022",
       "cardName" : "Muralha de Fogo",
@@ -2098,8 +2023,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000022",
       "cardName" : "Muralha de Fogo",
@@ -2124,8 +2048,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000022",
       "cardName" : "Muralha de Fogo",
@@ -2150,8 +2073,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000020",
       "cardName" : "Peitoral de brasas",
@@ -2176,8 +2098,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000020",
       "cardName" : "Peitoral de brasas",
@@ -2202,8 +2123,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000020",
       "cardName" : "Peitoral de brasas",
@@ -2228,8 +2148,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000019",
       "cardName" : "Corte seus Pescoços",
@@ -2254,8 +2173,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000019",
       "cardName" : "Corte seus Pescoços",
@@ -2280,8 +2198,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000019",
       "cardName" : "Corte seus Pescoços",
@@ -2306,8 +2223,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000016",
       "cardName" : "Tesouro Cristalino dos Caçadores",
@@ -2332,8 +2248,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000016",
       "cardName" : "Tesouro Cristalino dos Caçadores",
@@ -2358,8 +2273,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000016",
       "cardName" : "Tesouro Cristalino dos Caçadores",
@@ -2384,8 +2298,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000002",
       "cardName" : "Maestria com Chamas",
@@ -2410,8 +2323,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000001",
       "cardName" : "Bola de fogo",
@@ -2436,8 +2348,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000001",
       "cardName" : "Bola de fogo",
@@ -2462,8 +2373,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000001",
       "cardName" : "Bola de fogo",
@@ -2488,8 +2398,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000013",
       "cardName" : "Sino do Caçador",
@@ -2514,8 +2423,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000013",
       "cardName" : "Sino do Caçador",
@@ -2540,8 +2448,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000013",
       "cardName" : "Sino do Caçador",
@@ -2566,8 +2473,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000015",
       "cardName" : "Bomba de fumaça",
@@ -2592,8 +2498,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000015",
       "cardName" : "Bomba de fumaça",
@@ -2618,8 +2523,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000015",
       "cardName" : "Bomba de fumaça",
@@ -2644,8 +2548,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000014",
       "cardName" : "Arpão terrestre",
@@ -2670,8 +2573,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000014",
       "cardName" : "Arpão terrestre",
@@ -2696,8 +2598,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     } ],
     "liberationList" : [ ]
   },
@@ -2729,7 +2630,6 @@
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ],
       "espirito" : 2,
       "ataque" : 7,
       "defesa" : 3,
@@ -2766,7 +2666,6 @@
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ],
       "espirito" : 2,
       "ataque" : 7,
       "defesa" : 3,
@@ -2803,7 +2702,6 @@
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ],
       "espirito" : 1,
       "ataque" : 5,
       "defesa" : 3,
@@ -2840,8 +2738,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000004",
       "cardName" : "Dragão de Cristal",
@@ -2866,8 +2763,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000004",
       "cardName" : "Dragão de Cristal",
@@ -2892,8 +2788,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000004",
       "cardName" : "Dragão de Cristal",
@@ -2918,8 +2813,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000008",
       "cardName" : "Fragmento Afiado",
@@ -2944,8 +2838,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000008",
       "cardName" : "Fragmento Afiado",
@@ -2970,8 +2863,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000008",
       "cardName" : "Fragmento Afiado",
@@ -2996,8 +2888,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000007",
       "cardName" : "Dragast",
@@ -3022,8 +2913,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000012",
       "cardName" : "Golpes Pesados",
@@ -3048,8 +2938,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000012",
       "cardName" : "Golpes Pesados",
@@ -3074,8 +2963,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000012",
       "cardName" : "Golpes Pesados",
@@ -3100,8 +2988,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000011",
       "cardName" : "Ataque Mágico",
@@ -3126,8 +3013,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000011",
       "cardName" : "Ataque Mágico",
@@ -3152,8 +3038,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000010",
       "cardName" : "Contra Ataque",
@@ -3178,8 +3063,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000010",
       "cardName" : "Contra Ataque",
@@ -3204,8 +3088,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000010",
       "cardName" : "Contra Ataque",
@@ -3230,8 +3113,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000014",
       "cardName" : "Ponto Final",
@@ -3256,8 +3138,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000002",
       "cardName" : "Determinação Cristalina",
@@ -3282,8 +3163,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000002",
       "cardName" : "Determinação Cristalina",
@@ -3308,8 +3188,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000002",
       "cardName" : "Determinação Cristalina",
@@ -3334,8 +3213,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000001",
       "cardName" : "Ração de emergencia",
@@ -3360,8 +3238,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000001",
       "cardName" : "Ração de emergencia",
@@ -3386,8 +3263,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000001",
       "cardName" : "Ração de emergencia",
@@ -3412,8 +3288,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000007",
       "cardName" : "Banir!",
@@ -3438,8 +3313,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000010",
       "cardName" : "Garra espectral",
@@ -3464,8 +3338,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000010",
       "cardName" : "Garra espectral",
@@ -3490,8 +3363,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "20000000-0000-0000-0000-000000000010",
       "cardName" : "Garra espectral",
@@ -3516,8 +3388,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000015",
       "cardName" : "Auto Defesa Magica",
@@ -3542,8 +3413,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000015",
       "cardName" : "Auto Defesa Magica",
@@ -3568,8 +3438,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000015",
       "cardName" : "Auto Defesa Magica",
@@ -3594,8 +3463,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     } ],
     "liberationList" : [ ]
   }, {
@@ -3626,7 +3494,6 @@
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ],
       "espirito" : 2,
       "ataque" : 7,
       "defesa" : 2,
@@ -3663,7 +3530,6 @@
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ],
       "espirito" : 2,
       "ataque" : 5,
       "defesa" : 2,
@@ -3700,7 +3566,6 @@
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ],
       "espirito" : 3,
       "ataque" : 4,
       "defesa" : 2,
@@ -3737,8 +3602,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000021",
       "cardName" : "Escudo ardente",
@@ -3763,8 +3627,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000021",
       "cardName" : "Escudo ardente",
@@ -3789,8 +3652,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000023",
       "cardName" : "Cauterizar",
@@ -3815,8 +3677,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000023",
       "cardName" : "Cauterizar",
@@ -3841,8 +3702,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000023",
       "cardName" : "Cauterizar",
@@ -3867,8 +3727,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000022",
       "cardName" : "Muralha de Fogo",
@@ -3893,8 +3752,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000022",
       "cardName" : "Muralha de Fogo",
@@ -3919,8 +3777,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000022",
       "cardName" : "Muralha de Fogo",
@@ -3945,8 +3802,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000020",
       "cardName" : "Peitoral de brasas",
@@ -3971,8 +3827,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000020",
       "cardName" : "Peitoral de brasas",
@@ -3997,8 +3852,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000020",
       "cardName" : "Peitoral de brasas",
@@ -4023,8 +3877,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000019",
       "cardName" : "Corte seus Pescoços",
@@ -4049,8 +3902,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000019",
       "cardName" : "Corte seus Pescoços",
@@ -4075,8 +3927,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000019",
       "cardName" : "Corte seus Pescoços",
@@ -4101,8 +3952,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000016",
       "cardName" : "Tesouro Cristalino dos Caçadores",
@@ -4127,8 +3977,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000016",
       "cardName" : "Tesouro Cristalino dos Caçadores",
@@ -4153,8 +4002,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000016",
       "cardName" : "Tesouro Cristalino dos Caçadores",
@@ -4179,8 +4027,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000002",
       "cardName" : "Maestria com Chamas",
@@ -4205,8 +4052,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000001",
       "cardName" : "Bola de fogo",
@@ -4231,8 +4077,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000001",
       "cardName" : "Bola de fogo",
@@ -4257,8 +4102,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "30000000-0000-0000-0000-000000000001",
       "cardName" : "Bola de fogo",
@@ -4283,8 +4127,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000013",
       "cardName" : "Sino do Caçador",
@@ -4309,8 +4152,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000013",
       "cardName" : "Sino do Caçador",
@@ -4335,8 +4177,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000013",
       "cardName" : "Sino do Caçador",
@@ -4361,8 +4202,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000015",
       "cardName" : "Bomba de fumaça",
@@ -4387,8 +4227,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000015",
       "cardName" : "Bomba de fumaça",
@@ -4413,8 +4252,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000015",
       "cardName" : "Bomba de fumaça",
@@ -4439,8 +4277,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000014",
       "cardName" : "Arpão terrestre",
@@ -4465,8 +4302,7 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
-      "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "evolvesIntoHeroName" : null
     }, {
       "uuid" : "40000000-0000-0000-0000-000000000014",
       "cardName" : "Arpão terrestre",
@@ -4491,12 +4327,875 @@
       "missionTargetValue" : 0,
       "missionCurrentProgress" : 0,
       "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    } ],
+    "liberationList" : [ ]
+  }, {
+    "uuid" : "a192f616-80b3-4a1b-ad39-ebd7175ca0e1",
+    "deckName" : "caçadores",
+    "heroList" : [ {
+      "uuid" : "10000000-0000-0000-0000-000000000030",
+      "cardName" : "Xia, Caçador de Bestas",
+      "cardType" : "HERO",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ "Humano" ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ "Criador" ],
+      "descricao" : "Início do Combate: Jogue a próxima Ferramenta do seu baralho.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
       "evolvesIntoHeroName" : null,
-      "effects" : [ ]
+      "espirito" : 1,
+      "ataque" : 7,
+      "defesa" : 2,
+      "vidaMaxima" : 16,
+      "vidaAtual" : 16,
+      "reducaoDano" : 0,
+      "danoBonus" : 0,
+      "vulnerabilidade" : 0,
+      "maxWeaponSlots" : 2,
+      "estaAtivo" : true,
+      "estaVivo" : true
+    }, {
+      "uuid" : "10000000-0000-0000-0000-000000000031",
+      "cardName" : "Asahum, Caçadora de Bestas",
+      "cardType" : "HERO",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ "Humano" ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ "Criador" ],
+      "descricao" : "Final do Combate: As Jóias e Ferramentas anexadas em Asahum, Caçadora de Bestas retornam para o baralho.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null,
+      "espirito" : 2,
+      "ataque" : 8,
+      "defesa" : 1,
+      "vidaMaxima" : 16,
+      "vidaAtual" : 16,
+      "reducaoDano" : 0,
+      "danoBonus" : 0,
+      "vulnerabilidade" : 0,
+      "maxWeaponSlots" : 2,
+      "estaAtivo" : true,
+      "estaVivo" : true
+    }, {
+      "uuid" : "10000000-0000-0000-0000-000000000032",
+      "cardName" : "Constructo de Combate, Arsenal Vivo",
+      "cardType" : "HERO",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ "Constructo" ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Empunhadura Quádrupla.\nInício do Combate: Desequipe uma Arma Aliada e Equipe-a em Constructo de Combate, Arsenal Vivo.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null,
+      "espirito" : 1,
+      "ataque" : 6,
+      "defesa" : 3,
+      "vidaMaxima" : 15,
+      "vidaAtual" : 15,
+      "reducaoDano" : 0,
+      "danoBonus" : 0,
+      "vulnerabilidade" : 0,
+      "maxWeaponSlots" : 4,
+      "estaAtivo" : true,
+      "estaVivo" : true
+    } ],
+    "cardList" : [ {
+      "uuid" : "40000000-0000-0000-0000-000000000012",
+      "cardName" : "Sica",
+      "cardType" : "ITEM",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "ARMA",
+      "empunhadura" : 1,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Arma - Empunhadura Simples\nSeu Herói Recebe +1 de Ataque e +1 de Espírito.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000012",
+      "cardName" : "Sica",
+      "cardType" : "ITEM",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "ARMA",
+      "empunhadura" : 1,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Arma - Empunhadura Simples\nSeu Herói Recebe +1 de Ataque e +1 de Espírito.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000012",
+      "cardName" : "Sica",
+      "cardType" : "ITEM",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "ARMA",
+      "empunhadura" : 1,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Arma - Empunhadura Simples\nSeu Herói Recebe +1 de Ataque e +1 de Espírito.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000013",
+      "cardName" : "Sino do Caçador",
+      "cardType" : "ITEM",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "FERRAMENTA",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Ferramenta\nSeu Herói Recebe +1 de Espírito.\nJogue uma Ferramenta de sua mão.\nJogue a próxima Arma de Empunhadura Simples de seu baralho.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000013",
+      "cardName" : "Sino do Caçador",
+      "cardType" : "ITEM",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "FERRAMENTA",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Ferramenta\nSeu Herói Recebe +1 de Espírito.\nJogue uma Ferramenta de sua mão.\nJogue a próxima Arma de Empunhadura Simples de seu baralho.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000013",
+      "cardName" : "Sino do Caçador",
+      "cardType" : "ITEM",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "FERRAMENTA",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Ferramenta\nSeu Herói Recebe +1 de Espírito.\nJogue uma Ferramenta de sua mão.\nJogue a próxima Arma de Empunhadura Simples de seu baralho.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000014",
+      "cardName" : "Arpão terrestre",
+      "cardType" : "ITEM",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "ARMA",
+      "empunhadura" : 1,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Arma - Empunhadura Simples\nSeu Herói Recebe +2 de Ataque e +1 de Defesa.\nAdicione a próxima Ferramenta de seu baralho a sua mão.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000014",
+      "cardName" : "Arpão terrestre",
+      "cardType" : "ITEM",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "ARMA",
+      "empunhadura" : 1,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Arma - Empunhadura Simples\nSeu Herói Recebe +2 de Ataque e +1 de Defesa.\nAdicione a próxima Ferramenta de seu baralho a sua mão.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000014",
+      "cardName" : "Arpão terrestre",
+      "cardType" : "ITEM",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "ARMA",
+      "empunhadura" : 1,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Arma - Empunhadura Simples\nSeu Herói Recebe +2 de Ataque e +1 de Defesa.\nAdicione a próxima Ferramenta de seu baralho a sua mão.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000015",
+      "cardName" : "Bomba de fumaça",
+      "cardType" : "ITEM",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "FERRAMENTA",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Ferramenta\nSeu Herói Recebe +2 de Ataque.\nO Herói Inimigo Recebe -2 de Defesa.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000015",
+      "cardName" : "Bomba de fumaça",
+      "cardType" : "ITEM",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "FERRAMENTA",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Ferramenta\nSeu Herói Recebe +2 de Ataque.\nO Herói Inimigo Recebe -2 de Defesa.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000015",
+      "cardName" : "Bomba de fumaça",
+      "cardType" : "ITEM",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "FERRAMENTA",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Ferramenta\nSeu Herói Recebe +2 de Ataque.\nO Herói Inimigo Recebe -2 de Defesa.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000017",
+      "cardName" : "Afie suas Lâminas",
+      "cardType" : "ACTION",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Seu Herói Recebe +X de Ataque, onde X é o seu Bônus de Ataque Duplicado.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000017",
+      "cardName" : "Afie suas Lâminas",
+      "cardType" : "ACTION",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Seu Herói Recebe +X de Ataque, onde X é o seu Bônus de Ataque Duplicado.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000017",
+      "cardName" : "Afie suas Lâminas",
+      "cardType" : "ACTION",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Seu Herói Recebe +X de Ataque, onde X é o seu Bônus de Ataque Duplicado.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000018",
+      "cardName" : "Estilo Secreto do Caçador",
+      "cardType" : "ACTION",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Seu Herói Recebe Empunhadura Tripla até o Final da Partida.\nJogue uma Arma de Empunhadura Simples de sua mão.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000018",
+      "cardName" : "Estilo Secreto do Caçador",
+      "cardType" : "ACTION",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Seu Herói Recebe Empunhadura Tripla até o Final da Partida.\nJogue uma Arma de Empunhadura Simples de sua mão.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000018",
+      "cardName" : "Estilo Secreto do Caçador",
+      "cardType" : "ACTION",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Seu Herói Recebe Empunhadura Tripla até o Final da Partida.\nJogue uma Arma de Empunhadura Simples de sua mão.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000019",
+      "cardName" : "Corte seus Pescoços",
+      "cardType" : "ACTION",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Para cada Arma equipada no Seu Herói, realize um Ataque Físico aleatoriamente contra um Herói Inimigo.\nDescarte todas as Armas equipadas no Seu Herói.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000019",
+      "cardName" : "Corte seus Pescoços",
+      "cardType" : "ACTION",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Para cada Arma equipada no Seu Herói, realize um Ataque Físico aleatoriamente contra um Herói Inimigo.\nDescarte todas as Armas equipadas no Seu Herói.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000019",
+      "cardName" : "Corte seus Pescoços",
+      "cardType" : "ACTION",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Para cada Arma equipada no Seu Herói, realize um Ataque Físico aleatoriamente contra um Herói Inimigo.\nDescarte todas as Armas equipadas no Seu Herói.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000001",
+      "cardName" : "Ração de emergencia",
+      "cardType" : "ACTION",
+      "color" : "NEUTRAL",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Compre duas cartas.\nJogue uma Carta de sua mão.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000001",
+      "cardName" : "Ração de emergencia",
+      "cardType" : "ACTION",
+      "color" : "NEUTRAL",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Compre duas cartas.\nJogue uma Carta de sua mão.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000001",
+      "cardName" : "Ração de emergencia",
+      "cardType" : "ACTION",
+      "color" : "NEUTRAL",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Compre duas cartas.\nJogue uma Carta de sua mão.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000004",
+      "cardName" : "Mirar na cabeça",
+      "cardType" : "ACTION",
+      "color" : "NEUTRAL",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Escolha um Herói Inimigo: Ele Sofre 3 de Dano Direto.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000004",
+      "cardName" : "Mirar na cabeça",
+      "cardType" : "ACTION",
+      "color" : "NEUTRAL",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Escolha um Herói Inimigo: Ele Sofre 3 de Dano Direto.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000004",
+      "cardName" : "Mirar na cabeça",
+      "cardType" : "ACTION",
+      "color" : "NEUTRAL",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "NENHUM",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Escolha um Herói Inimigo: Ele Sofre 3 de Dano Direto.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000016",
+      "cardName" : "Tesouro Cristalino dos Caçadores",
+      "cardType" : "ITEM",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "JOIA",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Jóia\nSeu Herói Recebe +X de Ataque, onde X é seu Espírito.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000016",
+      "cardName" : "Tesouro Cristalino dos Caçadores",
+      "cardType" : "ITEM",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "JOIA",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Jóia\nSeu Herói Recebe +X de Ataque, onde X é seu Espírito.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
+    }, {
+      "uuid" : "40000000-0000-0000-0000-000000000016",
+      "cardName" : "Tesouro Cristalino dos Caçadores",
+      "cardType" : "ITEM",
+      "color" : "RED",
+      "rarity" : "COMUM",
+      "cardSet" : "BASE",
+      "ownerId" : null,
+      "zoneId" : null,
+      "itemType" : "JOIA",
+      "empunhadura" : 0,
+      "racas" : [ ],
+      "afinidades" : [ ],
+      "ordem" : [ ],
+      "classe" : [ ],
+      "descricao" : "Jóia\nSeu Herói Recebe +X de Ataque, onde X é seu Espírito.",
+      "unica" : false,
+      "attachedToCardId" : null,
+      "turnsRemaining" : null,
+      "liberationCard" : false,
+      "missionType" : null,
+      "missionTargetValue" : 0,
+      "missionCurrentProgress" : 0,
+      "targetBaseHeroName" : null,
+      "evolvesIntoHeroName" : null
     } ],
     "liberationList" : [ ]
   } ],
-  "permanentElo" : 1006,
-  "weeklyElo" : 1006,
+  "permanentElo" : 1012,
+  "weeklyElo" : 1012,
   "lastWeeklyResetWeek" : "2026-W43"
 } ]
