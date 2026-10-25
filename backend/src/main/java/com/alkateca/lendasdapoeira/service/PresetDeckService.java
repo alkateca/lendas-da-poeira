@@ -27,6 +27,7 @@ public class PresetDeckService {
     private List<HeroCard> catalogHeroes = new ArrayList<>();
     private List<Card> catalogCards = new ArrayList<>();
 
+
     private static class BotDeckTemplate {
         final String botDisplayName;
         final String deckName;
@@ -367,5 +368,36 @@ public class PresetDeckService {
         copy.setClasse(src.getClasse() != null ? new ArrayList<>(src.getClasse()) : new ArrayList<>());
         copy.setZoneId(ZoneId.DECK);
         return copy;
+    }
+
+    public Deck getRandomPresetDeck() {
+        if (botDeckPool.isEmpty()) {
+            return new Deck();
+        }
+        BotDeckTemplate chosen = botDeckPool.get(random.nextInt(botDeckPool.size()));
+        Deck deck = buildDeckForPlayer(PLAYER_1_UUID, chosen.heroNames, chosen.cardNames);
+        deck.setUuid(UUID.randomUUID());
+        deck.setDeckName(chosen.deckName);
+        return deck;
+    }
+
+    public Deck getPresetDeckById(String presetDeckId, UUID ownerId) {
+        if (botDeckPool.isEmpty()) {
+            return new Deck();
+        }
+        int index = 0;
+        if (presetDeckId != null && presetDeckId.startsWith("PRESET_")) {
+            try {
+                index = Integer.parseInt(presetDeckId.replace("PRESET_", ""));
+            } catch (NumberFormatException ignored) {
+                index = 0;
+            }
+        }
+        BotDeckTemplate chosen = botDeckPool.get(Math.max(0, Math.min(index, botDeckPool.size() - 1)));
+        UUID targetOwner = ownerId != null ? ownerId : PLAYER_1_UUID;
+        Deck deck = buildDeckForPlayer(targetOwner, chosen.heroNames, chosen.cardNames);
+        deck.setUuid(UUID.randomUUID());
+        deck.setDeckName(chosen.deckName);
+        return deck;
     }
 }

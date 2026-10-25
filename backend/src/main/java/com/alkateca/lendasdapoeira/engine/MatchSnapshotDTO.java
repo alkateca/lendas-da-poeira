@@ -174,6 +174,8 @@ public class MatchSnapshotDTO {
         private int permanentEloDelta;
         private int weeklyElo;
         private int weeklyEloDelta;
+        private int poeiraEarned;
+        private int totalPoeira;
 
         public PlayerMatchStatsDTO(UUID playerId, String playerName, boolean winner, int totalDamageDealt,
                                    int totalDamageTaken, int totalHealingDone, int cardsPlayed,
