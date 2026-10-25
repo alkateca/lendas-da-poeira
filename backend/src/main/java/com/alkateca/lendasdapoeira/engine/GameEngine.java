@@ -339,26 +339,57 @@ public class GameEngine {
     }
 
     public void resolution() {
-        // 1. Muda para RESOLUTION primeiro para tirar a foto revelando as cartas nos 4 slots centrais!
+        // 1. Muda para RESOLUTION para revelar as cartas nos 4 slots centrais
         changePhase(TurnPhase.RESOLUTION);
 
         enqueueInitialResolutionCards();
 
-        // 2. Resolve cada efeito gerando 1 foto (MatchSnapshotDTO) por efeito!
+        // 2. Resolve todos os efeitos da pilha
         resolutionQueue.resolveAll(this);
 
-        // 3. Move cada carta resolvida para ATTACHED (se for ITEM), EXILE (se tiver Exilar.) ou DISCARD
-        moveResolvedCardsToDestination(gameState.getPlayer1PlayedCards());
-        moveResolvedCardsToDestination(gameState.getPlayer2PlayedCards());
+        // 3. Apenas Magias, Ações e Teurgias saem da mesa agora (indo para Descarte ou Exílio)
+        // Os Itens (Armas/Joias) continuam visíveis na mesa durante o Combate Físico (COMBAT)!
+        moveSpellsAndActionsToDestination(gameState.getPlayer1PlayedCards());
+        moveSpellsAndActionsToDestination(gameState.getPlayer2PlayedCards());
 
-        gameState.getPlayer1PlayedCards().clear();
-        gameState.getPlayer2PlayedCards().clear();
         resolvedCardsInCurrentCombat.clear();
         invokedCardIdsInCurrentCombat.clear();
 
         changePhase(TurnPhase.COMBAT);
     }
 
+    private void moveSpellsAndActionsToDestination(List<Card> playedCards) {
+        if (playedCards == null) return;
+        Iterator<Card> it = playedCards.iterator();
+        while (it.hasNext()) {
+            Card card = it.next();
+            if (card.getCardType() != com.alkateca.lendasdapoeira.enums.CardType.ITEM) {
+                if (card.getDescricao() != null && card.getDescricao().contains("Exilar.")) {
+                    card.setZoneId(com.alkateca.lendasdapoeira.enums.ZoneId.EXILE);
+                } else {
+                    card.setZoneId(com.alkateca.lendasdapoeira.enums.ZoneId.DISCARD);
+                }
+                it.remove(); // Remove da lista de resolução imediatamente
+            }
+        }
+    }
+
+    private void moveItemsToAttachedDestination(List<Card> playedCards) {
+        if (playedCards == null || playedCards.isEmpty()) return;
+        UUID activeP1HeroId = gameState.getActiveHeroPlayer1Id();
+        UUID activeP2HeroId = gameState.getActiveHeroPlayer2Id();
+
+        for (Card card : playedCards) {
+            if (card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM) {
+                boolean isP1Owner = card.getOwnerId().equals(player1.getUuid());
+                UUID defaultHeroId = isP1Owner ? activeP1HeroId : activeP2HeroId;
+                if (card.getAttachedToCardId() == null && defaultHeroId != null) {
+                    card.setAttachedToCardId(defaultHeroId);
+                }
+                card.setZoneId(com.alkateca.lendasdapoeira.enums.ZoneId.ATTACHED);
+            }
+        }
+    }
 
     public void discard() {
         refillHandToFive(player1);
@@ -731,16 +762,19 @@ public class GameEngine {
             triggerActiveHeroesEffects(TurnPhase.COMBAT_END);
         }
 
-        // 4. Se está em COMBAT_END, resolve os efeitos de fim de combate e só então recolhe as cartas da mesa!
+        // 4. Se está em COMBAT_END, resolve os efeitos de fim de combate, anexa os itens nos heróis ainda em BATTLE e depois retorna-os à BENCH
         if (this.turnPhase == TurnPhase.COMBAT_END) {
             resolutionQueue.resolveAll(this);
             if (isWaitingForPlayerChoice()) return;
 
-            // AGORA SIM: Fim da sequência de combate -> move cartas e tokens da mesa para ATTACHED, EXILE ou DISCARD
+            // Move as cartas da fila de resolução para ATTACHED/DISCARD/EXILE com os heróis ainda no slot de combate
             moveResolvedCardsToDestination(gameState.getPlayer1PlayedCards());
             moveResolvedCardsToDestination(gameState.getPlayer2PlayedCards());
             gameState.getPlayer1PlayedCards().clear();
             gameState.getPlayer2PlayedCards().clear();
+
+            // Snapshot dedicado: os itens saem da fila de resolução e deslizam para os heróis ainda em BATTLE
+            captureSnapshot(null, null, "COMBAT_END_ITEMS_ATTACHED");
 
             processAttachedCardsDuration();
             runCombatEndCleanup();
@@ -951,6 +985,12 @@ public class GameEngine {
 
         processAttachedCardsDuration();
         runCombatEndCleanup();
+
+        // AGORA SIM: No fim do combate, os itens que estavam na mesa deslizam e se anexam aos heróis!
+        moveItemsToAttachedDestination(gameState.getPlayer1PlayedCards());
+        moveItemsToAttachedDestination(gameState.getPlayer2PlayedCards());
+        gameState.getPlayer1PlayedCards().clear();
+        gameState.getPlayer2PlayedCards().clear();
 
         // Regra 4 de game_architecture.md: Ao final de COMBAT_END, contabiliza se algum Herói morreu (vidaAtual <= 0)
         evaluateHeroesDeathAndReturnToBench(player1);
@@ -1351,23 +1391,12 @@ public class GameEngine {
     private void enqueueInvokeEffectsAtFront(Card invokedCard) {
         if (invokedCard == null) return;
 
-        com.alkateca.lendasdapoeira.effects.Effect markResolvedStep = new com.alkateca.lendasdapoeira.effects.Effect() {
-            @Override
-            public boolean predicate(Card sourceCard, TurnPhase turnPhase) {
-                return true;
-            }
+        if (this.turnPhase == TurnPhase.COMBAT_START || this.turnPhase == TurnPhase.RESOLUTION) {
+            enqueueCardAndHeroOnPlayResolution(invokedCard, true);
+            return;
+        }
 
-            @Override
-            public boolean shouldCaptureSnapshot() {
-                return false;
-            }
-
-            @Override
-            public void resolve(GameEngine gameEngine, Card sourceCard) {
-                gameEngine.markCardAsResolved(sourceCard);
-            }
-        };
-
+        // Mantém comportamento simples apenas no GAME_START (onde não há Herói ativo em BATTLE)
         List<com.alkateca.lendasdapoeira.effects.Effect> cardEffects = new ArrayList<>();
         if (invokedCard.getEffects() != null) {
             for (com.alkateca.lendasdapoeira.effects.Effect eff : invokedCard.getEffects()) {
@@ -1376,11 +1405,9 @@ public class GameEngine {
                 }
             }
         }
-
         for (int i = cardEffects.size() - 1; i >= 0; i--) {
             resolutionQueue.enqueueFirst(cardEffects.get(i), invokedCard);
         }
-        resolutionQueue.enqueueFirst(markResolvedStep, invokedCard);
     }
 
     /**

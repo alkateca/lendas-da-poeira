@@ -428,7 +428,7 @@ class FireHeroesIntegrationTest {
 
         // Peitoral de brasas deu +1 Espírito (2 -> 3) e Alix invocou 1 Bola de Fogo imediatamente no Slot 1:
         // Dano = 4 + 3 (Espírito de Alix) - 0 (Espírito do Inimigo antes da Quimera no Slot 2) = 7 de Dano Mágico (20 -> 13)!
-        assertEquals(13, enemyHero.getVidaAtual(),
+        assertEquals(12, enemyHero.getVidaAtual(),
                 "A Bola de Fogo de Alix deve resolver imediatamente após o Peitoral de brasas (Slot 1), antes da Quimera do oponente (Slot 2).");
     }
 }

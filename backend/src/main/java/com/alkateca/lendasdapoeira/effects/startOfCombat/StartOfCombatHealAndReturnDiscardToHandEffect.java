@@ -61,6 +61,10 @@ public class StartOfCombatHealAndReturnDiscardToHandEffect implements Effect {
             myHero.setVidaAtual(newLife);
             System.out.println("-> " + myHero.getCardName() + " recuperou " + (newLife - currentLife) +
                     " de Vida! (Vida atual: " + myHero.getVidaAtual() + ")");
+
+            if (newLife > currentLife) {
+                gameEngine.captureSnapshot(sourceCard, this, "EFFECT_RESOLVED");
+            }
         }
 
         requestNextDiscardCard(gameEngine, sourceCard, myPlayer, maxCardsFromDiscard);

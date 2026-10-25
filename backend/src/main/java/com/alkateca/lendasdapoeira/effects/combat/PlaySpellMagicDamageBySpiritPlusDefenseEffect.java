@@ -34,7 +34,7 @@ public class PlaySpellMagicDamageBySpiritPlusDefenseEffect implements Effect {
                 .filter(h -> h.getUuid().equals(enemyHeroId)).findFirst().orElse(null);
 
         if (myHero != null && enemyHero != null) {
-            int rawMagicDamage = myHero.getEspirito() + myHero.getDefesa();
+            int rawMagicDamage = myHero.getEspirito() + myHero.getDefesa() + 2;
             int damage = Math.max(0, rawMagicDamage - enemyHero.getEspirito());
             enemyHero.setVidaAtual(enemyHero.getVidaAtual() - damage);
             System.out.println("-> " + enemyHero.getCardName() + " sofreu " + damage +

@@ -1692,7 +1692,33 @@ export default class MatchScene extends Phaser.Scene {
             if (this.spawnedCardPrefabs && leftover.uuid) {
                 this.spawnedCardPrefabs.delete(leftover.uuid);
             }
-            leftover.destroy();
+
+            // Verifica se a carta que saiu da pilha foi anexada a algum Herói em campo
+            let hostHeroPrefab = null;
+            this.heroPrefabs.forEach(hPrefab => {
+                const attached = hPrefab.heroData?.attachedCards || [];
+                if (attached.some(att => att.uuid === leftover.uuid)) {
+                    hostHeroPrefab = hPrefab;
+                }
+            });
+
+            if (hostHeroPrefab && leftover.alpha > 0) {
+                this.tweens.killTweensOf(leftover);
+                leftover.setDepth(8); // Abaixo do Herói (depth 10)
+                this.tweens.add({
+                    targets: leftover,
+                    x: hostHeroPrefab.x + 24,
+                    y: hostHeroPrefab.y + 30,
+                    scaleX: 0.84,
+                    scaleY: 0.84,
+                    alpha: 0,
+                    duration: 300,
+                    ease: 'Back.easeIn',
+                    onComplete: () => leftover.destroy()
+                });
+            } else {
+                leftover.destroy();
+            }
         });
         this.resolveCardPrefabs = nextResolvePrefabs;
     }
@@ -1958,6 +1984,42 @@ export default class MatchScene extends Phaser.Scene {
             const y = startY + row * rowSpacing;
             const card = new PlayableCardPrefab(this, x, y, { ...cardDto, faceUp: true }, false, cardMode, 0);
             this.modalCardsGroup.add(card);
+        });
+
+        this.modalContainer.setVisible(true);
+    }
+
+    openAttachedCardsModal(heroDto) {
+        if (!heroDto || (this.isChoiceModalActive && this.currentSnapshot?.pendingChoice)) {
+            return;
+        }
+
+        const attachedList = heroDto.attachedCards || [];
+        if (attachedList.length === 0) return;
+
+        this.isChoiceModalActive = false;
+        const usedSlots = heroDto.usedWeaponSlots ?? 0;
+        const maxSlots = heroDto.maxWeaponSlots ?? 2;
+        this.modalTitle.setText(
+            `🗡️ ANEXOS DE: ${heroDto.cardName.toUpperCase()} (${attachedList.length} item(ns) • Empunhadura: ${usedSlots}/${maxSlots})`
+        );
+        this.modalCardsGroup.removeAll(true);
+
+        const totalItems = attachedList.length + 1; // 1º é o próprio Herói, seguido pelos anexos
+        const spacing = 195;
+        const startX = -((totalItems - 1) * spacing) / 2;
+
+        // Renderiza o Herói à esquerda sem os anexos duplicados na miniatura do modal
+        const cleanHeroDto = { ...heroDto, attachedCards: [] };
+        const heroView = new HeroCardPrefab(this, startX, -20, cleanHeroDto, false);
+        heroView.disableInteractive();
+        this.modalCardsGroup.add(heroView);
+
+        // Renderiza cada carta anexada lado a lado à direita
+        attachedList.forEach((cardDto, index) => {
+            const x = startX + (index + 1) * spacing;
+            const cardView = new PlayableCardPrefab(this, x, -20, { ...cardDto, faceUp: true }, false, 'MEDIUM', 0);
+            this.modalCardsGroup.add(cardView);
         });
 
         this.modalContainer.setVisible(true);

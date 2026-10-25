@@ -348,7 +348,7 @@ class YellowThroneGuardiansIntegrationTest {
         enemyItem1.getEffects().forEach(eff -> eff.resolve(engine, enemyItem1));
         enemyItem2.getEffects().forEach(eff -> eff.resolve(engine, enemyItem2));
         assertEquals(6, enemyHero.getAtaque(), "Inimigo deve ter 6 de Ataque com Lamina de Cristal.");
-        assertEquals(3, enemyHero.getDefesa(), "Inimigo deve ter 3 de Defesa com Escudo ardente.");
+        assertEquals(4, enemyHero.getDefesa(), "Inimigo deve ter 4 de Defesa com Escudo ardente.");
 
         // Resolve Saque Rápido -> Escolhe Artefato Cortante da mão
         saqueRapido.getEffects().forEach(eff -> {

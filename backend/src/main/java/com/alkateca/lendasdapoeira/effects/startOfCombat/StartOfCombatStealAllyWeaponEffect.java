@@ -43,30 +43,59 @@ public class StartOfCombatStealAllyWeaponEffect implements Effect {
 
         int freeSlots = myHero.getMaxWeaponSlots() - gameEngine.getUsedWeaponSlotsForHero(myHero.getUuid());
 
-        Card allyWeapon = myPlayer.getCurrentDeck().getCardList().stream()
+        java.util.List<Card> validAllyWeapons = myPlayer.getCurrentDeck().getCardList().stream()
                 .filter(c -> c.getZoneId() == ZoneId.ATTACHED
                         && c.getItemType() == ItemType.ARMA
                         && c.getAttachedToCardId() != null
                         && !c.getAttachedToCardId().equals(myHero.getUuid())
                         && c.getEmpunhadura() <= freeSlots)
-                .findFirst()
-                .orElse(null);
+                .toList();
 
-        if (allyWeapon != null) {
-            gameEngine.detachCard(allyWeapon, ZoneId.RESOLVE);
-            if (allyWeapon.getEffects() != null) {
-                for (Effect effect : allyWeapon.getEffects()) {
-                    if (effect.predicate(allyWeapon, TurnPhase.RESOLUTION)) {
-                        effect.resolve(gameEngine, allyWeapon);
+        if (validAllyWeapons.isEmpty()) {
+            System.out.println("-> Nenhuma Arma Aliada disponível para equipar em " + myHero.getCardName() + ".");
+            return;
+        }
+
+        if (validAllyWeapons.size() == 1) {
+            transferWeaponToHero(gameEngine, validAllyWeapons.get(0), myHero);
+        } else {
+            java.util.List<UUID> validUuids = validAllyWeapons.stream().map(Card::getUuid).toList();
+            gameEngine.requestPlayerChoice(
+                    myPlayer.getUuid(),
+                    sourceCard,
+                    "ATTACHED",
+                    "Escolha uma Arma Aliada para equipar em " + myHero.getCardName(),
+                    validUuids,
+                    false,
+                    chosenWeaponUuid -> {
+                        validAllyWeapons.stream()
+                                .filter(w -> w.getUuid().equals(chosenWeaponUuid))
+                                .findFirst()
+                                .ifPresent(weapon -> transferWeaponToHero(gameEngine, weapon, myHero));
                     }
+            );
+        }
+    }
+
+    private void transferWeaponToHero(GameEngine gameEngine, Card allyWeapon, HeroCard targetHero) {
+        // 1. Desequipa do aliado antigo revertendo os buffs dele via onDetach
+        gameEngine.detachCard(allyWeapon, ZoneId.ATTACHED);
+
+        // 2. Vincula ao Constructo de Combate e aplica os efeitos de Equipar nele
+        allyWeapon.setAttachedToCardId(targetHero.getUuid());
+        allyWeapon.setZoneId(ZoneId.ATTACHED);
+
+        if (allyWeapon.getEffects() != null) {
+            for (Effect effect : allyWeapon.getEffects()) {
+                String effName = effect.getClass().getSimpleName();
+                if (effect.predicate(allyWeapon, TurnPhase.RESOLUTION)
+                        && (effName.startsWith("Equip") || effName.startsWith("OnEquip"))) {
+                    effect.resolve(gameEngine, allyWeapon);
                 }
             }
-            allyWeapon.setAttachedToCardId(myHero.getUuid());
-            allyWeapon.setZoneId(ZoneId.ATTACHED);
-            System.out.println("-> " + myHero.getCardName() + " desequipou a Arma Aliada " +
-                    allyWeapon.getCardName() + " e equipou-a em si mesmo!");
-        } else {
-            System.out.println("-> Nenhuma Arma Aliada disponível para equipar em " + myHero.getCardName() + ".");
         }
+
+        System.out.println("-> " + targetHero.getCardName() + " desequipou a Arma Aliada " +
+                allyWeapon.getCardName() + " e equipou-a em si mesmo!");
     }
 }

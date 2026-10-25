@@ -46,10 +46,15 @@ public class PlaySpellBuffEffect implements Effect {
             myHero.setEspirito(myHero.getEspirito() + bonusEspirito);
             myHero.setAtaque(myHero.getAtaque() + bonusAtaque);
             myHero.setDefesa(myHero.getDefesa() + bonusDefesa);
-            this.buffedHero = myHero;
-            this.activeBuff = true;
-            gameEngine.registerCombatEndCleanup(this::revertBuff);
-            System.out.println("-> " + myHero.getCardName() + " recebeu buff mágico temporário até o Final do Combate!");
+
+            gameEngine.registerCombatEndCleanup(() -> {
+                myHero.setEspirito(myHero.getEspirito() - bonusEspirito);
+                myHero.setAtaque(myHero.getAtaque() - bonusAtaque);
+                myHero.setDefesa(myHero.getDefesa() - bonusDefesa);
+            });
+
+            System.out.println("-> " + myHero.getCardName() + " recebeu +" + bonusEspirito + " ESP, +" +
+                    bonusAtaque + " ATQ, +" + bonusDefesa + " DEF até o Final do Combate!");
         }
     }
 

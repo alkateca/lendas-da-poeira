@@ -29,9 +29,6 @@ public class StartOfCombatPlayNextCardByTypeEffect implements Effect {
         System.out.println("Efeito de " + sourceCard.getCardName() + " ativado!");
 
         boolean isPlayer1 = sourceCard.getOwnerId().equals(gameEngine.getPlayer1().getUuid());
-        UUID myHeroId = isPlayer1
-                ? gameEngine.getGameState().getActiveHeroPlayer1Id()
-                : gameEngine.getGameState().getActiveHeroPlayer2Id();
         Player myPlayer = isPlayer1
                 ? gameEngine.getPlayer1()
                 : gameEngine.getPlayer2();
@@ -39,11 +36,6 @@ public class StartOfCombatPlayNextCardByTypeEffect implements Effect {
         if (myPlayer == null || myPlayer.getCurrentDeck() == null || myPlayer.getCurrentDeck().getCardList() == null) {
             return;
         }
-
-        HeroCard myHero = (HeroCard) myPlayer.getCurrentDeck().getHeroList().stream()
-                .filter(h -> h.getUuid().equals(myHeroId))
-                .findFirst()
-                .orElse(null);
 
         Card cardToPlay = myPlayer.getCurrentDeck().getCardList().stream()
                 .filter(c -> c.getZoneId() == ZoneId.DECK && c.getItemType() == typeToPlay)
@@ -54,25 +46,7 @@ public class StartOfCombatPlayNextCardByTypeEffect implements Effect {
             System.out.println("-> " + sourceCard.getCardName() + " jogou a próxima carta do tipo " +
                     typeToPlay.name() + " do baralho: " + cardToPlay.getCardName() + "!");
 
-            cardToPlay.setZoneId(ZoneId.RESOLVE);
-            if (cardToPlay.getEffects() != null) {
-                for (Effect effect : cardToPlay.getEffects()) {
-                    if (effect.predicate(cardToPlay, TurnPhase.RESOLUTION)) {
-                        effect.resolve(gameEngine, cardToPlay);
-                    }
-                }
-            }
-
-            if (cardToPlay.getAttachedToCardId() != null) {
-                cardToPlay.setZoneId(ZoneId.ATTACHED);
-            } else if (cardToPlay.getCardType() == CardType.ITEM && myHero != null) {
-                cardToPlay.setAttachedToCardId(myHero.getUuid());
-                cardToPlay.setZoneId(ZoneId.ATTACHED);
-            } else if (cardToPlay.getDescricao() != null && cardToPlay.getDescricao().contains("Exilar.")) {
-                cardToPlay.setZoneId(ZoneId.EXILE);
-            } else {
-                cardToPlay.setZoneId(ZoneId.DISCARD);
-            }
+            gameEngine.playCardIntoResolution(cardToPlay);
         } else {
             System.out.println("-> Nenhuma carta do tipo " + typeToPlay.name() + " encontrada no baralho.");
         }

@@ -215,15 +215,15 @@ public class CardFactory {
                 effects.add(new EndOfCombatHealAlliesEffect(2));
                 break;
             case "Sica":
-                effects.add(new EquipBuffEffect(1, 1, 0, 0));
+                effects.add(new EquipBuffEffect(2, 2, 0, 0));
                 break;
             case "Sino do Caçador":
-                effects.add(new EquipBuffEffect(1, 0, 0, 0));
+                effects.add(new EquipBuffEffect(1, 1, 0, 0));
                 effects.add(new PlayCardFromHandByTypeEffect(ItemType.FERRAMENTA));
                 effects.add(new PlayNextWeaponFromDeckEffect(1));
                 break;
             case "Arpão terrestre":
-                effects.add(new EquipBuffEffect(0, 2, 1, 0));
+                effects.add(new EquipBuffEffect(0, 3, 2, 0));
                 effects.add(new DrawNextCardByTypeEffect(ItemType.FERRAMENTA));
                 break;
             case "Bomba de fumaça":
@@ -234,10 +234,10 @@ public class CardFactory {
                 effects.add(new EquipBuffBySpiritEffect());
                 break;
             case "Peitoral de brasas":
-                effects.add(new EquipBuffEffect(1, 0, 2, 0));
+                effects.add(new EquipBuffEffect(2, 0, 2, 0));
                 break;
             case "Escudo ardente":
-                effects.add(new EquipBuffEffect(1, 0, 1, 0));
+                effects.add(new EquipBuffEffect(2, 0, 2, 0));
                 break;
             case "Estrela do amanhã":
                 effects.add(new EndOfCombatReviveAndExileEffect(13));
@@ -336,7 +336,7 @@ public class CardFactory {
             case "Luz da Lua":
                 break;
             case "Afie suas Lâminas":
-                effects.add(new PlayActionBuffAttackByDoubleBonusDamageEffect());
+                effects.add(new PlaySpellBuffEffect(0, 4, 4));
                 break;
             case "Estilo Secreto do Caçador":
                 effects.add(new PlayActionSetWeaponSlotsEffect(3));

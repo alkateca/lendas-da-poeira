@@ -31,7 +31,9 @@ chmod +x "$BACKEND_DIR/mvnw" 2>/dev/null || true
 
 # Configura JAVA_HOME automaticamente caso não esteja definido
 if [ -z "$JAVA_HOME" ] || [ ! -d "$JAVA_HOME" ]; then
-    if [ -d "/usr/lib/jvm/java-17-openjdk-amd64" ]; then
+    if [ -d "/c/Program Files/Java/jdk-25" ]; then
+        export JAVA_HOME="/c/Program Files/Java/jdk-25"
+    elif [ -d "/usr/lib/jvm/java-17-openjdk-amd64" ]; then
         export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
     elif [ -d "/usr/lib/jvm/default-java" ]; then
         export JAVA_HOME="/usr/lib/jvm/default-java"
@@ -45,27 +47,39 @@ fi
 
 is_pid_running() {
     local pid="$1"
-    [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null
+    [ -z "$pid" ] && return 1
+    if kill -0 "$pid" 2>/dev/null; then
+        return 0
+    fi
+    if command -v tasklist >/dev/null 2>&1; then
+        tasklist //FI "PID eq $pid" 2>/dev/null | grep -q "$pid" && return 0
+    fi
+    return 1
+}
+
+is_port_in_use() {
+    local port="$1"
+    if command -v fuser >/dev/null 2>&1 && fuser "${port}/tcp" >/dev/null 2>&1; then
+        return 0
+    fi
+    if command -v netstat >/dev/null 2>&1; then
+        netstat -ano 2>/dev/null | grep -E "(:|\.)${port}[[:space:]]" | grep -i "LISTENING" >/dev/null 2>&1 && return 0
+    fi
+    return 1
 }
 
 is_backend_running() {
     if [ -f "$BACKEND_PID_FILE" ] && is_pid_running "$(cat "$BACKEND_PID_FILE" 2>/dev/null)"; then
         return 0
     fi
-    if fuser "${BACKEND_PORT}/tcp" >/dev/null 2>&1; then
-        return 0
-    fi
-    return 1
+    is_port_in_use "$BACKEND_PORT"
 }
 
 is_frontend_running() {
     if [ -f "$FRONTEND_PID_FILE" ] && is_pid_running "$(cat "$FRONTEND_PID_FILE" 2>/dev/null)"; then
         return 0
     fi
-    if fuser "${FRONTEND_PORT}/tcp" >/dev/null 2>&1; then
-        return 0
-    fi
-    return 1
+    is_port_in_use "$FRONTEND_PORT"
 }
 
 stop_service() {
@@ -79,7 +93,9 @@ stop_service() {
         local pid
         pid=$(cat "$pid_file" 2>/dev/null)
         if is_pid_running "$pid"; then
-            pkill -P "$pid" 2>/dev/null || true
+            if command -v pkill >/dev/null 2>&1; then
+                pkill -P "$pid" 2>/dev/null || true
+            fi
             kill "$pid" 2>/dev/null || true
             sleep 1
             if is_pid_running "$pid"; then
@@ -91,7 +107,17 @@ stop_service() {
 
     # Garante que a porta associada foi liberada
     if [ -n "$port" ]; then
-        fuser -k "${port}/tcp" >/dev/null 2>&1 || true
+        if command -v fuser >/dev/null 2>&1; then
+            fuser -k "${port}/tcp" >/dev/null 2>&1 || true
+        elif command -v netstat >/dev/null 2>&1 && command -v taskkill >/dev/null 2>&1; then
+            local pids
+            pids=$(netstat -ano 2>/dev/null | grep -E "(:|\.)${port}[[:space:]]" | grep -i "LISTENING" | awk '{print $NF}' | sort -u)
+            for p in $pids; do
+                if [ -n "$p" ] && [ "$p" -ne 0 ] 2>/dev/null; then
+                    taskkill //F //PID "$p" >/dev/null 2>&1 || true
+                fi
+            done
+        fi
     fi
 
     echo -e "${GREEN}✓ $name parado.${NC}"
@@ -106,7 +132,13 @@ stop_all() {
 start_backend() {
     echo -e "${CYAN}Iniciando Backend (Java / Spring Boot na porta $BACKEND_PORT)...${NC}"
     cd "$BACKEND_DIR" || exit 1
-    setsid ./mvnw spring-boot:run < /dev/null > "$BACKEND_LOG" 2>&1 &
+    if command -v setsid >/dev/null 2>&1; then
+        setsid ./mvnw spring-boot:run < /dev/null > "$BACKEND_LOG" 2>&1 &
+    elif command -v nohup >/dev/null 2>&1; then
+        nohup ./mvnw spring-boot:run < /dev/null > "$BACKEND_LOG" 2>&1 &
+    else
+        ./mvnw spring-boot:run < /dev/null > "$BACKEND_LOG" 2>&1 &
+    fi
     local pid=$!
     disown "$pid" 2>/dev/null || true
     echo "$pid" > "$BACKEND_PID_FILE"
@@ -120,7 +152,13 @@ start_frontend() {
         echo -e "${YELLOW}node_modules não encontrado. Executando npm install...${NC}"
         npm install
     fi
-    setsid npm run dev < /dev/null > "$FRONTEND_LOG" 2>&1 &
+    if command -v setsid >/dev/null 2>&1; then
+        setsid npm run dev < /dev/null > "$FRONTEND_LOG" 2>&1 &
+    elif command -v nohup >/dev/null 2>&1; then
+        nohup npm run dev < /dev/null > "$FRONTEND_LOG" 2>&1 &
+    else
+        npm run dev < /dev/null > "$FRONTEND_LOG" 2>&1 &
+    fi
     local pid=$!
     disown "$pid" 2>/dev/null || true
     echo "$pid" > "$FRONTEND_PID_FILE"

@@ -27,7 +27,7 @@ public class PlaySpellHealBySpiritEffect implements Effect {
                 .filter(h -> h.getUuid().equals(myHeroId)).findFirst().orElse(null);
 
         if (myHero != null) {
-            int healAmount = Math.max(0, myHero.getEspirito());
+            int healAmount = Math.max(0, myHero.getEspirito() + 2);
             int novaVida = Math.min(myHero.getVidaMaxima(), myHero.getVidaAtual() + healAmount);
             myHero.setVidaAtual(novaVida);
             System.out.println("-> " + myHero.getCardName() + " curou " + healAmount +

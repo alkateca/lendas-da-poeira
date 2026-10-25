@@ -47,30 +47,48 @@ public class OnPlayWeaponBuffAndHealEffect implements Effect {
             return;
         }
 
-        List<Card> playedCards = gameEngine.getResolvedPlayedCardsForPlayer(sourceCard.getOwnerId());
-
-        if (playedCards == null) {
-            return;
-        }
-
-        List<Card> newWeapons = playedCards.stream()
-                .filter(c -> c.getItemType() == ItemType.ARMA && !processedWeaponIds.contains(c.getUuid()))
-                .collect(Collectors.toList());
-
-        if (newWeapons.isEmpty()) {
-            return;
-        }
-
         Player myPlayer = isPlayer1
                 ? gameEngine.getPlayer1()
                 : gameEngine.getPlayer2();
+
+        if (myPlayer == null || myPlayer.getCurrentDeck() == null) {
+            return;
+        }
 
         HeroCard myHero = (HeroCard) myPlayer.getCurrentDeck().getHeroList().stream()
                 .filter(h -> h.getUuid().equals(myHeroId))
                 .findFirst()
                 .orElse(null);
 
-        if (myHero == null) {
+        if (myHero == null || !Boolean.TRUE.equals(myHero.getEstaVivo())) {
+            return;
+        }
+
+        List<Card> resolvedSoFar = gameEngine.getResolvedPlayedCardsForPlayer(sourceCard.getOwnerId());
+        List<Card> allPlayedInCombat = isPlayer1
+                ? gameEngine.getGameState().getPlayer1PlayedCards()
+                : gameEngine.getGameState().getPlayer2PlayedCards();
+
+        // Inicializa os IDs de armas que já estavam equipadas em turnos anteriores para não contá-las novamente
+        if (processedWeaponIds.isEmpty() && myPlayer.getCurrentDeck().getCardList() != null) {
+            myPlayer.getCurrentDeck().getCardList().stream()
+                    .filter(c -> c.getZoneId() == com.alkateca.lendasdapoeira.enums.ZoneId.ATTACHED
+                            && myHeroId.equals(c.getAttachedToCardId())
+                            && c.getItemType() == ItemType.ARMA
+                            && (allPlayedInCombat == null || !allPlayedInCombat.contains(c)))
+                    .forEach(c -> processedWeaponIds.add(c.getUuid()));
+
+            gameEngine.registerCombatEndCleanup(processedWeaponIds::clear);
+        }
+
+        // Considera armas que já resolveram na pilha (incluindo armas invocadas/jogadas por efeitos)
+        List<Card> newWeapons = (allPlayedInCombat == null ? java.util.Collections.<Card>emptyList() : allPlayedInCombat).stream()
+                .filter(c -> c.getItemType() == ItemType.ARMA && !processedWeaponIds.contains(c.getUuid()))
+                .filter(c -> (resolvedSoFar != null && resolvedSoFar.contains(c))
+                          || myHeroId.equals(c.getAttachedToCardId()))
+                .collect(Collectors.toList());
+
+        if (newWeapons.isEmpty()) {
             return;
         }
 
@@ -90,7 +108,6 @@ public class OnPlayWeaponBuffAndHealEffect implements Effect {
 
         gameEngine.registerCombatEndCleanup(() -> {
             myHero.setAtaque(myHero.getAtaque() - totalAtk);
-            processedWeaponIds.clear();
             System.out.println("-> Buff temporário de " + sourceCard.getCardName() + " (-" + totalAtk + " Ataque) expirou no Final do Combate.");
         });
 

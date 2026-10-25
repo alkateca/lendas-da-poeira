@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { BOARD_LAYOUT } from '../config/BoardCoordinates.js';
+import PlayableCardPrefab from './PlayableCardPrefab.js';
 
 export default class HeroCardPrefab extends Phaser.GameObjects.Container {
     constructor(scene, x, y, heroDto, isOpponent) {
@@ -100,16 +101,11 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             wordWrap: { width: textMaxW }
         }).setOrigin(0, 0).setResolution(2);
 
-        // 6. Indicador de Itens Equipados no rodapé da caixa esquerda (SVG X=14, Y=358)
-        const equipPt = pos(14, 358);
-        this.equippedMiniFrame = scene.add.rectangle(equipPt.x + 28, equipPt.y, 56, 13, 0xffe600)
-            .setStrokeStyle(1, 0x090d16).setVisible(false);
-        this.metaText = scene.add.text(equipPt.x + 28, equipPt.y, '', {
-            fontSize: '7.5px',
-            color: '#090d16',
-            fontStyle: 'bold',
-            fontFamily: 'IoskeleyMono, monospace'
-        }).setOrigin(0.5).setResolution(2);
+        // 6. Camadas de Cartas Anexadas (Traseira em repouso / Frontal em Hover)
+        this.attachedBackLayer = scene.add.container(0, 0);
+        this.attachedFrontLayer = scene.add.container(0, 0);
+        this.attachedCardNodes = [];
+        this.knownAttachedUuids = new Set();
 
         // 7. Os 4 Atributos na Coluna Direita (SVG X=264, Centros Y = 224, 267, 310, 353)
         const espPt = pos(264, 224);
@@ -128,6 +124,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.deadOverlayText = scene.add.text(0, -height * 0.12, '💀', { fontSize: '30px' }).setOrigin(0.5).setVisible(false);
 
         this.add([
+            this.attachedBackLayer, // Fica ATRÁS do Herói em repouso
             this.shadow,
             this.bg,
             ...(this.artSprite ? [this.artSprite] : []),
@@ -135,10 +132,10 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             this.nameText,
             this.modBonusText, this.modReducaoText, this.modVulnText,
             this.traitsText, this.descText,
-            this.equippedMiniFrame, this.metaText,
             ...this.espBadge.elements, ...this.atqBadge.elements,
             ...this.defBadge.elements, ...this.hpBadge.elements,
-            this.sleepStatusIcon, this.deadOverlayBg, this.deadOverlayText
+            this.sleepStatusIcon, this.deadOverlayBg, this.deadOverlayText,
+            this.attachedFrontLayer // Fica NA FRENTE do Herói quando um anexo recebe hover
         ]);
 
         this.setSize(width, height);
@@ -241,6 +238,13 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             }
         });
 
+        this.on('pointerup', () => {
+            if (this.isDragging) return;
+            if (!this.scene.canDragHero(this) && this.heroData?.attachedCards?.length > 0) {
+                this.scene.openAttachedCardsModal(this.heroData);
+            }
+        });
+
         this.on('dragstart', () => {
             this.clearLongHoverTimer();
             this.scene.hideLargeCardPreview();
@@ -332,9 +336,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.modReducaoText.setText(`${reducao}`);
         this.modVulnText.setText(`${vuln}`);
 
-        const attachedCount = newHeroDto.attachedCards ? newHeroDto.attachedCards.length : 0;
-        this.equippedMiniFrame.setVisible(attachedCount > 0);
-        this.metaText.setText(attachedCount > 0 ? `🗡️ ITENS: ${attachedCount}` : '');
+        this.syncAttachedCardsVisuals(newHeroDto.attachedCards || []);
 
         const diffs = [];
         const vfxToTrigger = new Set();
@@ -426,6 +428,156 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             this.sleepStatusIcon.setVisible(!inBattle && newHeroDto.estaAtivo === false);
             this.setAlpha(newHeroDto.estaAtivo ? 1.0 : 0.9);
         }
+    }
+
+    syncAttachedCardsVisuals(attachedCards = []) {
+        this.attachedBackLayer.removeAll(true);
+        this.attachedFrontLayer.removeAll(true);
+        this.attachedCardNodes = [];
+
+        // Filtra itens que ainda estão visualmente na fila de resolução (evita anexar antes do COMBAT_END)
+        const snap = this.scene?.currentSnapshot;
+        const inResolveUuids = new Set([
+            ...(snap?.localPlayer?.playedCardsInResolve || []).map(c => c.uuid),
+            ...(snap?.opponentPlayer?.playedCardsInResolve || []).map(c => c.uuid)
+        ]);
+
+        const visibleAttached = (attachedCards || []).filter(c => c && !inResolveUuids.has(c.uuid));
+
+        if (visibleAttached.length === 0) {
+            this.knownAttachedUuids.clear();
+            return;
+        }
+
+        const inBattle = this.heroData?.zoneId === 'BATTLE';
+        const count = visibleAttached.length;
+
+        const maxSpreadX = inBattle ? 138 : 42;
+        const stepX = inBattle
+            ? Math.min(46, Math.max(24, Math.floor(maxSpreadX / count)))
+            : Math.min(20, Math.max(12, Math.floor(maxSpreadX / count)));
+        const baseY = inBattle ? 38 : 28;
+        const restScale = inBattle ? 0.92 : 0.84;
+
+        const currentUuids = new Set();
+
+        for (let i = visibleAttached.length - 1; i >= 0; i--) {
+            const attDto = visibleAttached[i];
+            if (attDto.uuid) currentUuids.add(attDto.uuid);
+
+            const baseX = (i + 1) * stepX;
+            const isNewlyEquipped = Boolean(attDto.uuid && !this.knownAttachedUuids.has(attDto.uuid));
+
+            const attCard = new PlayableCardPrefab(
+                this.scene,
+                baseX,
+                baseY,
+                { ...attDto, faceUp: true },
+                false,
+                'MEDIUM',
+                0
+            );
+
+            attCard.removeAllListeners('pointerover');
+            attCard.removeAllListeners('pointerout');
+            attCard.removeAllListeners('pointerdown');
+
+            attCard.on('pointerover', () => {
+                if (this.isDragging) return;
+                this.setDepth(95);
+                this.attachedFrontLayer.add(attCard);
+
+                this.scene.tweens.killTweensOf(attCard);
+                this.scene.tweens.add({
+                    targets: attCard,
+                    x: baseX,
+                    y: baseY - 58,
+                    scaleX: 1.08,
+                    scaleY: 1.08,
+                    duration: 140,
+                    ease: 'Back.easeOut'
+                });
+                attCard.bg.setStrokeStyle(3, 0xffe600);
+                this.scene.showLargeCardPreview(attDto, false);
+            });
+
+            attCard.on('pointerout', () => {
+                this.scene.hideLargeCardPreview();
+                if (!attCard.scene) return;
+
+                this.attachedBackLayer.add(attCard);
+                this.attachedCardNodes
+                    .slice()
+                    .reverse()
+                    .forEach(node => {
+                        if (node && node.parentContainer === this.attachedBackLayer) {
+                            this.attachedBackLayer.bringToTop(node);
+                        }
+                    });
+
+                this.scene.tweens.killTweensOf(attCard);
+                this.scene.tweens.add({
+                    targets: attCard,
+                    x: baseX,
+                    y: baseY,
+                    scaleX: restScale,
+                    scaleY: restScale,
+                    duration: 150,
+                    ease: 'Power2'
+                });
+                attCard.bg.setStrokeStyle(0, 0x000000);
+                if (!this.isDragging) this.setDepth(10);
+            });
+
+            attCard.on('pointerdown', () => {
+                if (this.scene && typeof this.scene.openAttachedCardsModal === 'function') {
+                    this.scene.openAttachedCardsModal(this.heroData);
+                }
+            });
+
+            if (isNewlyEquipped && this.scene) {
+                const resolveSource = (this.scene.resolveCardPrefabs || []).find(c => c.uuid === attDto.uuid);
+                const worldOriginX = resolveSource ? resolveSource.x : BOARD_LAYOUT.ARENA_CIRCLE.x;
+                const worldOriginY = resolveSource ? resolveSource.y : BOARD_LAYOUT.ARENA_CIRCLE.y;
+
+                if (resolveSource) resolveSource.setAlpha(0);
+
+                attCard.setPosition(worldOriginX - this.x, worldOriginY - this.y);
+                attCard.setScale(1.0);
+                attCard.bg.setStrokeStyle(4, 0x55ffff);
+                this.attachedFrontLayer.add(attCard);
+
+                this.scene.tweens.add({
+                    targets: attCard,
+                    x: baseX,
+                    y: baseY,
+                    scaleX: restScale,
+                    scaleY: restScale,
+                    duration: 360,
+                    ease: 'Back.easeInOut',
+                    onComplete: () => {
+                        if (!attCard.scene) return;
+                        attCard.bg.setStrokeStyle(0, 0x000000);
+                        this.attachedBackLayer.add(attCard);
+                        this.attachedCardNodes
+                            .slice()
+                            .reverse()
+                            .forEach(node => {
+                                if (node && node.parentContainer === this.attachedBackLayer) {
+                                    this.attachedBackLayer.bringToTop(node);
+                                }
+                            });
+                    }
+                });
+            } else {
+                attCard.setScale(restScale);
+                this.attachedBackLayer.add(attCard);
+            }
+
+            this.attachedCardNodes[i] = attCard;
+        }
+
+        this.knownAttachedUuids = currentUuids;
     }
 
     showFloatingNumber(text, color) {

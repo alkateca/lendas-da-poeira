@@ -36,16 +36,31 @@ public class EndOfCombatReturnAttachedCardsToDeckEffect implements Effect {
             return;
         }
 
+        List<Card> ownerPlayedCards = isPlayer1
+                ? gameEngine.getGameState().getPlayer1PlayedCards()
+                : gameEngine.getGameState().getPlayer2PlayedCards();
+
         List<Card> attachedToReturn = myPlayer.getCurrentDeck().getCardList().stream()
-                .filter(c -> c.getZoneId() == ZoneId.ATTACHED
-                        && sourceCard.getUuid().equals(c.getAttachedToCardId())
-                        && c.getItemType() != null
-                        && itemTypesToReturn.contains(c.getItemType()))
+                .filter(c -> c.getItemType() != null && itemTypesToReturn.contains(c.getItemType()))
+                .filter(c -> (c.getZoneId() == ZoneId.ATTACHED && sourceCard.getUuid().equals(c.getAttachedToCardId()))
+                          || (ownerPlayedCards != null && ownerPlayedCards.contains(c)))
                 .collect(Collectors.toList());
 
         for (Card card : attachedToReturn) {
+            if (ownerPlayedCards != null) {
+                ownerPlayedCards.remove(card);
+            }
+            // Garante que o vínculo esteja apontando para Asahum antes do detach reverter os buffs (onDetach)
+            if (card.getAttachedToCardId() == null) {
+                card.setAttachedToCardId(sourceCard.getUuid());
+                card.setZoneId(ZoneId.ATTACHED);
+            }
             gameEngine.detachCard(card, ZoneId.DECK);
             System.out.println("-> " + card.getCardName() + " retornou para o baralho de " + myPlayer.getName() + "!");
+        }
+
+        if (!attachedToReturn.isEmpty()) {
+            myPlayer.getCurrentDeck().shuffleDeck();
         }
     }
 }
