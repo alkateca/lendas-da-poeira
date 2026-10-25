@@ -1,5 +1,6 @@
 package com.alkateca.lendasdapoeira.controller;
 
+import com.alkateca.lendasdapoeira.engine.CardFactory;
 import com.alkateca.lendasdapoeira.entity.Deck;
 import com.alkateca.lendasdapoeira.entity.Player;
 import com.alkateca.lendasdapoeira.service.DeckValidatorService;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
 
@@ -19,13 +21,16 @@ import java.util.UUID;
 public class PlayerController {
 
     @Autowired
-    private PlayerStorageService storageService;
+    private PlayerStorageService playerStorageService;
 
     @Autowired
-    private DeckValidatorService validatorService;
+    private DeckValidatorService deckValidatorService;
 
     @Autowired
     private PresetDeckService presetDeckService;
+
+    @Autowired
+    private CardFactory cardFactory;
 
     @Autowired
     private EloRatingService eloRatingService;
@@ -36,37 +41,50 @@ public class PlayerController {
         if (nick == null || nick.trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
-        Player player = storageService.loginOrRegister(nick);
+        Player player = playerStorageService.loginOrRegister(nick);
+        deckValidatorService.ensureStarterCollection(player, presetDeckService.createDefaultDeck(), cardFactory.getAllCatalogCards());
+        playerStorageService.savePlayer(player);
         if (eloRatingService.ensurePlayerEloInitializedAndCurrentWeek(player)) {
-            storageService.saveOrUpdatePlayer(player);
+            playerStorageService.savePlayer(player);
         }
         return ResponseEntity.ok(player);
     }
 
     @GetMapping("/{playerId}")
     public ResponseEntity<Player> getPlayerProfile(@PathVariable UUID playerId) {
-        Player player = storageService.getPlayer(playerId);
+        Player player = playerStorageService.getPlayer(playerId);
         if (player == null) return ResponseEntity.notFound().build();
         if (eloRatingService.ensurePlayerEloInitializedAndCurrentWeek(player)) {
-            storageService.saveOrUpdatePlayer(player);
+            playerStorageService.savePlayer(player);
         }
         return ResponseEntity.ok(player);
     }
 
-    @PostMapping("/{playerId}/decks")
-    public ResponseEntity<Player> saveOrUpdateDeck(@PathVariable UUID playerId, @RequestBody Deck deck) {
-        Player player = storageService.getPlayer(playerId);
+    @PostMapping(path = {"/{playerId}/decks", "/{uuid}/decks"})
+    public ResponseEntity<Player> saveOrUpdateDeck(
+            @PathVariable(value = "playerId", required = false) UUID playerId,
+            @PathVariable(value = "uuid", required = false) UUID uuid,
+            @RequestBody Deck incomingDeck) {
+
+        UUID targetId = (playerId != null) ? playerId : uuid;
+        Player player = playerStorageService.getPlayer(targetId);
         if (player == null) return ResponseEntity.notFound().build();
 
-        if (deck.getUuid() == null) {
-            deck.setUuid(UUID.randomUUID());
-            player.getDecks().add(deck);
-        } else {
-            player.getDecks().removeIf(d -> d.getUuid().equals(deck.getUuid()));
-            player.getDecks().add(deck);
+        deckValidatorService.validateDeckOwnership(player, incomingDeck);
+
+        if (player.getDecks() == null) {
+            player.setDecks(new ArrayList<>());
         }
 
-        storageService.saveOrUpdatePlayer(player);
+        if (incomingDeck.getUuid() == null) {
+            incomingDeck.setUuid(UUID.randomUUID());
+            player.getDecks().add(incomingDeck);
+        } else {
+            player.getDecks().removeIf(d -> d.getUuid().equals(incomingDeck.getUuid()));
+            player.getDecks().add(incomingDeck);
+        }
+
+        playerStorageService.savePlayer(player);
         return ResponseEntity.ok(player);
     }
 
@@ -83,25 +101,30 @@ public class PlayerController {
             @PathVariable UUID playerId,
             @PathVariable UUID deckId) {
 
-        Player player = storageService.getPlayer(playerId);
+        Player player = playerStorageService.getPlayer(playerId);
         if (player == null) return ResponseEntity.notFound().build();
 
-        Deck chosen = player.getDecks().stream()
+        Deck chosen = player.getDecks() != null ? player.getDecks().stream()
                 .filter(d -> deckId.equals(d.getUuid()))
                 .findFirst()
-                .orElse(null);
+                .orElse(null) : null;
 
         if (chosen == null) {
             return ResponseEntity.badRequest().build();
         }
 
-        DeckValidatorService.ValidationResult check = validatorService.validateDeck(chosen);
+        DeckValidatorService.ValidationResult check = deckValidatorService.validateDeck(chosen);
         if (!check.isValidForPlay) {
             return ResponseEntity.badRequest().build();
         }
 
         player.setCurrentDeck(chosen);
-        storageService.saveOrUpdatePlayer(player);
+        playerStorageService.savePlayer(player);
         return ResponseEntity.ok(player);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 }

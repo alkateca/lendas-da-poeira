@@ -3,6 +3,7 @@ package com.alkateca.lendasdapoeira.service;
 import com.alkateca.lendasdapoeira.entity.Card;
 import com.alkateca.lendasdapoeira.entity.Deck;
 import com.alkateca.lendasdapoeira.entity.HeroCard;
+import com.alkateca.lendasdapoeira.entity.Player;
 import com.alkateca.lendasdapoeira.enums.*;
 import com.alkateca.lendasdapoeira.service.DeckValidatorService.CatalogFilterCriteria;
 import org.junit.jupiter.api.BeforeEach;
@@ -223,5 +224,61 @@ class DeckBuilderFilterAndValidationTest {
         Deck validDeck = new Deck("Deck Santa das Lâminas", thirtyCards, List.of(h1, h2, h3), List.of(MoyraLiberationCard));
         DeckValidatorService.ValidationResult result = validatorService.validateDeck(validDeck);
         assertTrue(result.isValidForPlay, result.message);
+    }
+
+    @Test
+    @DisplayName("5. Concessão de Coleção Inicial: garante Kit Inicial e 2 cópias de Neutras Comuns")
+    void shouldEnsureStarterCollectionForNewPlayer() {
+        Player player = new Player();
+        player.setName("Novo Jogador");
+
+        HeroCard h1 = new HeroCard();
+        h1.setCardName("Herói Inicial");
+        Card c1 = new Card();
+        c1.setCardName("Espada de Treino");
+        Deck starterDeck = new Deck("Inicial", List.of(c1), List.of(h1));
+
+        Card neutralCommon = new Card();
+        neutralCommon.setCardName("Pedra de Amolar");
+        neutralCommon.setColor(Colors.NEUTRAL);
+        neutralCommon.setRarity(CardRarity.COMUM);
+
+        validatorService.ensureStarterCollection(player, starterDeck, List.of(neutralCommon));
+
+        assertEquals(1, player.getOwnedHeroCount("Herói Inicial"));
+        assertEquals(1, player.getOwnedCardCount("Espada de Treino"));
+        assertEquals(2, player.getOwnedCardCount("Pedra de Amolar"));
+
+        // Se o jogador já possui coleção, não deve sobrescrever
+        player.addCardToCollection("Espada de Treino", 1);
+        validatorService.ensureStarterCollection(player, starterDeck, List.of(neutralCommon));
+        assertEquals(2, player.getOwnedCardCount("Espada de Treino"));
+    }
+
+    @Test
+    @DisplayName("6. Validação de Posse de Coleção: lança exceção se carta ou herói não pertencer ao jogador")
+    void shouldValidateDeckOwnershipCorrectly() {
+        Player player = new Player();
+        player.setName("Colecionador");
+        player.addHeroToCollection("Herói A", 1);
+        player.addCardToCollection("Carta 1", 2);
+
+        HeroCard hA = new HeroCard();
+        hA.setCardName("Herói A");
+        Card c1 = new Card();
+        c1.setCardName("Carta 1");
+
+        Deck validDeck = new Deck("Válido", List.of(c1, c1), List.of(hA));
+        assertDoesNotThrow(() -> validatorService.validateDeckOwnership(player, validDeck));
+
+        // Falha 1: Herói não possuído
+        HeroCard hB = new HeroCard();
+        hB.setCardName("Herói B Desconhecido");
+        Deck invalidHeroDeck = new Deck("Inválido", List.of(c1), List.of(hB));
+        assertThrows(IllegalArgumentException.class, () -> validatorService.validateDeckOwnership(player, invalidHeroDeck));
+
+        // Falha 2: Mais cópias da carta do que as possuídas
+        Deck excessDeck = new Deck("Excesso", List.of(c1, c1, c1), List.of(hA));
+        assertThrows(IllegalArgumentException.class, () -> validatorService.validateDeckOwnership(player, excessDeck));
     }
 }

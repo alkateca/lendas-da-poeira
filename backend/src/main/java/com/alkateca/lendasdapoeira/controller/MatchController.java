@@ -10,6 +10,7 @@ import com.alkateca.lendasdapoeira.enums.CardType;
 import com.alkateca.lendasdapoeira.enums.Colors;
 import com.alkateca.lendasdapoeira.enums.ItemType;
 import com.alkateca.lendasdapoeira.enums.ZoneId;
+import com.alkateca.lendasdapoeira.service.DeckValidatorService;
 import com.alkateca.lendasdapoeira.service.MatchmakingService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,21 +32,29 @@ public class MatchController {
     private final MatchmakingService matchmakingService;
     private final com.alkateca.lendasdapoeira.service.PlayerStorageService playerStorageService;
     private final com.alkateca.lendasdapoeira.service.PresetDeckService presetDeckService;
+    private final DeckValidatorService deckValidatorService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public MatchController(
             MatchmakingService matchmakingService,
             com.alkateca.lendasdapoeira.service.PlayerStorageService playerStorageService,
-            com.alkateca.lendasdapoeira.service.PresetDeckService presetDeckService) {
+            com.alkateca.lendasdapoeira.service.PresetDeckService presetDeckService,
+            DeckValidatorService deckValidatorService) {
         this.matchmakingService = matchmakingService;
         this.playerStorageService = playerStorageService;
         this.presetDeckService = presetDeckService;
+        this.deckValidatorService = deckValidatorService;
     }
 
     @PostMapping("/matches/start-pve")
     public ResponseEntity<MatchmakingStatusResponseDTO> startPveMatch(
             @RequestParam(required = false) UUID playerId,
             @RequestBody(required = false) JoinQueueRequestDTO request) {
+
+        if (request != null && request.getCurrentDeck() != null) {
+            Player dbPlayer = playerStorageService.findById(request.getPlayerId());
+            deckValidatorService.validateDeckOwnership(dbPlayer, request.getCurrentDeck());
+        }
 
         UUID finalPlayerId = (request != null && request.getPlayerId() != null)
                 ? request.getPlayerId()
@@ -66,6 +75,11 @@ public class MatchController {
 
     @PostMapping("/matchmaking/join")
     public ResponseEntity<MatchmakingStatusResponseDTO> joinMatchmaking(@RequestBody JoinQueueRequestDTO request) {
+        if (request.getCurrentDeck() != null) {
+            Player dbPlayer = playerStorageService.findById(request.getPlayerId());
+            deckValidatorService.validateDeckOwnership(dbPlayer, request.getCurrentDeck());
+        }
+
         Player player = buildPlayerWithDefaultOrSavedDeck(
                 request.getPlayerId(),
                 request.getPlayerName(),
@@ -138,6 +152,11 @@ public class MatchController {
 
     @PostMapping("/lobby/join")
     public ResponseEntity<LobbyStateResponseDTO> joinLobby(@RequestBody JoinQueueRequestDTO request) {
+        if (request.getCurrentDeck() != null) {
+            Player dbPlayer = playerStorageService.findById(request.getPlayerId());
+            deckValidatorService.validateDeckOwnership(dbPlayer, request.getCurrentDeck());
+        }
+
         Player player = buildPlayerWithDefaultOrSavedDeck(
                 request.getPlayerId(),
                 request.getPlayerName(),
@@ -160,6 +179,10 @@ public class MatchController {
     @PostMapping("/lobby/challenge")
     public ResponseEntity<DirectChallengeDTO> sendChallenge(@RequestBody ChallengeRequestDTO request) {
         try {
+            if (request.getChallengerDeck() != null) {
+                Player dbPlayer = playerStorageService.findById(request.getChallengerId());
+                deckValidatorService.validateDeckOwnership(dbPlayer, request.getChallengerDeck());
+            }
             Player challenger = buildPlayerWithDefaultOrSavedDeck(
                     request.getChallengerId(),
                     request.getChallengerName(),
@@ -177,6 +200,10 @@ public class MatchController {
             @PathVariable UUID challengeId,
             @RequestBody AcceptChallengeRequestDTO request) {
         try {
+            if (request.getTargetDeck() != null) {
+                Player dbPlayer = playerStorageService.findById(request.getTargetPlayerId());
+                deckValidatorService.validateDeckOwnership(dbPlayer, request.getTargetDeck());
+            }
             Player targetPlayer = buildPlayerWithDefaultOrSavedDeck(
                     request.getTargetPlayerId(),
                     request.getTargetPlayerName(),
@@ -429,5 +456,9 @@ public class MatchController {
         }
 
         return new Deck("Deck Sorteado", cards, heroes);
+    }
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<java.util.Map<String, String>> handleIllegalArgumentException(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
     }
 }

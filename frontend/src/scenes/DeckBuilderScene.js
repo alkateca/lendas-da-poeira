@@ -803,7 +803,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 item: h,
                 isHero: true,
                 isLiberation: false,
-                validation: DeckRestrictionValidator.canSelectHero(h, heroes)
+                validation: DeckRestrictionValidator.canSelectHero(h, heroes, this.player)
             }));
         } else if (isLiberationTab) {
             const liberationCards = this.catalogCards.filter(c => c.liberationCard);
@@ -811,7 +811,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 item: c,
                 isHero: false,
                 isLiberation: true,
-                validation: DeckRestrictionValidator.canAddLiberationCard(c, heroes, this.currentDeck.liberationList)
+                validation: DeckRestrictionValidator.canAddLiberationCard(c, heroes, this.currentDeck.liberationList, this.player)
             }));
         } else {
             let filteredCards = this.catalogCards.filter(c => !c.liberationCard);
@@ -822,17 +822,16 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 item: c,
                 isHero: false,
                 isLiberation: false,
-                validation: DeckRestrictionValidator.canAddCardToDeck(c, heroes, this.currentDeck.cardList)
+                validation: DeckRestrictionValidator.canAddCardToDeck(c, heroes, this.currentDeck.cardList, this.player)
             }));
         }
 
         // 1. Aplica os Filtros Cumulativos de Atributos e Busca por Escrita
         items = items.filter(entry => this.matchesActiveAttributeFilters(entry.item));
 
-        // 2. Filtragem Dinâmica por Heróis Selecionados (1 a 3 heróis):
-        // Oculta todas as cartas ou heróis incompatíveis com a equipe atual
-        if (this.hideIncompatibleCards && heroes.length > 0) {
-            items = items.filter(entry => entry.validation.compatibleWithTeam !== false);
+        // Filtra apenas cartas/heróis que pertencem à coleção quando "☑ Só Compatíveis" está ativo
+        if (this.hideIncompatibleCards) {
+            items = items.filter(entry => !entry.validation.notOwned && entry.validation.compatibleWithTeam !== false);
         }
 
         if (this.catalogCountLabel) {
@@ -1013,8 +1012,9 @@ export default class DeckBuilderScene extends Phaser.Scene {
         grouped.forEach(({ card, count }) => {
             const y = rowIdx * 38;
             const rowBg = this.add.rectangle(235, y, 460, 34, 0x1e293b).setStrokeStyle(1, 0x3b82f6);
-            const maxLabel = card.unica ? '1' : '3';
-            const txt = this.add.text(16, y, `${count}/${maxLabel}x  ${card.cardName} (${card.cardType})`, {
+            const ownedMax = this.player?.ownedCards?.[card.cardName] ?? (card.unica ? 1 : 3);
+            const effectiveMax = Math.min(card.unica ? 1 : 3, ownedMax);
+            const txt = this.add.text(16, y, `${count}/${effectiveMax} possuídas  •  ${card.cardName}`, {
                 fontSize: '12.5px', color: '#ffffff', fontStyle: 'bold'
             }).setOrigin(0, 0.5);
 

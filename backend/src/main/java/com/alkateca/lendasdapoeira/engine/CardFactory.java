@@ -1,5 +1,13 @@
 package com.alkateca.lendasdapoeira.engine;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.core.io.ClassPathResource;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.InputStream;
+import java.util.Collections;
+
 import com.alkateca.lendasdapoeira.effects.Effect;
 import com.alkateca.lendasdapoeira.effects.combat.*;
 import com.alkateca.lendasdapoeira.effects.endOfCombat.*;
@@ -28,7 +36,30 @@ import com.alkateca.lendasdapoeira.enums.Raca;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class CardFactory {
+
+    @Autowired(required = false)
+    private com.alkateca.lendasdapoeira.service.PresetDeckService presetDeckService;
+
+    public CardFactory() {}
+
+    public CardFactory(com.alkateca.lendasdapoeira.service.PresetDeckService presetDeckService) {
+        this.presetDeckService = presetDeckService;
+    }
+
+    public List<Card> getAllCatalogCards() {
+        if (presetDeckService != null && presetDeckService.getCatalogCards() != null && !presetDeckService.getCatalogCards().isEmpty()) {
+            return presetDeckService.getCatalogCards();
+        }
+        try {
+            InputStream cardsStream = new ClassPathResource("cards.json").getInputStream();
+            return new ObjectMapper().readValue(cardsStream, new TypeReference<List<Card>>() {});
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
+
 
     public static Card buildCardLogic(Card rawCardFromJson) {
 

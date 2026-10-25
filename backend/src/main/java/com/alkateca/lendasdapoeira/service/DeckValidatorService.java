@@ -3,6 +3,7 @@ package com.alkateca.lendasdapoeira.service;
 import com.alkateca.lendasdapoeira.entity.Card;
 import com.alkateca.lendasdapoeira.entity.Deck;
 import com.alkateca.lendasdapoeira.entity.HeroCard;
+import com.alkateca.lendasdapoeira.entity.Player;
 import com.alkateca.lendasdapoeira.enums.*;
 import org.springframework.stereotype.Service;
 
@@ -330,6 +331,94 @@ public class DeckValidatorService {
                     return true;
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Garante que novos jogadores (ou perfis legados sem coleção) recebam o Kit Inicial.
+     */
+    public void ensureStarterCollection(Player player, Deck starterPresetDeck, List<Card> catalogCards) {
+        if (player == null) return;
+        boolean hasHeroes = player.getOwnedHeroes() != null && !player.getOwnedHeroes().isEmpty();
+        boolean hasCards = player.getOwnedCards() != null && !player.getOwnedCards().isEmpty();
+
+        if (hasHeroes && hasCards) return;
+
+        // 1. Concede os Heróis e Cartas do Baralho Inicial Padrão
+        if (starterPresetDeck != null) {
+            if (starterPresetDeck.getHeroList() != null) {
+                starterPresetDeck.getHeroList().forEach(h -> player.addHeroToCollection(h.getCardName(), 1));
+            }
+            if (starterPresetDeck.getCardList() != null) {
+                starterPresetDeck.getCardList().forEach(c -> player.addCardToCollection(c.getCardName(), 1));
+            }
+            if (starterPresetDeck.getLiberationList() != null) {
+                starterPresetDeck.getLiberationList().forEach(l -> player.addCardToCollection(l.getCardName(), 1));
+            }
+        }
+
+        // 2. Concede 2 cópias de cartas introdutórias NEUTRAL / COMUM do catálogo
+        if (catalogCards != null) {
+            catalogCards.stream()
+                    .filter(c -> c.getColor() == com.alkateca.lendasdapoeira.enums.Colors.NEUTRAL
+                              && c.getRarity() == com.alkateca.lendasdapoeira.enums.CardRarity.COMUM)
+                    .forEach(c -> {
+                        if (player.getOwnedCardCount(c.getCardName()) < 2) {
+                            player.addCardToCollection(c.getCardName(), 2 - player.getOwnedCardCount(c.getCardName()));
+                        }
+                    });
+        }
+    }
+
+    /**
+     * Valida se todos os heróis, cartas e cartas de liberação do baralho pertencem à coleção do jogador
+     * e não excedem a quantidade de cópias possuídas.
+     */
+    public void validateDeckOwnership(Player player, Deck deck) {
+        if (player == null || deck == null) {
+            throw new IllegalArgumentException("Jogador ou baralho inválido.");
+        }
+
+        // 1. Valida posse dos Heróis
+        if (deck.getHeroList() != null) {
+            for (HeroCard hero : deck.getHeroList()) {
+                if (hero == null) continue;
+                if (player.getOwnedHeroCount(hero.getCardName()) < 1) {
+                    throw new IllegalArgumentException("Herói não pertence à sua coleção: " + hero.getCardName());
+                }
+            }
+        }
+
+        // 2. Contabiliza cópias usadas no baralho + zona de liberação e compara com ownedCards
+        Map<String, Integer> requestedCopies = new HashMap<>();
+
+        if (deck.getCardList() != null) {
+            for (Card card : deck.getCardList()) {
+                if (card == null) continue;
+                requestedCopies.merge(card.getCardName(), 1, Integer::sum);
+            }
+        }
+
+        if (deck.getLiberationList() != null) {
+            for (Card libCard : deck.getLiberationList()) {
+                if (libCard == null) continue;
+                requestedCopies.merge(libCard.getCardName(), 1, Integer::sum);
+            }
+        }
+
+        for (Map.Entry<String, Integer> entry : requestedCopies.entrySet()) {
+            String cardName = entry.getKey();
+            int usedCount = entry.getValue();
+            int ownedCount = player.getOwnedCardCount(cardName);
+
+            if (ownedCount <= 0) {
+                throw new IllegalArgumentException("Carta não pertence à sua coleção: " + cardName);
+            }
+            if (usedCount > ownedCount) {
+                throw new IllegalArgumentException(
+                        "Quantidade insuficiente na coleção para '" + cardName + "': em uso " + usedCount + ", possuídas " + ownedCount
+                );
+            }
+        }
     }
 
     private static String normalize(String input) {

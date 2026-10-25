@@ -65,9 +65,17 @@ public class PlayerStorageService {
         return playerDatabase.get(uuid);
     }
 
+    public Player findById(UUID uuid) {
+        return getPlayer(uuid);
+    }
+
     public void saveOrUpdatePlayer(Player player) {
         playerDatabase.put(player.getUuid(), player);
         saveToDisk();
+    }
+
+    public void savePlayer(Player player) {
+        saveOrUpdatePlayer(player);
     }
 
     public synchronized void resetAllPlayersWeeklyEloIfNeeded(java.util.function.Function<Player, Boolean> resetCheck) {

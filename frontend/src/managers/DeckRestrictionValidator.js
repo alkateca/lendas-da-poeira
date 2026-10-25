@@ -65,20 +65,33 @@ export default class DeckRestrictionValidator {
     /**
      * Verifica se um Herói do catálogo pode ser adicionado ao trio atual
      */
-    static canSelectHero(candidateHero, selectedHeroes = []) {
-        if (selectedHeroes.some(h => h.cardName === candidateHero.cardName)) {
+    static canSelectHero(hero, currentHeroList = [], player = null) {
+        const ownedHeroes = player?.ownedHeroes || {};
+        const hasCollectionData = Object.keys(ownedHeroes).length > 0;
+        const ownedCount = hasCollectionData ? (ownedHeroes[hero.cardName] || 0) : 1;
+
+        if (ownedCount <= 0) {
+            return {
+                allowed: false,
+                compatibleWithTeam: true,
+                notOwned: true,
+                reason: 'NÃO ADQUIRIDO (0/1)'
+            };
+        }
+
+        if (currentHeroList.some(h => h.cardName === hero.cardName)) {
             return { allowed: false, reason: 'Já está na equipe', compatibleWithTeam: false };
         }
-        if (selectedHeroes.length >= 3) {
+        if (currentHeroList.length >= 3) {
             return { allowed: false, reason: 'Equipe completa (3/3)', compatibleWithTeam: false };
         }
 
-        const candidateColor = candidateHero.color || 'NEUTRAL';
+        const candidateColor = hero.color || 'NEUTRAL';
         if (candidateColor === 'WHITE') {
             return { allowed: true, reason: 'Coringa (Restringe a cartas Brancas/Neutras)', compatibleWithTeam: true };
         }
 
-        const existingNonWhite = selectedHeroes.find(h => h.color && h.color !== 'WHITE');
+        const existingNonWhite = currentHeroList.find(h => h.color && h.color !== 'WHITE');
         if (existingNonWhite && existingNonWhite.color !== candidateColor) {
             return {
                 allowed: false,
@@ -149,49 +162,96 @@ export default class DeckRestrictionValidator {
      * Permite adicionar cartas desde que a carta seja compatível com os Heróis já escolhidos (1 a 3 Heróis),
      * e revalida automaticamente caso um Herói seja removido ou trocado!
      */
-    static canAddCardToDeck(card, selectedHeroes = [], currentDeckCards = []) {
-        if (!selectedHeroes || selectedHeroes.length === 0) {
-            return { allowed: false, reason: 'Escolha pelo menos 1 Herói primeiro', compatibleWithTeam: true };
-        }
+    static canAddCardToDeck(card, currentHeroList = [], currentCardList = [], player = null) {
+        const ownedCards = player?.ownedCards || {};
+        const hasCollectionData = Object.keys(ownedCards).length > 0;
+        const ownedCount = hasCollectionData ? (ownedCards[card.cardName] || 0) : (card.unica ? 1 : 3);
 
-        const reqCheck = this.checkCardHeroRequirements(card, selectedHeroes);
-        if (!reqCheck.compatible) {
-            return { allowed: false, reason: reqCheck.reason, compatibleWithTeam: false };
-        }
+        const ruleMaxCopies = card.unica ? 1 : 3;
+        const usedCopies = currentCardList.filter(c => c.cardName === card.cardName).length;
 
-        // Validação de Limite de Cópias (unica = máx 1, normal = máx 3) e Total de 30 Cartas
-        const copiesInDeck = currentDeckCards.filter(c => c.cardName === card.cardName).length;
-        const maxCopies = card.unica === true ? 1 : 3;
-
-        if (copiesInDeck >= maxCopies) {
+        if (ownedCount <= 0) {
+            const reqCheck = this.checkCardHeroRequirements(card, currentHeroList);
             return {
                 allowed: false,
-                reason: card.unica ? 'Carta Única (1/1 no deck)' : 'Limite atingido (3/3 cópias)',
-                compatibleWithTeam: true
+                compatibleWithTeam: reqCheck.compatible,
+                notOwned: true,
+                usedCopies,
+                ownedCount: 0,
+                reason: 'NÃO POSSUÍDA (0)'
             };
         }
 
-        if (currentDeckCards.length >= 30) {
-            return { allowed: false, reason: 'Baralho cheio (30/30)', compatibleWithTeam: true };
+        // Verifica compatibilidade com os Heróis selecionados primeiro
+        const reqCheck = this.checkCardHeroRequirements(card, currentHeroList);
+        if (!reqCheck.compatible) {
+            return {
+                allowed: false,
+                compatibleWithTeam: false,
+                usedCopies,
+                ownedCount,
+                reason: reqCheck.reason
+            };
+        }
+
+        if (currentCardList.length >= 30) {
+            return { allowed: false, compatibleWithTeam: true, usedCopies, ownedCount, reason: 'Baralho cheio (30/30)' };
+        }
+
+        if (usedCopies >= ruleMaxCopies) {
+            return {
+                allowed: false,
+                compatibleWithTeam: true,
+                usedCopies,
+                ownedCount,
+                reason: `Limite da carta (${usedCopies}/${ruleMaxCopies})`
+            };
+        }
+
+        if (usedCopies >= ownedCount) {
+            return {
+                allowed: false,
+                compatibleWithTeam: true,
+                usedCopies,
+                ownedCount,
+                reason: `Limite da Coleção (${usedCopies}/${ownedCount} possuídas)`
+            };
         }
 
         return {
             allowed: true,
-            reason: `Liberada (${copiesInDeck}/${maxCopies})`,
-            compatibleWithTeam: true
+            compatibleWithTeam: true,
+            usedCopies,
+            ownedCount,
+            reason: `ADICIONAR (${usedCopies}/${ownedCount} possuídas)`
         };
     }
 
     /**
      * Verifica se uma Carta de Liberação é compatível e pode ser equipada pela equipe atual
      */
-    static canAddLiberationCard(card, selectedHeroes = [], currentLiberationList = []) {
-        if (!selectedHeroes || selectedHeroes.length === 0) {
+    static canAddLiberationCard(card, currentHeroList = [], currentLiberationList = [], player = null) {
+        const ownedCards = player?.ownedCards || {};
+        const hasCollectionData = Object.keys(ownedCards).length > 0;
+        const ownedCount = hasCollectionData ? (ownedCards[card.cardName] || 0) : 1;
+
+        if (ownedCount <= 0) {
+            return {
+                allowed: false,
+                compatibleWithTeam: true,
+                notOwned: true,
+                usedCopies: 0,
+                ownedCount: 0,
+                reason: 'NÃO POSSUÍDA (0/1)'
+            };
+        }
+
+        if (!currentHeroList || currentHeroList.length === 0) {
             return { allowed: false, reason: 'Escolha seus Heróis primeiro', compatibleWithTeam: true };
         }
 
         if (card.targetBaseHeroName) {
-            const hasRequiredHero = selectedHeroes.some(
+            const hasRequiredHero = currentHeroList.some(
                 h => h.cardName && h.cardName.toLowerCase() === card.targetBaseHeroName.toLowerCase()
             );
             if (!hasRequiredHero) {
@@ -202,7 +262,7 @@ export default class DeckRestrictionValidator {
                 };
             }
         } else {
-            const reqCheck = this.checkCardHeroRequirements(card, selectedHeroes);
+            const reqCheck = this.checkCardHeroRequirements(card, currentHeroList);
             if (!reqCheck.compatible) {
                 return { allowed: false, reason: reqCheck.reason, compatibleWithTeam: false };
             }

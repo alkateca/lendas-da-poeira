@@ -264,6 +264,16 @@ public class PresetDeckService {
         return new Player(storedPlayer.getUuid(), storedPlayer.getName(), matchDeck);
     }
 
+    public Deck createDefaultDeck() {
+        BotDeckTemplate t = botDeckPool.isEmpty() ? null : botDeckPool.get(0);
+        if (t != null) {
+            Deck p1Deck = buildDeckForPlayer(PLAYER_1_UUID, t.heroNames, t.cardNames);
+            p1Deck.setDeckName(t.deckName);
+            return p1Deck;
+        }
+        return new Deck();
+    }
+
     public Player createPresetPlayer1() {
         BotDeckTemplate t = botDeckPool.get(0);
         Deck p1Deck = buildDeckForPlayer(PLAYER_1_UUID, t.heroNames, t.cardNames);
