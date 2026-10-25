@@ -98,11 +98,13 @@ public class GameEngine {
     private int turnsElapsed = 1;
     private final Map<UUID, Integer> lastRecordedHeroHp = new HashMap<>();
     private final Map<UUID, MatchSnapshotDTO.PlayerMatchStatsDTO> playerStatsMap = new HashMap<>();
+    private boolean rewardsGranted = false;
 
     private void initMatchMetrics() {
         this.turnsElapsed = 1;
         this.lastRecordedHeroHp.clear();
         this.playerStatsMap.clear();
+        this.rewardsGranted = false;
 
         if (player1 != null) {
             playerStatsMap.put(player1.getUuid(), new MatchSnapshotDTO.PlayerMatchStatsDTO(
@@ -194,6 +196,7 @@ public class GameEngine {
 
         finalizePlayerScore(player1, player2);
         finalizePlayerScore(player2, player1);
+        this.rewardsGranted = true;
 
         MatchSnapshotDTO.PlayerMatchStatsDTO p1Stats = playerStatsMap.get(player1.getUuid());
         MatchSnapshotDTO.PlayerMatchStatsDTO p2Stats = playerStatsMap.get(player2.getUuid());
@@ -230,9 +233,21 @@ public class GameEngine {
         stats.setHeroesAlive(alive);
         stats.setHeroesDefeated(defeatedEnemyHeroes);
 
-        // Pontuação = soma direta de dano total causado + cura realizada
         int score = stats.getTotalDamageDealt() + stats.getTotalHealingDone();
         stats.setMatchScore(score);
+
+        // Cálculo de Recompensa de Poeira
+        boolean playerForfeited = this.forfeitedByPlayerId != null && this.forfeitedByPlayerId.equals(player.getUuid());
+        int baseReward = playerForfeited ? 0 : (isWin ? 50 : 20);
+        int koBonus = playerForfeited ? 0 : (defeatedEnemyHeroes * 5);
+        int totalEarned = baseReward + koBonus;
+
+        if (!this.rewardsGranted) {
+            player.addPoeira(totalEarned);
+        }
+
+        stats.setPoeiraEarned(totalEarned);
+        stats.setTotalPoeira(player.getPoeira());
     }
 
     public GameEngine(Player player1, Player player2) {

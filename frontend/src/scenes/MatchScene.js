@@ -2386,6 +2386,16 @@ export default class MatchScene extends Phaser.Scene {
             }
         }
 
+        if (myStats.totalPoeira !== undefined) {
+            try {
+                const stored = JSON.parse(localStorage.getItem('lendas_player')) || {};
+                stored.poeira = myStats.totalPoeira;
+                localStorage.setItem('lendas_player', JSON.stringify(stored));
+            } catch (e) {
+                console.warn('Não foi possível atualizar Poeira local:', e);
+            }
+        }
+
         this.goStatsCardsGroup.removeAll(true);
         const localCard = this.createPlayerStatsSummaryCard(-215, 0, 'SUAS MÉTRICAS', myStats, true);
         const oppCard = this.createPlayerStatsSummaryCard(215, 0, 'MÉTRICAS DO OPONENTE', oppStats, false);
@@ -2429,10 +2439,12 @@ export default class MatchScene extends Phaser.Scene {
 
         const permEloVal = `${stats.permanentElo || 1000}${formatDelta(stats.permanentEloDelta)}`;
         const weekEloVal = `${stats.weeklyElo || 1000}${formatDelta(stats.weeklyEloDelta)}`;
+        const poeiraVal = `${stats.totalPoeira ?? 500}${stats.poeiraEarned > 0 ? ` (+${stats.poeiraEarned})` : ''}`;
 
         const rows = [
             { label: '🏅 ELO Permanente:', val: permEloVal, color: (stats.permanentEloDelta >= 0) ? '#4ade80' : '#f87171' },
             { label: '📅 ELO Semanal:', val: weekEloVal, color: (stats.weeklyEloDelta >= 0) ? '#38bdf8' : '#f87171' },
+            { label: '✨ Poeira Ganha:', val: poeiraVal, color: '#ffe600' },
             { label: '⚔️ Dano Total Causado:', val: `${stats.totalDamageDealt ?? 0}`, color: '#fbbf24' },
             { label: '🛡️ Dano Total Recebido:', val: `${stats.totalDamageTaken ?? 0}`, color: '#f87171' },
             { label: '💚 Cura Realizada:', val: `${stats.totalHealingDone ?? 0}`, color: '#4ade80' },
@@ -2441,7 +2453,7 @@ export default class MatchScene extends Phaser.Scene {
 
         const rowElements = [];
         rows.forEach((r, idx) => {
-            const ry = -62 + idx * 30;
+            const ry = -68 + idx * 27;
             const lbl = this.add.text(-170, ry, r.label, {
                 fontSize: '13.5px', color: '#cbd5e1', fontFamily: 'monospace'
             }).setOrigin(0, 0.5);

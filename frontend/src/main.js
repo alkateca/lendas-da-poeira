@@ -4,6 +4,7 @@ import LoginScene from './scenes/LoginScene.js';
 import MainMenuScene from './scenes/MainMenuScene.js';
 import PvpLobbyScene from './scenes/PvpLobbyScene.js';
 import DeckBuilderScene from './scenes/DeckBuilderScene.js';
+import ShopScene from './scenes/ShopScene.js';
 import MatchScene from './scenes/MatchScene.js';
 
 const config = {
@@ -28,7 +29,7 @@ const config = {
     dom: {
         createContainer: true
     },
-    scene: [LoginScene, MainMenuScene, PvpLobbyScene, DeckBuilderScene, MatchScene]
+    scene: [LoginScene, MainMenuScene, PvpLobbyScene, DeckBuilderScene, ShopScene, MatchScene]
 };
 
 new Phaser.Game(config);

@@ -99,6 +99,11 @@ export default class MainMenuScene extends Phaser.Scene {
             this.scene.start('DeckBuilderScene', { player: this.player });
         });
 
+        // Botão 4: Loja de Boosters e Decks
+        this.createButton(width / 2, height / 2 + 255, '🛒 LOJA DA POEIRA (BOOSTERS & DECKS)', 0x16a34a, () => {
+            this.scene.start('ShopScene', { player: this.player });
+        });
+
         if (this.autoStartPve) {
             this.time.delayedCall(200, () => this.startMatchAgainstMachine());
         } else if (this.autoSearchPvp) {

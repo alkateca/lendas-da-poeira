@@ -33,6 +33,12 @@ public class Player {
     private int weeklyElo = DEFAULT_INITIAL_ELO;
     private String lastWeeklyResetWeek;
 
+    // Sistema monetário
+    public static final int DEFAULT_INITIAL_POEIRA = 5000;
+
+    private int poeira = DEFAULT_INITIAL_POEIRA;
+    private java.util.Map<String, Integer> ownedItems = new java.util.HashMap<>();
+
     // Construtor compatível com o restante do sistema
     public Player(UUID uuid, String name, Deck currentDeck) {
         this.uuid = uuid;
@@ -42,25 +48,41 @@ public class Player {
         this.weeklyElo = DEFAULT_INITIAL_ELO;
     }
 
+    public void addPoeira(int amount) {
+        if (amount > 0) this.poeira += amount;
+    }
+
+    public void deductPoeira(int amount) {
+        if (amount <= 0) return;
+        if (this.poeira < amount) {
+            throw new IllegalArgumentException("Saldo de Poeira insuficiente.");
+        }
+        this.poeira -= amount;
+    }
+
     public int getOwnedHeroCount(String heroName) {
-        if (heroName == null || ownedHeroes == null) return 0;
-        return ownedHeroes.getOrDefault(heroName, 0);
+        return (heroName == null || ownedHeroes == null) ? 0 : ownedHeroes.getOrDefault(heroName, 0);
     }
 
     public int getOwnedCardCount(String cardName) {
-        if (cardName == null || ownedCards == null) return 0;
-        return ownedCards.getOrDefault(cardName, 0);
+        return (cardName == null || ownedCards == null) ? 0 : ownedCards.getOrDefault(cardName, 0);
     }
 
     public void addHeroToCollection(String heroName, int copies) {
         if (heroName == null || copies <= 0) return;
-        if (this.ownedHeroes == null) this.ownedHeroes = new HashMap<>();
+        if (this.ownedHeroes == null) this.ownedHeroes = new java.util.HashMap<>();
         this.ownedHeroes.put(heroName, getOwnedHeroCount(heroName) + copies);
     }
 
     public void addCardToCollection(String cardName, int copies) {
         if (cardName == null || copies <= 0) return;
-        if (this.ownedCards == null) this.ownedCards = new HashMap<>();
-        this.ownedCards.put(cardName, Math.min(3, getOwnedCardCount(cardName) + copies));
+        if (this.ownedCards == null) this.ownedCards = new java.util.HashMap<>();
+        this.ownedCards.put(cardName, getOwnedCardCount(cardName) + copies);
+    }
+
+    public void addItemToCollection(String itemId, int quantity) {
+        if (itemId == null || quantity <= 0) return;
+        if (this.ownedItems == null) this.ownedItems = new java.util.HashMap<>();
+        this.ownedItems.put(itemId, this.ownedItems.getOrDefault(itemId, 0) + quantity);
     }
 }
