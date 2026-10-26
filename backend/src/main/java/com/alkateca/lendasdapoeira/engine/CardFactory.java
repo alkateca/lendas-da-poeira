@@ -11,22 +11,10 @@ import java.util.Collections;
 import com.alkateca.lendasdapoeira.effects.Effect;
 import com.alkateca.lendasdapoeira.effects.combat.*;
 import com.alkateca.lendasdapoeira.effects.endOfCombat.*;
-import com.alkateca.lendasdapoeira.effects.startOfCombat.StartOfCombatInvokeCardEffect;
-import com.alkateca.lendasdapoeira.effects.startOfCombat.StartOfCombatInvokeIfNotEquippedEffect;
-import com.alkateca.lendasdapoeira.effects.startOfCombat.StartOfCombatMagicDamageEffect;
-import com.alkateca.lendasdapoeira.effects.startOfCombat.StartOfCombatZombieBuffEffect;
-import com.alkateca.lendasdapoeira.effects.gameStart.StartOfGameInvokeCardEffect;
-import com.alkateca.lendasdapoeira.effects.startOfCombat.StartOfCombatPlayNextCardByTypeEffect;
-import com.alkateca.lendasdapoeira.effects.endOfCombat.EndOfCombatReturnAttachedCardsToDeckEffect;
-import com.alkateca.lendasdapoeira.effects.gameStart.StartOfGameSetWeaponSlotsEffect;
-import com.alkateca.lendasdapoeira.effects.startOfCombat.StartOfCombatStealAllyWeaponEffect;
-import com.alkateca.lendasdapoeira.effects.startOfCombat.StartOfCombatTutorSpellFromDiscardToHandEffect;
-import com.alkateca.lendasdapoeira.effects.startOfCombat.StartOfCombatHealAndReturnDiscardToHandEffect;
-import com.alkateca.lendasdapoeira.effects.gameStart.StartOfGameMillSpellsByAffinityEffect;
+import com.alkateca.lendasdapoeira.effects.startOfCombat.*;
+import com.alkateca.lendasdapoeira.effects.gameStart.*;
 import java.util.Arrays;
 
-import com.alkateca.lendasdapoeira.effects.startOfCombat.StartOfCombatDebuffEnemySpiritEffect;
-import com.alkateca.lendasdapoeira.effects.gameStart.StartOfGameDebuffEnemyDefenseEffect;
 import com.alkateca.lendasdapoeira.enums.Classe;
 import com.alkateca.lendasdapoeira.enums.ItemType;
 import com.alkateca.lendasdapoeira.entity.Card;
@@ -83,8 +71,14 @@ public class CardFactory {
                 effects.add(new EndOfCombatHealEffect(2));
                 break;
             case "Alucinação Cintlante":
+                break;
             case "Rei Goblin":
+                effects.add(new AuraGoblinEffectAmplifierEffect(1));
+                effects.add(new EndOfCombatHealEffect(2));
+                break;
             case "Traidor Goblin":
+                effects.add(new StartOfGameGoblinAllyCountBuffEffect(1, 1));
+                break;
             case "Rainha Goblin":
                 effects.add(new EndOfCombatHealAlliesEffect(2));
                 break;
@@ -106,7 +100,11 @@ public class CardFactory {
                 effects.add(new StartOfGameInvokeCardEffect("Rapieira de Cristal"));
                 break;
             case "Alka, Lutador do Grupo dos Heróis":
+                effects.add(new EndOfCombatExtraAttackIfHighAttackEffect(10));
+                break;
             case "Leone, Clériga do Grupo dos Heróis":
+                effects.add(new StartOfCombatHealAlliesEffect(3));
+                effects.add(new EndOfCombatDirectDamageByCombatHealingEffect());
                 break;
             case "Enamor,O Grande Cavaleiro":
                 effects.add(new StartOfCombatInvokeIfNotEquippedEffect("Dragast"));
@@ -123,18 +121,43 @@ public class CardFactory {
                 effects.add(new EndOfCombatMagicDamageEffect(5));
                 break;
             case "Heróis Lendários dos Goblin":
+                if (rawCardFromJson instanceof com.alkateca.lendasdapoeira.entity.HeroCard hero) {
+                    hero.setColor(com.alkateca.lendasdapoeira.enums.Colors.GREEN);
+                }
                 effects.add(new OnPlaySpellBuffEffect(com.alkateca.lendasdapoeira.enums.CardType.SPELL, 1, 0, 0));
                 effects.add(new OnPlaySpellBuffEffect(com.alkateca.lendasdapoeira.enums.CardType.ITEM, 0, 1, 0));
                 effects.add(new OnPlaySpellBuffEffect(com.alkateca.lendasdapoeira.enums.CardType.ACTION, 0, 0, 1));
                 effects.add(new EndOfCombatHealAlliesEffect(3));
                 break;
             case "Kael, Domador de Feras":
+                effects.add(new StartOfCombatConstructoBuffAndHealEffect(2, 2));
+                break;
             case "Behemoth-29A":
+                effects.add(new StartOfCombatSelfDamageToHealHeroEffect(3, 3, "Kael"));
+                break;
             case "Rapinária-7B3":
+                effects.add(new StartOfCombatInvokeCardEffect("Vendaval Arcano"));
+                effects.add(new StartOfCombatInvokeCardEffect("Barreira de Gelo"));
+                break;
             case "Kael, Cavaleiro Bestial":
+                if (rawCardFromJson instanceof com.alkateca.lendasdapoeira.entity.HeroCard evolvedHero) {
+                    if (evolvedHero.getRacas() != null && !evolvedHero.getRacas().contains(Raca.CONSTRUCTO)) {
+                        evolvedHero.getRacas().add(Raca.CONSTRUCTO);
+                    }
+                }
+                effects.add(new StartOfCombatConstructoBuffAndHealEffect(2, 2));
+                effects.add(new EndOfCombatAllEnemiesDirectDamageEffect(2));
+                break;
             case "Hati, Constructo Gélido":
+                effects.add(new StartOfCombatBonusAttackVsClassEffect(Classe.EMISSOR, 3));
+                effects.add(new EndOfCombatTransferDeadEnemyVulnerabilityEffect());
+                break;
             case "Skoll, Espreitador Solar":
+                effects.add(new StartOfCombatRandomEnemyVulnerabilityEffect(1));
+                effects.add(new StartOfCombatBuffAttackByEnemyVulnerabilityEffect());
+                break;
             case "Fenrir, o Grande Devorador":
+                effects.add(new StartOfCombatDoubleAttackByVulnerabilityEffect(5));
                 break;
             case "Oráculo Real":
                 effects.add(new AuraRaceBuffEffect(Raca.GUARDIOES_DO_TRONO, 0, 2, 1));
@@ -187,7 +210,11 @@ public class CardFactory {
                 effects.add(new EndOfCombatMagicDamageEffect(6));
                 break;
             case "Homunculo Carniceiro":
+                effects.add(new EndOfCombatHealEffect(1));
+                effects.add(new EndOfCombatAllEnemiesDirectDamageEffect(1, false));
+                break;
             case "Quimera Negra":
+                effects.add(new StartOfCombatDebuffEnemyStatsEffect(1, 1, 1, 1));
                 break;
             case "Dragast":
                 effects.add(new EquipBuffEffect(2, 2, 0, 0));
@@ -208,7 +235,12 @@ public class CardFactory {
                 effects.add(new ConvertAttacksToMagicDamageEffect());
                 break;
             case "Machado de Gelo":
+                effects.add(new EquipBuffEffect(0, 2, 2, 0));
+                effects.add(new OnEquipEnemyVulnerabilityEffect(1, false));
+                break;
             case "Grande Machado Sombrio":
+                effects.add(new EquipBuffEffect(0, 4, 2, 0));
+                effects.add(new OnEquipEnemyVulnerabilityEffect(1, true));
                 break;
             case "Artefato Cortante":
                 effects.add(new EquipBuffEffect(0, 3, 1, 0));
@@ -264,6 +296,7 @@ public class CardFactory {
                 effects.add(new PlaySpellInvokeCardEffect("Estatica"));
                 break;
             case "Atmosfera Pesada":
+                effects.add(new PlayPermanentStatModifierEffect(-1, 0, 0, true, true));
                 break;
             case "Vendaval Arcano":
                 effects.add(new PlaySpellDiscardRandomItemEachEnemyHeroEffect());
@@ -272,7 +305,11 @@ public class CardFactory {
                 effects.add(new PlaySpellChooseAndDiscardEnemyItemEffect());
                 break;
             case "Barreira de Gelo":
+                effects.add(new EquipGlobalBuffEffect(1, 0, 2));
+                break;
             case "Mordida Glacial":
+                effects.add(new PlayPermanentStatModifierEffect(1, 2, 0, false, false));
+                effects.add(new OnEquipEnemyVulnerabilityEffect(1, false));
                 break;
             case "Contra Ataque":
                 effects.add(new DiscardEnemyWeaponEffect());
@@ -324,7 +361,11 @@ public class CardFactory {
                 effects.add(new PlayActionChooseEnemyHeroDirectDamageEffect(3));
                 break;
             case "Ritos Fúnebres":
+                effects.add(new PlayActionChooseHeroHealAndReviveEffect(5));
+                break;
             case "Exumação":
+                effects.add(new PlayPermanentStatModifierEffect(-1, -1, -1, false, false));
+                effects.add(new PlayFromDiscardEffect());
                 break;
             case "Banir!":
                 effects.add(new PlayActionBanishEnemyCardAndCopiesEffect());
@@ -333,7 +374,10 @@ public class CardFactory {
                 effects.add(new PlayActionBonusDamageEffect(2));
                 break;
             case "Tristeza":
+                break;
             case "Luz da Lua":
+                effects.add(new PlaySpellBuffEffect(0, 2, 0));
+                effects.add(new PlayActionHealByCurrentAttackEffect());
                 break;
             case "Afie suas Lâminas":
                 effects.add(new PlaySpellBuffEffect(0, 4, 4));
@@ -414,9 +458,9 @@ public class CardFactory {
                 effects.add(new EvolveHeroEffect(
                         "Kael, Domador de Feras",
                         "Kael, Cavaleiro Bestial",
-                        4, 7, 4, 25, 3,
-                        com.alkateca.lendasdapoeira.enums.Colors.RED,
-                        "Forma Evoluída: Atributos de combate ampliados e 3 slots de arma."
+                        1, 10, 2, 16, 2,
+                        com.alkateca.lendasdapoeira.enums.Colors.GREEN,
+                        "Início do Combate: Seus Constructos recebem +2 de Ataque e recuperam 2 pontos de Vida.\nFinal do Combate: Cause 2 de Dano Direto aos Heróis Inimigos."
                 ));
                 break;
 

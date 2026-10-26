@@ -20,6 +20,7 @@ public class EndOfCombatHealEffect implements Effect {
 
     @Override
     public void resolve(GameEngine gameEngine, Card sourceCard) {
+        System.out.println("Efeito de " + sourceCard.getCardName() + " ativado!");
         boolean isPlayer1 = sourceCard.getOwnerId().equals(gameEngine.getPlayer1().getUuid());
         java.util.UUID myHeroId = isPlayer1
                 ? gameEngine.getGameState().getActiveHeroPlayer1Id()
@@ -31,10 +32,11 @@ public class EndOfCombatHealEffect implements Effect {
                 .filter(h -> h.getUuid().equals(myHeroId)).findFirst().orElse(null);
 
         if (myHero != null) {
-            int novaVida = myHero.getVidaAtual() + healAmount;
+            int finalHeal = healAmount + gameEngine.getGoblinEffectBonus(sourceCard);
+            int novaVida = myHero.getVidaAtual() + finalHeal;
             if (novaVida > myHero.getVidaMaxima()) novaVida = myHero.getVidaMaxima();
             myHero.setVidaAtual(novaVida);
-            System.out.println("-> " + myHero.getCardName() + " recuperou " + healAmount + " de Vida! Vida restante: " + myHero.getVidaAtual());
+            System.out.println("-> " + myHero.getCardName() + " recuperou " + finalHeal + " de Vida! Vida restante: " + myHero.getVidaAtual());
         }
     }
 }

@@ -12,10 +12,18 @@ import com.alkateca.lendasdapoeira.enums.ZoneId;
 import java.util.UUID;
 
 public class EquipGlobalBuffEffect implements Effect {
+    private final int bonusEspirito;
     private final int bonusAtaque;
+    private final int bonusDefesa;
 
     public EquipGlobalBuffEffect(int bonusAtaque) {
+        this(0, bonusAtaque, 0);
+    }
+
+    public EquipGlobalBuffEffect(int bonusEspirito, int bonusAtaque, int bonusDefesa) {
+        this.bonusEspirito = bonusEspirito;
         this.bonusAtaque = bonusAtaque;
+        this.bonusDefesa = bonusDefesa;
     }
 
     @Override
@@ -25,6 +33,7 @@ public class EquipGlobalBuffEffect implements Effect {
 
     @Override
     public void resolve(GameEngine gameEngine, Card sourceCard) {
+        System.out.println("Efeito de " + sourceCard.getCardName() + " ativado!");
         boolean isPlayer1 = sourceCard.getOwnerId().equals(gameEngine.getPlayer1().getUuid());
         Player myPlayer = isPlayer1
                 ? gameEngine.getPlayer1()
@@ -59,8 +68,11 @@ public class EquipGlobalBuffEffect implements Effect {
 
         for (Card card : myPlayer.getCurrentDeck().getHeroList()) {
             HeroCard hero = (HeroCard) card;
+            hero.setEspirito(hero.getEspirito() + bonusEspirito);
             hero.setAtaque(hero.getAtaque() + bonusAtaque);
-            System.out.println("-> " + hero.getCardName() + " recebeu +" + bonusAtaque + " de Ataque global!");
+            hero.setDefesa(hero.getDefesa() + bonusDefesa);
+            System.out.println("-> " + hero.getCardName() + " recebeu buff global de " + sourceCard.getCardName() +
+                    "! (Esp: +" + bonusEspirito + ", Atk: +" + bonusAtaque + ", Def: +" + bonusDefesa + ")");
         }
     }
 
@@ -74,9 +86,11 @@ public class EquipGlobalBuffEffect implements Effect {
         if (myPlayer != null && myPlayer.getCurrentDeck() != null && myPlayer.getCurrentDeck().getHeroList() != null) {
             for (Card card : myPlayer.getCurrentDeck().getHeroList()) {
                 HeroCard hero = (HeroCard) card;
+                hero.setEspirito(hero.getEspirito() - bonusEspirito);
                 hero.setAtaque(hero.getAtaque() - bonusAtaque);
+                hero.setDefesa(hero.getDefesa() - bonusDefesa);
             }
-            System.out.println("-> " + sourceCard.getCardName() + " foi desanexado! Bônus global de Ataque removido.");
+            System.out.println("-> " + sourceCard.getCardName() + " foi desanexado! Bônus global removido.");
         }
     }
 }

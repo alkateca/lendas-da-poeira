@@ -42,10 +42,14 @@ public class TrueDamageEffect implements Effect {
                 .orElse(null);
 
         if (enemyHero != null) {
-
-            enemyHero.setVidaAtual(enemyHero.getVidaAtual() - damage);
-            System.out.println("-> " + enemyHero.getCardName() + " sofreu " + damage +
-                    " de dano mágico! Vida restante: " + enemyHero.getVidaAtual());
+            java.util.UUID myHeroId = isPlayer1
+                    ? gameEngine.getGameState().getActiveHeroPlayer1Id()
+                    : gameEngine.getGameState().getActiveHeroPlayer2Id();
+            HeroCard myHero = gameEngine.findHeroById(myHeroId);
+            int finalDamage = gameEngine.calculateDirectDamage(myHero, enemyHero, damage);
+            enemyHero.setVidaAtual(enemyHero.getVidaAtual() - finalDamage);
+            System.out.println("-> " + enemyHero.getCardName() + " sofreu " + finalDamage +
+                    " de dano direto! Vida restante: " + enemyHero.getVidaAtual());
         }
 
     }

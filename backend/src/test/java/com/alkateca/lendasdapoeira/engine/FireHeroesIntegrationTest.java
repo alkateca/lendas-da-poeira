@@ -78,7 +78,7 @@ class FireHeroesIntegrationTest {
         engine.getResolutionQueue().resolveAll(engine);
 
         assertEquals(1, xama.getDanoBonus(), "A aura de Xamã das cinzas deve conceder +1 de Dano Bônus.");
-        assertEquals(8, enemyHero.getVidaAtual(), "A Bola de Fogo invocada no início do combate deve causar 7 de Dano Mágico (4 + 3 Espírito).");
+        assertEquals(7, enemyHero.getVidaAtual(), "A Bola de Fogo invocada no início do combate deve causar 8 de Dano Mágico (4 + 3 Espírito + 1 Dano Bônus).");
         long resolveFireballs = deck1.getCardList().stream()
                 .filter(c -> c.getZoneId() == ZoneId.RESOLVE && "Bola de fogo".equalsIgnoreCase(c.getCardName()))
                 .count();

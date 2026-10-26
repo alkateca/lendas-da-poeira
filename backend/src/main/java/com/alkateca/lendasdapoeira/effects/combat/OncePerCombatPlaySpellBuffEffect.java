@@ -30,7 +30,6 @@ public class OncePerCombatPlaySpellBuffEffect implements Effect {
 
     @Override
     public boolean predicate(Card sourceCard, TurnPhase turnPhase) {
-        // Resetamos a flag no fim do combate, ativamos na resolução
         if (turnPhase == TurnPhase.COMBAT_END) {
             alreadyTriggeredThisCombat = false;
             return false;
@@ -68,13 +67,18 @@ public class OncePerCombatPlaySpellBuffEffect implements Effect {
                         .orElse(null);
 
                 if (activeHero != null) {
-                    activeHero.setEspirito(activeHero.getEspirito() + espiritoBuff);
-                    activeHero.setAtaque(activeHero.getAtaque() + ataqueBuff);
-                    activeHero.setDefesa(activeHero.getDefesa() + defesaBuff);
+                    int goblinBonus = gameEngine.getGoblinEffectBonus(sourceCard);
+                    int finalEsp = espiritoBuff > 0 ? espiritoBuff + goblinBonus : espiritoBuff;
+                    int finalAtk = ataqueBuff > 0 ? ataqueBuff + goblinBonus : ataqueBuff;
+                    int finalDef = defesaBuff > 0 ? defesaBuff + goblinBonus : defesaBuff;
+
+                    activeHero.setEspirito(activeHero.getEspirito() + finalEsp);
+                    activeHero.setAtaque(activeHero.getAtaque() + finalAtk);
+                    activeHero.setDefesa(activeHero.getDefesa() + finalDef);
                     alreadyTriggeredThisCombat = true;
                     gameEngine.registerCombatEndCleanup(() -> alreadyTriggeredThisCombat = false);
 
-                    System.out.println("Efeito de " + sourceCard.getCardName() + " ativado (Ao jogar " + targetCardType.name() + "): +" + ataqueBuff + " Ataque!");
+                    System.out.println("Efeito de " + sourceCard.getCardName() + " ativado (Ao jogar " + targetCardType.name() + "): +ESP " + finalEsp + ", +ATQ " + finalAtk + ", +DEF " + finalDef + "!");
                     gameEngine.captureSnapshot(sourceCard, this, "EFFECT_RESOLVED");
                 }
             }

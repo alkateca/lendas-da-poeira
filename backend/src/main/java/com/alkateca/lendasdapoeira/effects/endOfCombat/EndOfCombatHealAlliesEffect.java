@@ -29,6 +29,7 @@ public class EndOfCombatHealAlliesEffect implements Effect {
                 ? gameEngine.getPlayer1()
                 : gameEngine.getPlayer2();
 
+        int finalHeal = healAmount + gameEngine.getGoblinEffectBonus(sourceCard);
         int healedCount = 0;
         for (Card card : allyPlayer.getCurrentDeck().getHeroList()) {
             if (card instanceof HeroCard) {
@@ -37,7 +38,7 @@ public class EndOfCombatHealAlliesEffect implements Effect {
                     int currentLife = hero.getVidaAtual();
                     int maxLife = hero.getVidaMaxima();
                     if (currentLife < maxLife) {
-                        int newLife = Math.min(currentLife + healAmount, maxLife);
+                        int newLife = Math.min(currentLife + finalHeal, maxLife);
                         hero.setVidaAtual(newLife);
                         healedCount++;
                         System.out.println("-> " + hero.getCardName() + " recuperou " + (newLife - currentLife) + " de Vida! Vida restante: " + hero.getVidaAtual());
@@ -45,7 +46,7 @@ public class EndOfCombatHealAlliesEffect implements Effect {
                 }
             }
         }
-        
+
         if (healedCount == 0) {
             System.out.println("-> Nenhum aliado precisava de cura.");
         }

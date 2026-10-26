@@ -57,8 +57,13 @@ public class PlayActionChooseEnemyHeroDirectDamageEffect implements Effect {
                             .orElse(null);
 
                     if (chosenEnemyHero != null && Boolean.TRUE.equals(chosenEnemyHero.getEstaVivo())) {
-                        chosenEnemyHero.setVidaAtual(chosenEnemyHero.getVidaAtual() - directDamage);
-                        System.out.println("-> " + chosenEnemyHero.getCardName() + " sofreu " + directDamage +
+                        UUID myHeroId = isPlayer1
+                                ? gameEngine.getGameState().getActiveHeroPlayer1Id()
+                                : gameEngine.getGameState().getActiveHeroPlayer2Id();
+                        HeroCard myHero = gameEngine.findHeroById(myHeroId);
+                        int finalDamage = gameEngine.calculateDirectDamage(myHero, chosenEnemyHero, directDamage);
+                        chosenEnemyHero.setVidaAtual(chosenEnemyHero.getVidaAtual() - finalDamage);
+                        System.out.println("-> " + chosenEnemyHero.getCardName() + " sofreu " + finalDamage +
                                 " de Dano Direto de " + sourceCard.getCardName() + "! (Vida restante: " +
                                 chosenEnemyHero.getVidaAtual() + ")");
                     }

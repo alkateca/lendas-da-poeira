@@ -113,6 +113,9 @@ public class ReviveAndEvolveDeadHeroEffect implements Effect {
 
         // Herda os status do morto + soma os status extras da Liberação
         deadHero.setCardName(evolvedName);
+        if (evoTemplate.getColor() != null) {
+            deadHero.setColor(evoTemplate.getColor());
+        }
         deadHero.setEspirito(deadHero.getEspirito() + bonusSpirit);
         deadHero.setAtaque(deadHero.getAtaque() + bonusAttack);
         deadHero.setDefesa(deadHero.getDefesa() + bonusDefense);
