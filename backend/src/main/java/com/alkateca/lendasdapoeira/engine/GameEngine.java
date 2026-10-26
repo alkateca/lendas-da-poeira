@@ -28,6 +28,7 @@ public class GameEngine {
     private UUID winnerPlayerId;
     private UUID forfeitedByPlayerId;
     private String winReason;
+    private boolean pvpMatch = false;
 
     private java.util.function.Consumer<UUID> pendingChoiceCallback;
 
@@ -238,16 +239,14 @@ public class GameEngine {
 
         // Cálculo de Recompensa de Poeira
         boolean playerForfeited = this.forfeitedByPlayerId != null && this.forfeitedByPlayerId.equals(player.getUuid());
-        int baseReward = playerForfeited ? 0 : (isWin ? 50 : 20);
-        int koBonus = playerForfeited ? 0 : (defeatedEnemyHeroes * 5);
-        int totalEarned = baseReward + koBonus;
+        int totalEarned = (!playerForfeited && isWin) ? (this.pvpMatch ? 150 : 50) : 0;
 
-        if (!this.rewardsGranted) {
-            player.addPoeira(totalEarned);
+        if (!this.rewardsGranted && totalEarned > 0) {
+            player.addGold(totalEarned);
         }
 
         stats.setPoeiraEarned(totalEarned);
-        stats.setTotalPoeira(player.getPoeira());
+        stats.setTotalPoeira(player.getGold());
     }
 
     public GameEngine(Player player1, Player player2) {

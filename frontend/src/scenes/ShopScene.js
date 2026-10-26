@@ -7,16 +7,27 @@ export default class ShopScene extends Phaser.Scene {
         super({ key: 'ShopScene' });
         this.player = null;
         this.products = [];
-        this.activeTab = 'BOOSTER'; // 'BOOSTER' ou 'DECK'
+        this.activeTab = 'BOOSTER'; // 'BOOSTER', 'DECK' ou 'MARKET'
         this.isOpeningBooster = false;
+        this.marketListings = [];
+        this.isProcessingTransaction = false;
     }
 
     init(data) {
         this.player = data?.player || JSON.parse(localStorage.getItem('lendas_player')) || {};
-        if (this.player.poeira === undefined) this.player.poeira = 500;
+        const currentGold = this.player.balance?.gold ?? this.player.poeira ?? 500;
+        this.player.balance = { gold: currentGold };
+        this.player.poeira = currentGold;
         if (!this.player.ownedCards) this.player.ownedCards = {};
         if (!this.player.ownedHeroes) this.player.ownedHeroes = {};
         if (!this.player.decks) this.player.decks = [];
+        this.activeTab = data?.initialTab || 'BOOSTER'; // 'BOOSTER', 'DECK' ou 'MARKET'
+        this.marketListings = [];
+        this.isProcessingTransaction = false;
+    }
+
+    getGoldBalance() {
+        return this.player.balance?.gold ?? this.player.poeira ?? 0;
     }
 
     preload() {
@@ -49,6 +60,7 @@ export default class ShopScene extends Phaser.Scene {
         this.createBoosterRevealModal();
 
         await this.fetchProductsFromServer();
+        await this.fetchMarketListingsFromServer();
         this.renderProductsGrid();
     }
 
@@ -72,9 +84,9 @@ export default class ShopScene extends Phaser.Scene {
             fontStyle: 'bold'
         }).setOrigin(0, 0.5).setResolution(2);
 
-        // Visor Claro de Saldo de Poeira
+        // Visor Claro de Saldo de Gold
         this.add.rectangle(1320, 62, 310, 48, 0xfaf8f5).setStrokeStyle(3, 0x090d16);
-        this.balanceText = this.add.text(1320, 62, `✨ POEIRA: ${this.player.poeira}`, {
+        this.balanceText = this.add.text(1320, 62, `🪙 GOLD: ${this.getGoldBalance()}`, {
             fontFamily: 'IoskeleyMono, monospace',
             fontSize: '18px',
             color: '#090d16',
@@ -85,7 +97,7 @@ export default class ShopScene extends Phaser.Scene {
             .setStrokeStyle(2.5, 0xffffff)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => {
-                if (!this.isOpeningBooster) {
+                if (!this.isOpeningBooster && !this.isProcessingTransaction) {
                     this.scene.start('MainMenuScene', { player: this.player });
                 }
             });
@@ -99,8 +111,9 @@ export default class ShopScene extends Phaser.Scene {
     }
 
     createTabs() {
-        this.boosterTabBtn = this.createTabButton(420, 145, '📦 PACOTES SELADOS (BOOSTERS)', 'BOOSTER');
-        this.deckTabBtn = this.createTabButton(920, 145, '🃏 DECKS ESTRUTURADOS', 'DECK');
+        this.boosterTabBtn = this.createTabButton(380, 145, '📦 BOOSTERS', 'BOOSTER');
+        this.deckTabBtn = this.createTabButton(960, 145, '🃏 BARALHOS', 'DECK');
+        this.marketTabBtn = this.createTabButton(1540, 145, '⚖️ CARTAS DE PLAYERS', 'MARKET');
         this.updateTabVisuals();
     }
 
@@ -109,7 +122,7 @@ export default class ShopScene extends Phaser.Scene {
             .setStrokeStyle(3, 0x090d16)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => {
-                if (this.isOpeningBooster) return;
+                if (this.isOpeningBooster || this.isProcessingTransaction) return;
                 this.activeTab = tabKey;
                 this.updateTabVisuals();
                 this.renderProductsGrid();
@@ -126,12 +139,16 @@ export default class ShopScene extends Phaser.Scene {
     }
 
     updateTabVisuals() {
-        const isBooster = this.activeTab === 'BOOSTER';
-        this.boosterTabBtn.bg.setFillStyle(isBooster ? 0xe60012 : 0x1e293b);
-        this.boosterTabBtn.txt.setColor(isBooster ? '#ffe600' : '#94a3b8');
-
-        this.deckTabBtn.bg.setFillStyle(!isBooster ? 0xe60012 : 0x1e293b);
-        this.deckTabBtn.txt.setColor(!isBooster ? '#ffe600' : '#94a3b8');
+        const tabs = [
+            { key: 'BOOSTER', btn: this.boosterTabBtn },
+            { key: 'DECK', btn: this.deckTabBtn },
+            { key: 'MARKET', btn: this.marketTabBtn }
+        ];
+        tabs.forEach(t => {
+            const active = this.activeTab === t.key;
+            t.btn.bg.setFillStyle(active ? 0xe60012 : 0x1e293b);
+            t.btn.txt.setColor(active ? '#ffe600' : '#94a3b8');
+        });
     }
 
     async fetchProductsFromServer() {
@@ -176,10 +193,26 @@ export default class ShopScene extends Phaser.Scene {
         }
     }
 
+    async fetchMarketListingsFromServer() {
+        try {
+            const res = await fetch('http://localhost:8080/api/shop/listings');
+            if (res.ok) {
+                this.marketListings = await res.json();
+            }
+        } catch (e) {
+            this.marketListings = [];
+        }
+    }
+
     renderProductsGrid() {
         this.productsContainer.removeAll(true);
-        const filtered = this.products.filter(p => p.type === this.activeTab);
 
+        if (this.activeTab === 'MARKET') {
+            this.renderPlayerListingsGrid();
+            return;
+        }
+
+        const filtered = this.products.filter(p => p.type === this.activeTab);
         filtered.forEach((product, idx) => {
             const x = 520 + (idx % 2) * 880;
             const y = 560;
@@ -187,12 +220,95 @@ export default class ShopScene extends Phaser.Scene {
         });
     }
 
+    renderPlayerListingsGrid() {
+        if (!this.marketListings || this.marketListings.length === 0) {
+            const emptyMsg = this.add.text(960, 540, 'Nenhuma carta anunciada pelos jogadores no momento.\nVisite a tela MINHA COLEÇÃO para anunciar cartas!', {
+                fontFamily: 'IoskeleyMono, monospace',
+                fontSize: '20px',
+                color: '#94a3b8',
+                align: 'center',
+                fontStyle: 'bold'
+            }).setOrigin(0.5).setResolution(2);
+            this.productsContainer.add(emptyMsg);
+            return;
+        }
+
+        this.marketListings.slice(0, 8).forEach((listing, idx) => {
+            const col = idx % 4;
+            const row = Math.floor(idx / 4);
+            const x = 345 + col * 410;
+            const y = 395 + row * 340;
+            this.createListingCard(x, y, listing);
+        });
+    }
+
+    createListingCard(x, y, listing) {
+        const card = this.add.container(x, y);
+        const w = 360;
+        const h = 300;
+        const isOwnListing = listing.sellerId === this.player.uuid;
+        const canAfford = this.getGoldBalance() >= listing.price;
+
+        const bg = this.add.rectangle(0, 0, w, h, 0xfaf8f5, 1).setStrokeStyle(3, 0x090d16);
+        const header = this.add.rectangle(0, -h / 2 + 34, w - 6, 62, 0x090d16);
+
+        const title = this.add.text(0, -h / 2 + 34, listing.cardName, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '15px',
+            color: '#ffe600',
+            fontStyle: 'bold',
+            align: 'center',
+            wordWrap: { width: w - 24 }
+        }).setOrigin(0.5).setResolution(2);
+
+        const sellerTxt = this.add.text(0, -35, `Vendedor: ${listing.sellerName || 'Jogador'}`, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '13px',
+            color: '#334155',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
+
+        const priceBadge = this.add.rectangle(0, 18, 240, 42, 0xe6dec8).setStrokeStyle(2, 0x090d16);
+        const priceTxt = this.add.text(0, 18, `🪙 ${listing.price} GOLD`, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '17px',
+            color: isOwnListing ? '#090d16' : (canAfford ? '#15803d' : '#dc2626'),
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
+
+        const btnColor = isOwnListing ? 0xd97706 : (canAfford ? 0x16a34a : 0x64748b);
+        const btnLabel = isOwnListing ? '↩ REMOVER ANÚNCIO' : (canAfford ? '⚡ COMPRAR CARTA' : '🔒 SALDO INSUFICIENTE');
+
+        const actionBtnBg = this.add.rectangle(0, 95, 300, 50, btnColor)
+            .setStrokeStyle(3, 0x090d16)
+            .setInteractive({ useHandCursor: isOwnListing || canAfford })
+            .on('pointerdown', () => {
+                if (isOwnListing) {
+                    this.handleCancelListing(listing);
+                } else if (canAfford) {
+                    this.handleBuyListing(listing);
+                } else {
+                    this.showShopToast('Saldo de Gold insuficiente para comprar esta carta!');
+                }
+            });
+
+        const actionBtnTxt = this.add.text(0, 95, btnLabel, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '15px',
+            color: '#ffffff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
+
+        card.add([bg, header, title, sellerTxt, priceBadge, priceTxt, actionBtnBg, actionBtnTxt]);
+        this.productsContainer.add(card);
+    }
+
     createProductCard(x, y, product) {
         const card = this.add.container(x, y);
         const w = 740;
         const h = 640;
 
-        const canAfford = (this.player.poeira ?? 0) >= product.price;
+        const canAfford = this.getGoldBalance() >= product.price;
 
         const shadow = this.add.rectangle(10, 12, w, h, 0x090d16, 0.8);
         const bg = this.add.rectangle(0, 0, w, h, 0xfaf8f5, 1).setStrokeStyle(4, 0x090d16);
@@ -225,7 +341,7 @@ export default class ShopScene extends Phaser.Scene {
         }).setOrigin(0.5).setResolution(2);
 
         const priceBadge = this.add.rectangle(0, 200, 260, 42, 0xe6dec8).setStrokeStyle(2, 0x090d16);
-        const priceTxt = this.add.text(0, 200, `CUSTO: ✨ ${product.price} POEIRA`, {
+        const priceTxt = this.add.text(0, 200, `CUSTO: 🪙 ${product.price} GOLD`, {
             fontFamily: 'IoskeleyMono, monospace',
             fontSize: '16px',
             color: canAfford ? '#15803d' : '#dc2626',
@@ -237,7 +353,7 @@ export default class ShopScene extends Phaser.Scene {
             .setInteractive({ useHandCursor: canAfford })
             .on('pointerdown', () => {
                 if (!canAfford) {
-                    this.showShopToast('Saldo de Poeira insuficiente para esta compra!');
+                    this.showShopToast('Saldo de Gold insuficiente para esta compra!');
                     return;
                 }
                 this.handlePurchaseProduct(product);
@@ -255,12 +371,17 @@ export default class ShopScene extends Phaser.Scene {
     }
 
     async handlePurchaseProduct(product) {
-        if (this.isOpeningBooster) return;
+        if (this.isOpeningBooster || this.isProcessingTransaction) return;
+        this.isProcessingTransaction = true;
 
         try {
+            const idempotencyKey = `BUY_PROD_${this.player.uuid}_${product.id}_${Date.now()}`;
             const res = await fetch('http://localhost:8080/api/shop/buy', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Idempotency-Key': idempotencyKey
+                },
                 body: JSON.stringify({
                     playerId: this.player.uuid,
                     productId: product.id
@@ -275,7 +396,7 @@ export default class ShopScene extends Phaser.Scene {
 
             this.player = data.updatedPlayer;
             localStorage.setItem('lendas_player', JSON.stringify(this.player));
-            this.balanceText.setText(`✨ POEIRA: ${this.player.poeira}`);
+            this.balanceText.setText(`🪙 GOLD: ${this.getGoldBalance()}`);
             this.renderProductsGrid();
 
             if (data.productType === 'BOOSTER' && data.openedBoosterCards?.length > 0) {
@@ -285,6 +406,74 @@ export default class ShopScene extends Phaser.Scene {
             }
         } catch (err) {
             this.showShopToast('Erro de conexão com o servidor da Loja.');
+        } finally {
+            this.isProcessingTransaction = false;
+        }
+    }
+
+    async handleBuyListing(listing) {
+        if (this.isProcessingTransaction) return;
+        this.isProcessingTransaction = true;
+
+        try {
+            const res = await fetch(`http://localhost:8080/api/shop/listings/${listing.id}/buy`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Idempotency-Key': `BUY_LISTING_${listing.id}_${this.player.uuid}`
+                },
+                body: JSON.stringify({ playerId: this.player.uuid })
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                this.showShopToast(data.message || 'Erro ao comprar carta.');
+                return;
+            }
+
+            this.player = data.player;
+            localStorage.setItem('lendas_player', JSON.stringify(this.player));
+            this.balanceText.setText(`🪙 GOLD: ${this.getGoldBalance()}`);
+
+            await this.fetchMarketListingsFromServer();
+            this.renderProductsGrid();
+            this.showShopToast(data.message || 'Carta adquirida com sucesso!', '#16a34a');
+        } catch (e) {
+            this.showShopToast('Erro de conexão com o servidor.');
+        } finally {
+            this.isProcessingTransaction = false;
+        }
+    }
+
+    async handleCancelListing(listing) {
+        if (this.isProcessingTransaction) return;
+        this.isProcessingTransaction = true;
+
+        try {
+            const res = await fetch(`http://localhost:8080/api/shop/listings/${listing.id}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Idempotency-Key': `CANCEL_LISTING_${listing.id}_${this.player.uuid}`
+                },
+                body: JSON.stringify({ playerId: this.player.uuid })
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                this.showShopToast(data.message || 'Erro ao cancelar anúncio.');
+                return;
+            }
+
+            this.player = data.player;
+            localStorage.setItem('lendas_player', JSON.stringify(this.player));
+            await this.fetchMarketListingsFromServer();
+            this.renderProductsGrid();
+            this.showShopToast(data.message || 'Anúncio removido!', '#ca8a04');
+        } catch (e) {
+            this.showShopToast('Erro de conexão com o servidor.');
+        } finally {
+            this.isProcessingTransaction = false;
         }
     }
 

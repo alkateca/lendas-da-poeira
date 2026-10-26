@@ -31,14 +31,22 @@ chmod +x "$BACKEND_DIR/mvnw" 2>/dev/null || true
 
 # Configura JAVA_HOME automaticamente caso não esteja definido
 if [ -z "$JAVA_HOME" ] || [ ! -d "$JAVA_HOME" ]; then
-    if [ -d "/c/Program Files/Java/jdk-25" ]; then
-        export JAVA_HOME="/c/Program Files/Java/jdk-25"
-    elif [ -d "/usr/lib/jvm/java-17-openjdk-amd64" ]; then
-        export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
-    elif [ -d "/usr/lib/jvm/default-java" ]; then
-        export JAVA_HOME="/usr/lib/jvm/default-java"
-    elif command -v java >/dev/null 2>&1; then
-        export JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")"
+    for jdk in "$HOME"/.jdks/*; do
+        if [ -d "$jdk/bin" ]; then
+            export JAVA_HOME="$jdk"
+            break
+        fi
+    done
+    if [ -z "$JAVA_HOME" ]; then
+        if [ -d "/c/Program Files/Java/jdk-25" ]; then
+            export JAVA_HOME="/c/Program Files/Java/jdk-25"
+        elif [ -d "/usr/lib/jvm/java-17-openjdk-amd64" ]; then
+            export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+        elif [ -d "/usr/lib/jvm/default-java" ]; then
+            export JAVA_HOME="/usr/lib/jvm/default-java"
+        elif command -v java >/dev/null 2>&1; then
+            export JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")"
+        fi
     fi
 fi
 if [ -n "$JAVA_HOME" ]; then

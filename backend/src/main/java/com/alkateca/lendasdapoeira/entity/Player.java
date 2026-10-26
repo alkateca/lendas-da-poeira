@@ -36,6 +36,15 @@ public class Player {
     // Sistema monetário
     public static final int DEFAULT_INITIAL_POEIRA = 5000;
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Balance {
+        private int gold = DEFAULT_INITIAL_POEIRA;
+    }
+
+    private Balance balance = new Balance(DEFAULT_INITIAL_POEIRA);
+
     private int poeira = DEFAULT_INITIAL_POEIRA;
     private java.util.Map<String, Integer> ownedItems = new java.util.HashMap<>();
 
@@ -48,16 +57,57 @@ public class Player {
         this.weeklyElo = DEFAULT_INITIAL_ELO;
     }
 
+    public Balance getBalance() {
+        if (this.balance == null) {
+            this.balance = new Balance(this.poeira);
+        }
+        return this.balance;
+    }
+
+    public void setBalance(Balance balance) {
+        this.balance = balance != null ? balance : new Balance(0);
+        this.poeira = this.balance.getGold();
+    }
+
+    public int getGold() {
+        return getBalance().getGold();
+    }
+
+    public void setGold(int gold) {
+        if (gold < 0) {
+            throw new IllegalArgumentException("O saldo de Gold não pode ser negativo.");
+        }
+        getBalance().setGold(gold);
+        this.poeira = gold;
+    }
+
+    public int getPoeira() {
+        return getGold();
+    }
+
+    public void setPoeira(int poeira) {
+        setGold(Math.max(0, poeira));
+    }
+
+    public synchronized void addGold(int amount) {
+        if (amount <= 0) return;
+        setGold(getGold() + amount);
+    }
+
+    public synchronized void deductGold(int amount) {
+        if (amount <= 0) return;
+        if (getGold() < amount) {
+            throw new IllegalStateException("Saldo de Gold insuficiente. Necessário: " + amount + ", Disponível: " + getGold());
+        }
+        setGold(getGold() - amount);
+    }
+
     public void addPoeira(int amount) {
-        if (amount > 0) this.poeira += amount;
+        addGold(amount);
     }
 
     public void deductPoeira(int amount) {
-        if (amount <= 0) return;
-        if (this.poeira < amount) {
-            throw new IllegalArgumentException("Saldo de Poeira insuficiente.");
-        }
-        this.poeira -= amount;
+        deductGold(amount);
     }
 
     public int getOwnedHeroCount(String heroName) {
@@ -78,6 +128,38 @@ public class Player {
         if (cardName == null || copies <= 0) return;
         if (this.ownedCards == null) this.ownedCards = new java.util.HashMap<>();
         this.ownedCards.put(cardName, getOwnedCardCount(cardName) + copies);
+    }
+
+    public synchronized void removeCardFromCollection(String cardName, int copies) {
+        if (cardName == null || copies <= 0) {
+            throw new IllegalArgumentException("Carta ou quantidade inválida para remoção.");
+        }
+        int current = getOwnedCardCount(cardName);
+        if (current < copies) {
+            throw new IllegalStateException("Quantidade insuficiente da carta '" + cardName + "' na coleção.");
+        }
+        int remaining = current - copies;
+        if (remaining == 0) {
+            this.ownedCards.remove(cardName);
+        } else {
+            this.ownedCards.put(cardName, remaining);
+        }
+    }
+
+    public synchronized void removeHeroFromCollection(String heroName, int copies) {
+        if (heroName == null || copies <= 0) {
+            throw new IllegalArgumentException("Herói ou quantidade inválida para remoção.");
+        }
+        int current = getOwnedHeroCount(heroName);
+        if (current < copies) {
+            throw new IllegalStateException("Quantidade insuficiente do Herói '" + heroName + "' na coleção.");
+        }
+        int remaining = current - copies;
+        if (remaining == 0) {
+            this.ownedHeroes.remove(heroName);
+        } else {
+            this.ownedHeroes.put(heroName, remaining);
+        }
     }
 
     public void addItemToCollection(String itemId, int quantity) {
