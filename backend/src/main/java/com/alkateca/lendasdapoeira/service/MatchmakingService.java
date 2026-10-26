@@ -70,15 +70,21 @@ public class MatchmakingService {
     private final Map<UUID, LobbyPresenceEntry> lobbyPresence = new ConcurrentHashMap<>();
     private final Map<UUID, DirectChallengeEntry> directChallenges = new ConcurrentHashMap<>();
     private final EloRatingService eloRatingService;
+    private final PlayerStorageService playerStorageService;
 
     @org.springframework.beans.factory.annotation.Autowired
-    public MatchmakingService(EloRatingService eloRatingService) {
+    public MatchmakingService(EloRatingService eloRatingService, PlayerStorageService playerStorageService) {
         this.eloRatingService = eloRatingService;
+        this.playerStorageService = playerStorageService;
+    }
+
+    public MatchmakingService(EloRatingService eloRatingService) {
+        this(eloRatingService, null);
     }
 
     // Construtor padrão para testes unitários sem Spring Context
     public MatchmakingService() {
-        this.eloRatingService = null;
+        this(null, null);
     }
 
     // =========================================================================
@@ -328,6 +334,7 @@ public class MatchmakingService {
         // Instancia e inicia a partida PvP no GameEngine
         UUID matchId = UUID.randomUUID();
         Match match = new Match(matchId, MatchMode.PVP, challenger, acceptingTargetPlayer, false);
+        match.getGameEngine().setPvpMatch(true); // Ativa recompensa de 150 Gold para PvP
         match.startMatch();
 
         activeMatches.put(matchId, match);
@@ -471,6 +478,7 @@ public class MatchmakingService {
 
             UUID matchId = UUID.randomUUID();
             Match match = new Match(matchId, MatchMode.PVP, opponent, joiningPlayer, false);
+            match.getGameEngine().setPvpMatch(true); // Ativa recompensa de 150 Gold para PvP
             match.startMatch();
 
             activeMatches.put(matchId, match);
@@ -537,6 +545,12 @@ public class MatchmakingService {
                 match.syncStatusWithEngine();
             }
             applyEloIfMatchFinished(match);
+            if (engine.getWinnerPlayerId() != null) {
+                Player p1 = engine.getPlayer1();
+                Player p2 = engine.getPlayer2();
+                if (p1 != null && playerStorageService != null) playerStorageService.saveOrUpdatePlayer(p1);
+                if (p2 != null && playerStorageService != null) playerStorageService.saveOrUpdatePlayer(p2);
+            }
             releasePlayersFromMatch(match);
 
             System.out.println("🏳️ Partida PvP " + matchId + ": Jogador " + playerId
@@ -588,6 +602,13 @@ public class MatchmakingService {
             executeBotActionsIfNeeded(match);
             match.syncStatusWithEngine();
             applyEloIfMatchFinished(match);
+
+            if (engine.getWinnerPlayerId() != null) {
+                Player p1 = engine.getPlayer1();
+                Player p2 = engine.getPlayer2();
+                if (p1 != null && playerStorageService != null) playerStorageService.saveOrUpdatePlayer(p1);
+                if (p2 != null && playerStorageService != null) playerStorageService.saveOrUpdatePlayer(p2);
+            }
 
             if (match.getStatus() == MatchStatus.FINISHED) {
                 releasePlayersFromMatch(match);

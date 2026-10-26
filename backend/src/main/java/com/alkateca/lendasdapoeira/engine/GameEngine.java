@@ -52,6 +52,53 @@ public class GameEngine {
     // Rastreia as cartas jogadas que já resolveram na fase RESOLUTION atual e as cartas que foram apenas invocadas
     private List<Card> resolvedCardsInCurrentCombat = new ArrayList<>();
     private Set<UUID> invokedCardIdsInCurrentCombat = new HashSet<>();
+    private final Map<UUID, Integer> combatEffectiveHealingByPlayer = new HashMap<>();
+    private final Map<UUID, Integer> maxHeroAttackInCurrentCombat = new HashMap<>();
+    private final Set<UUID> doubleAttackHeroIdsInCurrentCombat = new HashSet<>();
+
+    public void enableDoubleAttackForCurrentCombat(UUID heroId) {
+        if (heroId != null) {
+            this.doubleAttackHeroIdsInCurrentCombat.add(heroId);
+        }
+    }
+
+    public boolean hasDoubleAttackInCurrentCombat(UUID heroId) {
+        return heroId != null && this.doubleAttackHeroIdsInCurrentCombat.contains(heroId);
+    }
+
+    public int getEffectiveHealingInCurrentCombat(UUID playerId) {
+        if (playerId == null) return 0;
+        updateCombatMetricsFromBoardState(null);
+        return this.combatEffectiveHealingByPlayer.getOrDefault(playerId, 0);
+    }
+
+    public int getMaxHeroAttackInCurrentCombat(UUID heroId) {
+        if (heroId == null) return 0;
+        HeroCard hero = findHeroById(heroId);
+        int currentAtk = hero != null ? hero.getAtaque() : 0;
+        return Math.max(currentAtk, this.maxHeroAttackInCurrentCombat.getOrDefault(heroId, 0));
+    }
+
+    public int getGoblinEffectBonus(Card sourceCard) {
+        if (sourceCard == null || sourceCard.getRacas() == null
+                || !sourceCard.getRacas().contains(com.alkateca.lendasdapoeira.enums.Raca.GOBLIN)) {
+            return 0;
+        }
+        boolean isP1 = player1 != null && sourceCard.getOwnerId() != null && sourceCard.getOwnerId().equals(player1.getUuid());
+        Player owner = isP1 ? player1 : player2;
+        if (owner == null || owner.getCurrentDeck() == null || owner.getCurrentDeck().getHeroList() == null) {
+            return 0;
+        }
+        return owner.getCurrentDeck().getHeroList().stream()
+                .filter(h -> h != null
+                        && Boolean.TRUE.equals(h.getEstaVivo())
+                        && h.getVidaAtual() > 0
+                        && h.getEffects() != null)
+                .flatMap(h -> h.getEffects().stream())
+                .filter(eff -> eff instanceof com.alkateca.lendasdapoeira.effects.combat.AuraGoblinEffectAmplifierEffect)
+                .mapToInt(eff -> ((com.alkateca.lendasdapoeira.effects.combat.AuraGoblinEffectAmplifierEffect) eff).getBonusEffectValue())
+                .sum();
+    }
 
     public void markCardAsResolved(Card card) {
         if (card != null && !resolvedCardsInCurrentCombat.contains(card)) {
@@ -91,6 +138,9 @@ public class GameEngine {
         }
         this.resolvedCardsInCurrentCombat.clear();
         this.invokedCardIdsInCurrentCombat.clear();
+        this.combatEffectiveHealingByPlayer.clear();
+        this.maxHeroAttackInCurrentCombat.clear();
+        this.doubleAttackHeroIdsInCurrentCombat.clear();
     }
 
     // =========================================================================
@@ -154,6 +204,12 @@ public class GameEngine {
         for (HeroCard hero : owner.getCurrentDeck().getHeroList()) {
             if (hero == null) continue;
 
+            int currentAtk = hero.getAtaque();
+            int prevMaxAtk = maxHeroAttackInCurrentCombat.getOrDefault(hero.getUuid(), currentAtk);
+            if (currentAtk > prevMaxAtk || !maxHeroAttackInCurrentCombat.containsKey(hero.getUuid())) {
+                maxHeroAttackInCurrentCombat.put(hero.getUuid(), currentAtk);
+            }
+
             int currentHp = hero.getVidaAtual();
             int previousHp = lastRecordedHeroHp.getOrDefault(hero.getUuid(), hero.getVidaMaxima());
             int delta = currentHp - previousHp;
@@ -177,6 +233,15 @@ public class GameEngine {
                 }
             } else if (delta > 0) {
                 ownerStats.setTotalHealingDone(ownerStats.getTotalHealingDone() + delta);
+                if (this.turnPhase == TurnPhase.COMBAT_START
+                        || this.turnPhase == TurnPhase.RESOLUTION
+                        || this.turnPhase == TurnPhase.COMBAT
+                        || this.turnPhase == TurnPhase.COMBAT_END) {
+                    combatEffectiveHealingByPlayer.put(
+                            owner.getUuid(),
+                            combatEffectiveHealingByPlayer.getOrDefault(owner.getUuid(), 0) + delta
+                    );
+                }
             }
 
             lastRecordedHeroHp.put(hero.getUuid(), currentHp);
@@ -193,11 +258,16 @@ public class GameEngine {
 
     public MatchSnapshotDTO.MatchResultSummaryDTO buildMatchResultSummary() {
         if (player1 == null || player2 == null) return null;
+        if (this.turnPhase != TurnPhase.GAME_OVER && this.winnerPlayerId == null) {
+            return null;
+        }
         if (playerStatsMap.isEmpty()) initMatchMetrics();
 
         finalizePlayerScore(player1, player2);
         finalizePlayerScore(player2, player1);
-        this.rewardsGranted = true;
+        if (this.winnerPlayerId != null) {
+            this.rewardsGranted = true;
+        }
 
         MatchSnapshotDTO.PlayerMatchStatsDTO p1Stats = playerStatsMap.get(player1.getUuid());
         MatchSnapshotDTO.PlayerMatchStatsDTO p2Stats = playerStatsMap.get(player2.getUuid());
@@ -440,12 +510,19 @@ public class GameEngine {
             }
         }
 
-        captureSnapshot(null, null, "MATCH_FORFEITED");
         gameOver();
+        captureSnapshot(null, null, "MATCH_FORFEITED");
     }
 
     public void gameOver() {
         System.out.println("--- PARTIDA ENCERRADA ---");
+        if (this.turnPhase != TurnPhase.GAME_OVER) {
+            this.turnPhase = TurnPhase.GAME_OVER;
+            if (this.gameState != null) {
+                this.gameState.setTurnPhase(TurnPhase.GAME_OVER);
+            }
+        }
+        buildMatchResultSummary();
     }
 
 
@@ -453,6 +530,9 @@ public class GameEngine {
         this.turnPhase = newPhase;
         if (this.gameState != null) {
             this.gameState.setTurnPhase(newPhase);
+        }
+        if (newPhase == TurnPhase.GAME_OVER) {
+            gameOver();
         }
         // Captura snapshot da mudança de fase
         captureSnapshot(null, null, "PHASE_CHANGE");
@@ -508,7 +588,7 @@ public class GameEngine {
         if (p1Hero != null) p1Hero.onPhaseChange(phase, resolutionQueue);
         if (p2Hero != null) p2Hero.onPhaseChange(phase, resolutionQueue);
 
-        if (phase == TurnPhase.COMBAT_END) {
+        if (phase == TurnPhase.COMBAT_START || phase == TurnPhase.COMBAT_END) {
             List<Card> allHeroes = new ArrayList<>();
             allHeroes.addAll(player1.getCurrentDeck().getHeroList());
             allHeroes.addAll(player2.getCurrentDeck().getHeroList());
@@ -517,8 +597,7 @@ public class GameEngine {
                 if (hCard instanceof HeroCard && hCard.getZoneId() == ZoneId.BENCH && Boolean.TRUE.equals(((HeroCard) hCard).getEstaVivo())) {
                     if (hCard.getEffects() != null) {
                         hCard.getEffects().stream()
-                                .filter(eff -> eff instanceof com.alkateca.lendasdapoeira.effects.endOfCombat.EndOfCombatDeadOrderBuffEffect
-                                        && eff.predicate(hCard, phase))
+                                .filter(eff -> eff.canTriggerFromBench() && eff.predicate(hCard, phase))
                                 .forEach(eff -> resolutionQueue.enqueue(eff, hCard));
                     }
                 }
@@ -934,6 +1013,39 @@ public class GameEngine {
                         .anyMatch(eff -> eff instanceof com.alkateca.lendasdapoeira.effects.combat.ConvertAttacksToMagicDamageEffect));
     }
 
+    public int calculatePhysicalDamage(HeroCard attacker, HeroCard defender, int basePhysicalDamage) {
+        if (defender == null) return 0;
+        int bonusDamage = attacker != null ? attacker.getDanoBonus() : 0;
+        int rawDamage = basePhysicalDamage + bonusDamage;
+        int totalMitigation = defender.getDefesa() + defender.getReducaoDano();
+        return Math.max(0, (rawDamage - totalMitigation) + defender.getVulnerabilidade());
+    }
+
+    public int calculateMagicDamage(HeroCard attacker, HeroCard defender, int baseMagicDamage) {
+        if (defender == null) return 0;
+        int bonusDamage = attacker != null ? attacker.getDanoBonus() : 0;
+        int rawMagic = baseMagicDamage + bonusDamage;
+        int magicMitigation = defender.getEspirito();
+        return Math.max(0, (rawMagic - magicMitigation) + defender.getVulnerabilidade());
+    }
+
+    public int calculateDirectDamage(HeroCard attacker, HeroCard defender, int baseDirectDamage) {
+        if (defender == null) return 0;
+        int bonusDamage = attacker != null ? attacker.getDanoBonus() : 0;
+        int rawDirect = baseDirectDamage + bonusDamage + defender.getVulnerabilidade();
+        return Math.max(0, rawDirect);
+    }
+
+    public int calculateBasicAttackDamage(HeroCard attacker, HeroCard defender) {
+        if (attacker == null || defender == null) return 0;
+        if (hasMagicBasicAttacks(attacker.getUuid())) {
+            // --- CÁLCULO DE DANO MÁGICO (ou Ataques Básicos Mágicos) ---
+            return calculateMagicDamage(attacker, defender, attacker.getAtaque());
+        }
+        // --- CÁLCULO DE DANO FÍSICO ---
+        return calculatePhysicalDamage(attacker, defender, attacker.getAtaque());
+    }
+
     /**
      * 3. Matemática do Combate Físico (TurnPhase.COMBAT)
      */
@@ -942,27 +1054,11 @@ public class GameEngine {
         HeroCard p2Hero = getActiveHero(player2, gameState.getActiveHeroPlayer2Id());
 
         if (p1Hero != null && p2Hero != null) {
-            int damageToP2;
-            if (hasMagicBasicAttacks(p1Hero.getUuid())) {
-                int p1RawMagic = p1Hero.getAtaque() + p1Hero.getDanoBonus();
-                damageToP2 = Math.max(0, p1RawMagic - p2Hero.getEspirito());
-            } else {
-                // Cálculo de Dano Físico de P1 em P2: (Ataque + DanoBônus + VulnerabilidadeAlvo) - (DefesaAlvo + ReduçãoDanoAlvo)
-                int p1RawDamage = p1Hero.getAtaque() + p1Hero.getDanoBonus() + p2Hero.getVulnerabilidade();
-                int p2Mitigation = p2Hero.getDefesa() + p2Hero.getReducaoDano();
-                damageToP2 = Math.max(0, p1RawDamage - p2Mitigation);
-            }
+            int p1Attacks = hasDoubleAttackInCurrentCombat(p1Hero.getUuid()) ? 2 : 1;
+            int p2Attacks = hasDoubleAttackInCurrentCombat(p2Hero.getUuid()) ? 2 : 1;
 
-            int damageToP1;
-            if (hasMagicBasicAttacks(p2Hero.getUuid())) {
-                int p2RawMagic = p2Hero.getAtaque() + p2Hero.getDanoBonus();
-                damageToP1 = Math.max(0, p2RawMagic - p1Hero.getEspirito());
-            } else {
-                // Cálculo de Dano Físico de P2 em P1
-                int p2RawDamage = p2Hero.getAtaque() + p2Hero.getDanoBonus() + p1Hero.getVulnerabilidade();
-                int p1Mitigation = p1Hero.getDefesa() + p1Hero.getReducaoDano();
-                damageToP1 = Math.max(0, p2RawDamage - p1Mitigation);
-            }
+            int damageToP2 = calculateBasicAttackDamage(p1Hero, p2Hero) * p1Attacks;
+            int damageToP1 = calculateBasicAttackDamage(p2Hero, p1Hero) * p2Attacks;
 
             // A vida pode ficar abaixo de 0 durante o combate (game_architecture.md)
             p2Hero.setVidaAtual(p2Hero.getVidaAtual() - damageToP2);
@@ -1301,7 +1397,25 @@ public class GameEngine {
                 invokedCard.setCardType(com.alkateca.lendasdapoeira.enums.CardType.ACTION);
                 if (invokedCard.getColor() == null) invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.BLACK);
                 if (invokedCard.getDescricao() == null) {
-                    invokedCard.setDescricao("Ação Necromântica invocada em combate.");
+                    invokedCard.setDescricao("Zumbi\nEscolha um Herói: Recupere 5 de Vida.\nSe estiver Morto e sua vida ficar acima de 0: O reviva.");
+                }
+            } else if ("Vendaval Arcano".equalsIgnoreCase(cardName)) {
+                invokedCard.setCardType(com.alkateca.lendasdapoeira.enums.CardType.SPELL);
+                if (invokedCard.getColor() == null) invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.NEUTRAL);
+                if (invokedCard.getAfinidades() == null || invokedCard.getAfinidades().isEmpty()) {
+                    invokedCard.setAfinidades(new ArrayList<>(List.of(com.alkateca.lendasdapoeira.enums.Afinidade.AR)));
+                }
+                if (invokedCard.getDescricao() == null) {
+                    invokedCard.setDescricao("Afinidade Ar\nDescarte um Item Aleatório de cada Herói Inimigo.");
+                }
+            } else if ("Barreira de Gelo".equalsIgnoreCase(cardName)) {
+                invokedCard.setCardType(com.alkateca.lendasdapoeira.enums.CardType.SPELL);
+                if (invokedCard.getColor() == null) invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.GREEN);
+                if (invokedCard.getAfinidades() == null || invokedCard.getAfinidades().isEmpty()) {
+                    invokedCard.setAfinidades(new ArrayList<>(List.of(com.alkateca.lendasdapoeira.enums.Afinidade.AGUA)));
+                }
+                if (invokedCard.getDescricao() == null) {
+                    invokedCard.setDescricao("Afinidade Agua\nEnquanto estiver Equipada: Seus Heróis Recebem +1 de Espírito e +2 de Defesa.");
                 }
             } else if ("Tristeza".equalsIgnoreCase(cardName)) {
                 invokedCard.setCardType(com.alkateca.lendasdapoeira.enums.CardType.ACTION);

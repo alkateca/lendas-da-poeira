@@ -99,7 +99,7 @@
     "cardSet": "BASE",
     "itemType": "ARMA",
     "empunhadura": 1,
-    "descricao": "Arma - Empunhadura Simples - Zumbi\nInício do Combate: O Herói Inimigo Recebe -1 de Espírito -1 de Ataque -1 de Defesa -1 de Vida Máxima.",
+    "descricao": "Arma - Empunhadura Simples - Zumbi\nInício do Combate: O Herói Inimigo Recebe -1 de Espírito -1 de Ataque -1 de Defesa -1 de Vida Máxima até o Final da Partida.",
     "racas": [],
     "ordem": [
       "Zumbi"
@@ -187,7 +187,7 @@
     "cardSet": "BASE",
     "itemType": "ARMA",
     "empunhadura": 1,
-    "descricao": "Arma - Empunhadura Simples\nSeu Herói Recebe +2 de Ataque e +2 de Defesa.\nInício da Partida: O Herói Inimigo Recebe +1 de Vulnerabilidade.",
+    "descricao": "Arma - Empunhadura Simples\nSeu Herói Recebe +2 de Ataque e +2 de Defesa.\nAo Equipar: O Herói Inimigo Recebe +1 de Vulnerabilidade até o Final da Partida.",
     "racas": [],
     "ordem": [],
     "classe": [],
@@ -203,7 +203,7 @@
     "cardSet": "BASE",
     "itemType": "ARMA",
     "empunhadura": 2,
-    "descricao": "Arma - Empunhadura Dupla\nSeu Herói Recebe +4 de Ataque e +2 de Defesa.\nOs Heróis Inimigos Recebem +1 de Vulnerabilidade.",
+    "descricao": "Arma - Empunhadura Dupla\nSeu Herói Recebe +4 de Ataque e +2 de Defesa.\nAo Equipar: Os Heróis Inimigos Recebem +1 de Vulnerabilidade até o Final da Partida.",
     "racas": [],
     "ordem": [],
     "classe": [],
@@ -309,7 +309,7 @@
     "cardSet": "BASE",
     "itemType": "NENHUM",
     "empunhadura": 0,
-    "descricao": "Afinidade Ar - Zumbi\nOs Heróis Inimigos Recebem -1 de Espírito.",
+    "descricao": "Afinidade Ar - Zumbi\nOs Heróis Inimigos Recebem -1 de Espírito até o Final da Partida.",
     "racas": [],
     "ordem": [
       "Zumbi"
@@ -383,7 +383,7 @@
     "cardSet": "BASE",
     "itemType": "NENHUM",
     "empunhadura": 0,
-    "descricao": "Afinidade Agua\nSeu Herói Recebe +2 de Ataque e +1 de Espírito.\nAumente em 1 a Vulnerabilidade do Herói Inimigo.",
+    "descricao": "Afinidade Agua\nSeu Herói Recebe +2 de Ataque e +1 de Espírito.\nAumente em 1 a Vulnerabilidade do Herói Inimigo até o Final da Partida.",
     "racas": [],
     "ordem": [],
     "classe": [],
@@ -686,7 +686,7 @@
     "cardSet": "BASE",
     "itemType": "NENHUM",
     "empunhadura": 0,
-    "descricao": "Zumbi\nSeu Herói Recebe -1 de Espírito -1 de Ataque -1 de Defesa.\nJogue uma Carta do seu descarte.",
+    "descricao": "Zumbi\nSeu Herói Recebe -1 de Espírito -1 de Ataque -1 de Defesa até o Final da Partida.\nJogue uma Carta do seu descarte.",
     "racas": [],
     "ordem": [
       "Zumbi"
@@ -754,7 +754,7 @@
     "cardSet": "BASE",
     "itemType": "NENHUM",
     "empunhadura": 0,
-    "descricao": "Seu Herói Recebe +2 de Ataque.\nCure Seu Herói em X, onde X é seu Ataque.",
+    "descricao": "Seu Herói Recebe +2 de Ataque até o Final do Combate.\nCure Seu Herói em X, onde X é seu Ataque.",
     "racas": [],
     "ordem": [],
     "classe": [],

@@ -78,7 +78,9 @@ public class SnapshotFactory {
         snapshot.setWinnerPlayerId(engine.getWinnerPlayerId());
         snapshot.setForfeitedByPlayerId(engine.getForfeitedByPlayerId());
         snapshot.setWinReason(engine.getWinReason());
-        snapshot.setMatchResult(engine.buildMatchResultSummary());
+        if (engine.getTurnPhase() == TurnPhase.GAME_OVER || engine.getWinnerPlayerId() != null) {
+            snapshot.setMatchResult(engine.buildMatchResultSummary());
+        }
 
         // Guarda o pedido de escolha pendente (se a ResolutionQueue tiver pausado aguardando input do jogador)
         snapshot.setPendingChoice(engine.getGameState().getPendingChoice());

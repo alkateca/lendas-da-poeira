@@ -96,9 +96,14 @@ public class OnPlaySpellBuffEffect implements Effect {
                     .orElse(null);
 
             if (myHero != null) {
-                int totalEsp = bonusEspirito * matchCount;
-                int totalAtk = bonusAtaque * matchCount;
-                int totalDef = bonusDefesa * matchCount;
+                int goblinBonus = gameEngine.getGoblinEffectBonus(sourceCard);
+                int perCardEsp = bonusEspirito > 0 ? bonusEspirito + goblinBonus : bonusEspirito;
+                int perCardAtk = bonusAtaque > 0 ? bonusAtaque + goblinBonus : bonusAtaque;
+                int perCardDef = bonusDefesa > 0 ? bonusDefesa + goblinBonus : bonusDefesa;
+
+                int totalEsp = perCardEsp * matchCount;
+                int totalAtk = perCardAtk * matchCount;
+                int totalDef = perCardDef * matchCount;
                 myHero.setEspirito(myHero.getEspirito() + totalEsp);
                 myHero.setAtaque(myHero.getAtaque() + totalAtk);
                 myHero.setDefesa(myHero.getDefesa() + totalDef);
@@ -112,7 +117,7 @@ public class OnPlaySpellBuffEffect implements Effect {
                     gameEngine.registerCombatEndCleanup(this::revertBuff);
                 }
 
-                System.out.println("Efeito de " + sourceCard.getCardName() + " ativado (Ao jogar " + targetCardType.name() + " x" + matchCount + "): +" + totalAtk + " Ataque!");
+                System.out.println("Efeito de " + sourceCard.getCardName() + " ativado (Ao jogar " + targetCardType.name() + " x" + matchCount + "): +ESP " + totalEsp + ", +ATQ " + totalAtk + ", +DEF " + totalDef + "!");
                 gameEngine.captureSnapshot(sourceCard, this, "EFFECT_RESOLVED");
             }
         }

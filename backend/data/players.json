@@ -1,4 +1,52 @@
 [ {
+  "uuid" : "8b879e07-eefa-4bbe-999f-e8b226f6b01d",
+  "name" : "DevUser",
+  "currentDeck" : null,
+  "decks" : [ ],
+  "ownedHeroes" : {
+    "Isenora, Santa das Laminas" : 1,
+    "Cavaleiro Onear" : 1,
+    "Enamor,O Grande Cavaleiro" : 1
+  },
+  "ownedCards" : {
+    "Tristeza" : 2,
+    "Garra espectral" : 2,
+    "Lamina de Cristal" : 3,
+    "Determinação Cristalina" : 1,
+    "Broche de Cristal" : 3,
+    "Maestria com Chamas" : 2,
+    "Estatica" : 2,
+    "Para-raios" : 2,
+    "Mirar na cabeça" : 2,
+    "Quimera" : 3,
+    "Impulso de Poder" : 1,
+    "Risada Sarcástica" : 2,
+    "Dragast" : 3,
+    "Ponto Final" : 2,
+    "Ataque Mágico" : 3,
+    "Golpes Pesados" : 3,
+    "Banir!" : 2,
+    "Estrela do amanhã" : 2,
+    "Alma em Chamas" : 2,
+    "Convocação" : 2,
+    "Quebra!" : 2,
+    "Rapieira de Cristal" : 3,
+    "Bola de fogo" : 2,
+    "Ração de emergencia" : 2,
+    "Vendaval Arcano" : 2,
+    "Auto Defesa Magica" : 2,
+    "Contra Ataque" : 3
+  },
+  "permanentElo" : 1000,
+  "weeklyElo" : 1000,
+  "lastWeeklyResetWeek" : "2026-W44",
+  "balance" : {
+    "gold" : 5000
+  },
+  "poeira" : 5000,
+  "ownedItems" : { },
+  "gold" : 5000
+}, {
   "uuid" : "2db68214-2741-43f7-b413-c8adac92b47c",
   "name" : "dummy",
   "currentDeck" : {
@@ -1743,7 +1791,7 @@
     "Dragast" : 3,
     "Rapieira de Cristal" : 3,
     "Contra Ataque" : 3,
-    "Ataque Mágico" : 3,
+    "Ataque Mágico" : 5,
     "Golpes Pesados" : 3,
     "Ponto Final" : 2,
     "Auto Defesa Magica" : 2,
@@ -1767,9 +1815,13 @@
   },
   "permanentElo" : 1000,
   "weeklyElo" : 1000,
-  "lastWeeklyResetWeek" : "2026-W43",
-  "poeira" : 5000000,
-  "ownedItems" : { }
+  "lastWeeklyResetWeek" : "2026-W44",
+  "balance" : {
+    "gold" : 4999700
+  },
+  "poeira" : 4999700,
+  "ownedItems" : { },
+  "gold" : 4999700
 }, {
   "uuid" : "16ce2a43-2d41-4826-90e8-aedae904109a",
   "name" : "alka",
@@ -6145,7 +6197,7 @@
     "Risada Sarcástica" : 4,
     "Dragast" : 7,
     "Ponto Final" : 6,
-    "Ataque Mágico" : 7,
+    "Ataque Mágico" : 5,
     "Golpes Pesados" : 7,
     "Banir!" : 4,
     "Estrela do amanhã" : 4,
@@ -6190,10 +6242,14 @@
     "Cauterizar" : 4
   },
   "permanentElo" : 1018,
-  "weeklyElo" : 1018,
-  "lastWeeklyResetWeek" : "2026-W43",
-  "poeira" : 499550,
-  "ownedItems" : { }
+  "weeklyElo" : 1000,
+  "lastWeeklyResetWeek" : "2026-W44",
+  "balance" : {
+    "gold" : 499850
+  },
+  "poeira" : 499850,
+  "ownedItems" : { },
+  "gold" : 499850
 }, {
   "uuid" : "cc80dd53-32e5-49a9-a262-3ba6d575c365",
   "name" : "Dante",
@@ -6235,7 +6291,11 @@
   },
   "permanentElo" : 1000,
   "weeklyElo" : 1000,
-  "lastWeeklyResetWeek" : "2026-W43",
+  "lastWeeklyResetWeek" : "2026-W44",
+  "balance" : {
+    "gold" : 5000
+  },
   "poeira" : 5000,
-  "ownedItems" : { }
+  "ownedItems" : { },
+  "gold" : 5000
 } ]

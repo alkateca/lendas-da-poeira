@@ -59,19 +59,10 @@ public class PlayActionMultiPhysicalAttackRandomEffect implements Effect {
                 .filter(h -> Boolean.TRUE.equals(h.getEstaVivo()))
                 .collect(Collectors.toList());
 
-        boolean magicAttack = gameEngine.hasMagicBasicAttacks(myHeroId);
         for (Card weapon : equippedWeapons) {
             if (!livingEnemies.isEmpty()) {
                 HeroCard targetEnemy = livingEnemies.get(random.nextInt(livingEnemies.size()));
-                int damage;
-                if (magicAttack) {
-                    int rawMagic = myHero.getAtaque() + myHero.getDanoBonus();
-                    damage = Math.max(0, rawMagic - targetEnemy.getEspirito());
-                } else {
-                    int rawDamage = myHero.getAtaque() + myHero.getDanoBonus() + targetEnemy.getVulnerabilidade();
-                    int mitigation = targetEnemy.getDefesa() + targetEnemy.getReducaoDano();
-                    damage = Math.max(0, rawDamage - mitigation);
-                }
+                int damage = gameEngine.calculateBasicAttackDamage(myHero, targetEnemy);
                 targetEnemy.setVidaAtual(targetEnemy.getVidaAtual() - damage);
                 System.out.println("-> Ataque com " + weapon.getCardName() + " contra " +
                         targetEnemy.getCardName() + " causou " + damage + " de dano! Vida restante: " + targetEnemy.getVidaAtual());

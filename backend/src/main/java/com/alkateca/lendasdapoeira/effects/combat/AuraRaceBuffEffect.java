@@ -25,6 +25,11 @@ public class AuraRaceBuffEffect implements Effect {
     }
 
     @Override
+    public boolean canTriggerFromBench() {
+        return true;
+    }
+
+    @Override
     public boolean predicate(Card sourceCard, TurnPhase turnPhase) {
         return !applied && (turnPhase == TurnPhase.GAME_START
                 || turnPhase == TurnPhase.COMBAT_START

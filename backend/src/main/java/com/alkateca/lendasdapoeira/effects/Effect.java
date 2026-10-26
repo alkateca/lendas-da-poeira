@@ -21,4 +21,8 @@ public interface Effect {
     default boolean shouldCaptureSnapshot() {
         return true;
     }
+
+    default boolean canTriggerFromBench() {
+        return false;
+    }
 }
