@@ -368,6 +368,7 @@ public class MatchController {
             matchPlayer.setPermanentElo(savedPlayer.getPermanentElo() > 0 ? savedPlayer.getPermanentElo() : 1000);
             matchPlayer.setWeeklyElo(savedPlayer.getWeeklyElo() > 0 ? savedPlayer.getWeeklyElo() : 1000);
             matchPlayer.setLastWeeklyResetWeek(savedPlayer.getLastWeeklyResetWeek());
+            matchPlayer.setGold(savedPlayer.getGold());
         }
         return matchPlayer;
     }

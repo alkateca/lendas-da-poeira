@@ -54,6 +54,15 @@ export default class MainMenuScene extends Phaser.Scene {
             fontSize: '11px', color: '#64748b'
         });
 
+        const currentGold = this.player.balance?.gold ?? this.player.poeira ?? 0;
+        this.add.rectangle(980, 65, 290, 48, 0xfaf8f5).setStrokeStyle(3, 0x090d16);
+        this.goldHeaderText = this.add.text(980, 65, `🪙 GOLD: ${currentGold}`, {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '18px',
+            color: '#090d16',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
         this.syncPlayerProfileFromServer();
 
         // Botão para alternar o Baralho Escolhido no Menu Principal
@@ -84,23 +93,23 @@ export default class MainMenuScene extends Phaser.Scene {
             fontSize: '16px', color: '#94a3b8'
         }).setOrigin(0.5);
 
-        // Botão 1: Partida contra a Máquina (PvE)
-        this.createButton(width / 2, height / 2 - 30, '🤖 PARTIDA CONTRA A MÁQUINA (PvE)', 0x1d4ed8, () => {
+        this.createButton(width / 2, height / 2 - 45, '🤖 PARTIDA CONTRA A MÁQUINA (PvE)', 0x1d4ed8, () => {
             this.startMatchAgainstMachine();
         });
 
-        // Botão 2: PvP
-        this.createButton(width / 2, height / 2 + 65, '⚔️ PVP (JOGADOR VS JOGADOR)', 0xb91c1c, () => {
+        this.createButton(width / 2, height / 2 + 40, '⚔️ PVP (JOGADOR VS JOGADOR)', 0xb91c1c, () => {
             this.onPvpButtonClicked();
         });
 
-        // Botão 3: Montar Baralho
-        this.createButton(width / 2, height / 2 + 160, '🃏 MONTAR BARALHO (DECKBUILDER)', 0xca8a04, () => {
+        this.createButton(width / 2, height / 2 + 125, '🃏 MONTAR BARALHO (DECKBUILDER)', 0xca8a04, () => {
             this.scene.start('DeckBuilderScene', { player: this.player });
         });
 
-        // Botão 4: Loja de Boosters e Decks
-        this.createButton(width / 2, height / 2 + 255, '🛒 LOJA DA POEIRA (BOOSTERS & DECKS)', 0x16a34a, () => {
+        this.createButton(width / 2, height / 2 + 210, '📚 MINHA COLEÇÃO (VENDER CARTAS)', 0x7e22ce, () => {
+            this.scene.start('CollectionScene', { player: this.player });
+        });
+
+        this.createButton(width / 2, height / 2 + 295, '🛒 MERCADO DA POEIRA (LOJA & P2P)', 0x16a34a, () => {
             this.scene.start('ShopScene', { player: this.player });
         });
 
@@ -290,9 +299,17 @@ export default class MainMenuScene extends Phaser.Scene {
                 this.player.permanentElo = fresh.permanentElo ?? 1000;
                 this.player.weeklyElo = fresh.weeklyElo ?? 1000;
                 this.player.lastWeeklyResetWeek = fresh.lastWeeklyResetWeek;
+                this.player.balance = fresh.balance || { gold: fresh.poeira ?? 0 };
+                this.player.poeira = this.player.balance.gold;
+                if (fresh.ownedCards) this.player.ownedCards = fresh.ownedCards;
+                if (fresh.ownedHeroes) this.player.ownedHeroes = fresh.ownedHeroes;
+
                 localStorage.setItem('lendas_player', JSON.stringify(this.player));
                 if (this.playerEloText) {
                     this.playerEloText.setText(`🏅 ELO: ${this.player.permanentElo}  |  📅 Semanal: ${this.player.weeklyElo}`);
+                }
+                if (this.goldHeaderText) {
+                    this.goldHeaderText.setText(`🪙 GOLD: ${this.player.balance.gold}`);
                 }
             }
         } catch (e) {
