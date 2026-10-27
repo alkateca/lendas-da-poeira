@@ -1006,5 +1006,53 @@
     "classe": [],
     "afinidades": [],
     "unica": false
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000026",
+    "cardName": "Seguindo Ordens",
+    "cardType": "ACTION",
+    "color": "BLACK",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Escolha um Herói Inimigo fora de combate: Ele Sofre 1 de Dano Direto.\nEscolha um Herói Inimigo: Altere seu Estado Ativo.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": [],
+    "unica": false
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000027",
+    "cardName": "Grilhões Pesados",
+    "cardType": "ACTION",
+    "color": "BLACK",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Desequipe um Item do Herói Inimigo. Se o Herói Inimigo estiver Ferido: Desequipe até dois Itens em vez disso.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": [],
+    "unica": false
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000028",
+    "cardName": "Manoplas do Necromante",
+    "cardType": "ITEM",
+    "color": "BLACK",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "ARMADURA",
+    "empunhadura": 0,
+    "descricao": "Armadura\nInício do Combate: Seu Herói recebe +X de Espírito, +X de Ataque e +X de Defesa até o Final do Combate, onde X é a diferença entre a Vida Máxima e a Vida Atual do Herói Inimigo (máximo de 3).",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": [],
+    "unica": false
   }
 ]

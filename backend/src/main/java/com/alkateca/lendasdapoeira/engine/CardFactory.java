@@ -274,6 +274,10 @@ public class CardFactory {
             case "Estrela do amanhã":
                 effects.add(new EndOfCombatReviveAndExileEffect(13));
                 break;
+            case "Manoplas do necromante":
+            case "Manoplas do Necromante":
+                effects.add(new StartOfCombatBuffStatsByEnemyMissingHealthEffect(3));
+                break;
 
             // ==========================================
             // FEITIÇOS (Spells)
@@ -388,6 +392,16 @@ public class CardFactory {
                 break;
             case "Corte seus Pescoços":
                 effects.add(new PlayActionMultiPhysicalAttackRandomEffect());
+                break;
+            case "Seguindo ordens":
+            case "Seguindo Ordens":
+                effects.add(new PlayActionChooseEnemyHeroOutOfCombatDirectDamageEffect(1));
+                effects.add(new PlayActionToggleEnemyHeroActiveStateEffect());
+                break;
+            case "Grilhões Pesados":
+            case "Grilhões pesados":
+            case "Girlhões pesados":
+                effects.add(new PlayActionUnequipEnemyItemConditionalWoundedEffect(1, 2));
                 break;
 
             // ==========================================
