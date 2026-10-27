@@ -976,5 +976,61 @@
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000037",
+    "cardName": "Izeref, Executor da Ordem Necrótica",
+    "cardType": "HERO",
+    "color": "BLACK",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "descricao": "Aura: O Herói Inimigo é considerado morto se sua vida ficar abaixo de 0.",
+    "espirito": 1,
+    "ataque": 7,
+    "defesa": 3,
+    "vidaMaxima": 14,
+    "vidaAtual": 14,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Criador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000038",
+    "cardName": "Constructo Carniceiro",
+    "cardType": "HERO",
+    "color": "BLACK",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "descricao": "Aura: Quando um Herói Inimigo sofrer Dano, ele sofre 1 de Dano a mais.",
+    "espirito": 2,
+    "ataque": 7,
+    "defesa": 2,
+    "vidaMaxima": 15,
+    "vidaAtual": 15,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Constructo"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Emissor"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
   }
 ]
