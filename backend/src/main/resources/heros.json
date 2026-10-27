@@ -951,5 +951,30 @@
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000036",
+    "cardName": "Chefe Carrasco",
+    "cardType": "HERO",
+    "color": "BLACK",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "descricao": "Início do Combate: Se não estiver com Espada do Carrasco Equipada: Invocar: Espada do Carrasco.\nSe o Herói Inimigo tiver vida menor que a sua Vida Máxima, a Defesa do Herói Inimigo se torna 0 até o Final do Combate.",
+    "espirito": 0,
+    "ataque": 6,
+    "defesa": 2,
+    "vidaMaxima": 15,
+    "vidaAtual": 15,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
   }
 ]

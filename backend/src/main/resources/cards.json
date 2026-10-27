@@ -990,5 +990,21 @@
     "classe": [],
     "afinidades": [],
     "unica": false
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000025",
+    "cardName": "Espada do Carrasco",
+    "cardType": "ITEM",
+    "color": "BLACK",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "ARMA",
+    "empunhadura": 2,
+    "descricao": "Arma - Empunhadura Dupla\nSeu Herói Recebe +3 de Ataque.\nFinal do Combate: Se o Herói Inimigo tiver 0 ou menos de Vida, Seu Herói recupera 5 pontos de Vida.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": [],
+    "unica": false
   }
 ]
