@@ -35,7 +35,7 @@ public class EndOfCombatHealBySpiritEffect implements Effect {
                 .findFirst()
                 .orElse(null);
 
-        if (myHero != null) {
+        if (myHero != null && Boolean.TRUE.equals(myHero.getEstaVivo())) {
             int healAmount = myHero.getEspirito();
             int novaVida = myHero.getVidaAtual() + healAmount;
             if (novaVida > myHero.getVidaMaxima()) {

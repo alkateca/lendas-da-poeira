@@ -400,7 +400,7 @@ public class DeckValidatorService {
 
         if (deck.getLiberationList() != null) {
             for (Card libCard : deck.getLiberationList()) {
-                if (libCard == null) continue;
+                if (libCard == null || libCard.isLiberationCard()) continue;
                 requestedCopies.merge(libCard.getCardName(), 1, Integer::sum);
             }
         }

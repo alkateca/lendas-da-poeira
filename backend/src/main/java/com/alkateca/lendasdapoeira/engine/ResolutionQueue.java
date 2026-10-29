@@ -38,6 +38,7 @@ public class ResolutionQueue {
             PendingEffect pending = queue.pollFirst();
             int historySizeBefore = engine.getSnapshotHistory().size();
             pending.getEffect().resolve(engine, pending.getSourceCard());
+            engine.evaluateInstantDeathByAura();
 
             // Captura foto do efeito resolvido (ou do pedido de escolha aberto)
             if (engine.isWaitingForPlayerChoice()) {

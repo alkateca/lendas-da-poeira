@@ -84,6 +84,12 @@ public class PlayerController {
             player.getDecks().add(incomingDeck);
         }
 
+        if (player.getCurrentDeck() == null
+                || (player.getCurrentDeck().getUuid() != null
+                    && player.getCurrentDeck().getUuid().equals(incomingDeck.getUuid()))) {
+            player.setCurrentDeck(incomingDeck);
+        }
+
         playerStorageService.savePlayer(player);
         return ResponseEntity.ok(player);
     }

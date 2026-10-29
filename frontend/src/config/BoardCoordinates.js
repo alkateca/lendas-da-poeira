@@ -26,10 +26,19 @@ export const BOARD_LAYOUT = {
             BLACK: 0x64748b,
             YELLOW: 0xfacc15,
             NEUTRAL: 0x94a3b8
+        },
+        CARD_THEMES: {
+            LENDARIA: { headerBg: 0xffd700, border: 0xff55ff, stripe: 0xf59e0b, textColor: '#090d16' }, // Cor exclusiva de Raridade Lendária
+            RED:      { headerBg: 0xdc2626, border: 0xef4444, stripe: 0x991b1b, textColor: '#ffffff' },
+            BLUE:     { headerBg: 0x2563eb, border: 0x38bdf8, stripe: 0x1e40af, textColor: '#ffffff' },
+            BLACK:    { headerBg: 0x1e293b, border: 0x9333ea, stripe: 0x090d16, textColor: '#f8fafc' },
+            GREEN:    { headerBg: 0x16a34a, border: 0x4ade80, stripe: 0x14532d, textColor: '#ffffff' },
+            YELLOW:   { headerBg: 0xfacc15, border: 0xffe600, stripe: 0xca8a04, textColor: '#090d16' },
+            WHITE:    { headerBg: 0xf8fafc, border: 0xe2e8f0, stripe: 0x94a3b8, textColor: '#090d16' },
+            NEUTRAL:  { headerBg: 0xCBD5E1, border: 0x94a3b8, stripe: 0x475569, textColor: '#090d16' }
         }
     },
 
-    // 1. TOPO CENTRAL: Mão do Oponente espaçada (sem sobreposição)
     OPPONENT_HAND_SLOTS: [
         { x: 779,  y: -16, angle: 8 },
         { x: 907,  y: -10, angle: 4 },
@@ -38,34 +47,27 @@ export const BOARD_LAYOUT = {
         { x: 1291, y: -16, angle: -8 }
     ],
 
-    // BANNERS DOS JOGADORES -> Agora no lado ESQUERDO da tela
     PLAYER_BANNERS: {
         OPPONENT: { x: 215, y: 72 },
         LOCAL:    { x: 215, y: 1008 }
     },
 
-    // ZONA DE LIBERAÇÃO -> Agora no lado DIREITO (Tamanho MEDIUM_CARD: 140x190)
     LIBERATION_PANEL: {
         OPPONENT: { x: 1525, y: 135 },
         LOCAL:    { x: 1525, y: 945 }
     },
 
-    // BARALHO E DESCARTE (LÁPIDE) -> Agora no lado DIREITO, ao lado da Zona de Liberação
     PILES: {
-        OPPONENT_DECK:    { x: 1695, y: 135 }, // Tamanho MEDIUM_CARD (140x190)
-        OPPONENT_DISCARD: { x: 1835, y: 135 }, // Ícone de Lápide (82x96)
+        OPPONENT_DECK:    { x: 1695, y: 135 },
+        OPPONENT_DISCARD: { x: 1835, y: 135 },
 
-        LOCAL_DECK:       { x: 1695, y: 945 }, // Tamanho MEDIUM_CARD (140x190)
-        LOCAL_DISCARD:    { x: 1835, y: 945 }, // Ícone de Lápide (82x96)
+        LOCAL_DECK:       { x: 1695, y: 945 },
+        LOCAL_DISCARD:    { x: 1835, y: 945 },
 
-        // Botão Confirmar centralizado na direita (entre os recursos do oponente e os seus)
         MAIN_BUTTON:      { x: 1695, y: 540 },
-
-        // Preview Ampliado no centro-esquerda (entre os dois banners de nome)
         LARGE_PREVIEW:    { x: 215,  y: 540 }
     },
 
-    // 3. ESQUERDA: Molduras e Slots das Bancadas de Heróis (ZoneId.BENCH - Tamanho Médio com espaçamento ampliado)
     BENCH_BOXES: {
         OPPONENT: { x: 310, y: 275, width: 530, height: 300 },
         LOCAL:    { x: 310, y: 805, width: 530, height: 300 }
@@ -83,7 +85,6 @@ export const BOARD_LAYOUT = {
         { x: 482, y: 815 }
     ],
 
-    // 4. CENTRO: Círculo da Arena + Batalha + 4 Slots Intercalados espaçados
     ARENA_CIRCLE: { x: 1035, y: 500, radius: 385 },
 
     BATTLE_SLOTS: {
@@ -98,7 +99,6 @@ export const BOARD_LAYOUT = {
         { x: 1314, y: 500, order: 4 }
     ],
 
-    // 5. BASE CENTRAL: Mão do Jogador Local com espaçamento amplo (sem sobreposição)
     LOCAL_HAND_SLOTS: [
         { x: 771,  y: 985, angle: -8 },
         { x: 903,  y: 970, angle: -4 },
@@ -107,3 +107,12 @@ export const BOARD_LAYOUT = {
         { x: 1299, y: 985, angle: 8 }
     ]
 };
+
+export function getCardVisualTheme(color, rarity) {
+    const themes = BOARD_LAYOUT.COLORS.CARD_THEMES;
+    if (String(rarity || '').toUpperCase() === 'LENDARIA') {
+        return themes.LENDARIA;
+    }
+    const key = String(color || 'NEUTRAL').toUpperCase();
+    return themes[key] || themes.NEUTRAL;
+}

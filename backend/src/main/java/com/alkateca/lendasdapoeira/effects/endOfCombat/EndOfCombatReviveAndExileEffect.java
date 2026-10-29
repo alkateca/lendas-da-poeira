@@ -39,7 +39,7 @@ public class EndOfCombatReviveAndExileEffect implements Effect {
                 .findFirst()
                 .orElse(null);
 
-        if (allyHero != null) {
+        if (allyHero != null && Boolean.TRUE.equals(allyHero.getEstaVivo())) {
             if (allyHero.getVidaAtual() < 0) {
                 allyHero.setVidaAtual(reviveHealth);
                 System.out.println("-> " + allyHero.getCardName() + " recuperou vida! Vida restante: " + allyHero.getVidaAtual());

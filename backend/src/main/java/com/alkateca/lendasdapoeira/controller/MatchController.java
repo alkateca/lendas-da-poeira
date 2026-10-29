@@ -133,6 +133,28 @@ public class MatchController {
         return ResponseEntity.ok(result);
     }
 
+    @PostMapping("/matches/{matchId}/timeout")
+    public ResponseEntity<MatchTimelineResponseDTO> handlePhaseTimeout(
+            @PathVariable UUID matchId,
+            @RequestParam(required = false) UUID playerId,
+            @RequestParam(defaultValue = "0") long sinceSequence,
+            @RequestBody(required = false) java.util.Map<String, Object> body) {
+        try {
+            UUID resolvedPlayerId = playerId;
+            if (resolvedPlayerId == null && body != null && body.get("playerId") != null) {
+                resolvedPlayerId = UUID.fromString(String.valueOf(body.get("playerId")));
+            }
+            long resolvedSinceSeq = sinceSequence;
+            if (resolvedSinceSeq == 0 && body != null && body.get("sinceSequence") != null) {
+                resolvedSinceSeq = Long.parseLong(String.valueOf(body.get("sinceSequence")));
+            }
+            MatchTimelineResponseDTO timeline = matchmakingService.processPhaseTimeout(matchId, resolvedPlayerId, resolvedSinceSeq);
+            return ResponseEntity.ok(timeline);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @GetMapping("/matches/{matchId}/state")
     public ResponseEntity<MatchTimelineResponseDTO> getMatchState(
             @PathVariable UUID matchId,
@@ -369,6 +391,18 @@ public class MatchController {
             matchPlayer.setWeeklyElo(savedPlayer.getWeeklyElo() > 0 ? savedPlayer.getWeeklyElo() : 1000);
             matchPlayer.setLastWeeklyResetWeek(savedPlayer.getLastWeeklyResetWeek());
             matchPlayer.setGold(savedPlayer.getGold());
+            if (savedPlayer.getOwnedHeroes() != null) {
+                matchPlayer.setOwnedHeroes(new java.util.HashMap<>(savedPlayer.getOwnedHeroes()));
+            }
+            if (savedPlayer.getOwnedCards() != null) {
+                matchPlayer.setOwnedCards(new java.util.HashMap<>(savedPlayer.getOwnedCards()));
+            }
+            if (savedPlayer.getOwnedItems() != null) {
+                matchPlayer.setOwnedItems(new java.util.HashMap<>(savedPlayer.getOwnedItems()));
+            }
+            if (savedPlayer.getDecks() != null) {
+                matchPlayer.setDecks(new ArrayList<>(savedPlayer.getDecks()));
+            }
         }
         return matchPlayer;
     }

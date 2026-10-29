@@ -55,6 +55,78 @@ public class GameEngine {
     private final Map<UUID, Integer> combatEffectiveHealingByPlayer = new HashMap<>();
     private final Map<UUID, Integer> maxHeroAttackInCurrentCombat = new HashMap<>();
     private final Set<UUID> doubleAttackHeroIdsInCurrentCombat = new HashSet<>();
+    private final Map<UUID, Set<UUID>> playedCardIdsInCurrentTurn = new HashMap<>();
+    private final Map<UUID, Set<UUID>> invokedCardIdsByPlayerInCurrentTurn = new HashMap<>();
+    private final Map<UUID, Integer> extraCardsDrawnInCurrentTurn = new HashMap<>();
+    private final Set<UUID> heroesWhoDealtPhysicalOrMagicDamageInCurrentCombat = new HashSet<>();
+
+    public void recordExtraCardDraw(UUID playerId, int count) {
+        if (playerId == null || count <= 0) return;
+        if (this.turnPhase != TurnPhase.GAME_START
+                && this.turnPhase != TurnPhase.CHOICE
+                && this.turnPhase != TurnPhase.DISCARD) {
+            this.extraCardsDrawnInCurrentTurn.put(
+                    playerId,
+                    this.extraCardsDrawnInCurrentTurn.getOrDefault(playerId, 0) + count
+            );
+        }
+    }
+
+    public boolean hasDrawnCardsOutsideChoiceInCurrentTurn(UUID playerId) {
+        return playerId != null && this.extraCardsDrawnInCurrentTurn.getOrDefault(playerId, 0) > 0;
+    }
+
+    public void recordHeroDealtPhysicalOrMagicDamage(UUID heroId) {
+        if (heroId != null) {
+            this.heroesWhoDealtPhysicalOrMagicDamageInCurrentCombat.add(heroId);
+        }
+    }
+
+    public boolean hasHeroDealtPhysicalOrMagicDamageInCurrentCombat(UUID heroId) {
+        return heroId != null && this.heroesWhoDealtPhysicalOrMagicDamageInCurrentCombat.contains(heroId);
+    }
+
+    public int getCardsPlayedByPlayerInCurrentTurn(UUID playerId) {
+        if (playerId == null) return 0;
+        Set<UUID> uniquePlayed = new HashSet<>(
+                this.playedCardIdsInCurrentTurn.getOrDefault(playerId, Collections.emptySet())
+        );
+        Set<UUID> invokedByPlayer = this.invokedCardIdsByPlayerInCurrentTurn.getOrDefault(playerId, Collections.emptySet());
+        if (gameState != null && player1 != null) {
+            boolean isP1 = playerId.equals(player1.getUuid());
+            List<Card> currentStack = isP1 ? gameState.getPlayer1PlayedCards() : gameState.getPlayer2PlayedCards();
+            if (currentStack != null) {
+                for (Card c : currentStack) {
+                    if (c != null && c.getUuid() != null
+                            && !invokedCardIdsInCurrentCombat.contains(c.getUuid())
+                            && !invokedByPlayer.contains(c.getUuid())) {
+                        uniquePlayed.add(c.getUuid());
+                    }
+                }
+            }
+        }
+        return uniquePlayed.size();
+    }
+
+    public int getCardsPlayedOrInvokedByPlayerInCurrentCombat(UUID playerId) {
+        if (playerId == null) return 0;
+        Set<UUID> uniqueAll = new HashSet<>(
+                this.playedCardIdsInCurrentTurn.getOrDefault(playerId, Collections.emptySet())
+        );
+        uniqueAll.addAll(this.invokedCardIdsByPlayerInCurrentTurn.getOrDefault(playerId, Collections.emptySet()));
+        if (gameState != null && player1 != null) {
+            boolean isP1 = playerId.equals(player1.getUuid());
+            List<Card> currentStack = isP1 ? gameState.getPlayer1PlayedCards() : gameState.getPlayer2PlayedCards();
+            if (currentStack != null) {
+                for (Card c : currentStack) {
+                    if (c != null && c.getUuid() != null) {
+                        uniqueAll.add(c.getUuid());
+                    }
+                }
+            }
+        }
+        return uniqueAll.size();
+    }
 
     public void enableDoubleAttackForCurrentCombat(UUID heroId) {
         if (heroId != null) {
@@ -104,6 +176,12 @@ public class GameEngine {
         if (card != null && !resolvedCardsInCurrentCombat.contains(card)) {
             resolvedCardsInCurrentCombat.add(card);
         }
+        if (card != null && card.getOwnerId() != null && card.getUuid() != null
+                && !invokedCardIdsInCurrentCombat.contains(card.getUuid())) {
+            playedCardIdsInCurrentTurn
+                    .computeIfAbsent(card.getOwnerId(), k -> new HashSet<>())
+                    .add(card.getUuid());
+        }
     }
 
     public List<Card> getResolvedPlayedCardsForPlayer(UUID playerId) {
@@ -141,6 +219,10 @@ public class GameEngine {
         this.combatEffectiveHealingByPlayer.clear();
         this.maxHeroAttackInCurrentCombat.clear();
         this.doubleAttackHeroIdsInCurrentCombat.clear();
+        this.playedCardIdsInCurrentTurn.clear();
+        this.invokedCardIdsByPlayerInCurrentTurn.clear();
+        this.extraCardsDrawnInCurrentTurn.clear();
+        this.heroesWhoDealtPhysicalOrMagicDamageInCurrentCombat.clear();
     }
 
     // =========================================================================
@@ -480,6 +562,17 @@ public class GameEngine {
      * Processa a desistência (W.O.) de um jogador, declarando o oponente vencedor e encerrando a partida.
      */
     public void forfeitMatch(UUID quittingPlayerId) {
+        forfeitMatch(quittingPlayerId, "FORFEIT", "MATCH_FORFEITED");
+    }
+
+    /**
+     * Processa a derrota por tempo esgotado (30s sem ação) de um jogador, declarando o oponente vencedor.
+     */
+    public void timeoutMatch(UUID timedOutPlayerId) {
+        forfeitMatch(timedOutPlayerId, "TIMEOUT", "MATCH_TIMEOUT");
+    }
+
+    private void forfeitMatch(UUID quittingPlayerId, String reason, String eventType) {
         if (this.turnPhase == TurnPhase.GAME_OVER) {
             return;
         }
@@ -490,7 +583,7 @@ public class GameEngine {
 
         this.forfeitedByPlayerId = quittingPlayer != null ? quittingPlayer.getUuid() : quittingPlayerId;
         this.winnerPlayerId = winnerPlayer != null ? winnerPlayer.getUuid() : null;
-        this.winReason = "FORFEIT";
+        this.winReason = reason;
 
         // Limpa qualquer escolha pendente para não travar a tela do oponente
         if (this.gameState != null) {
@@ -511,7 +604,7 @@ public class GameEngine {
         }
 
         gameOver();
-        captureSnapshot(null, null, "MATCH_FORFEITED");
+        captureSnapshot(null, null, eventType);
     }
 
     public void gameOver() {
@@ -585,8 +678,8 @@ public class GameEngine {
         HeroCard p1Hero = getActiveHero(player1, gameState.getActiveHeroPlayer1Id());
         HeroCard p2Hero = getActiveHero(player2, gameState.getActiveHeroPlayer2Id());
 
-        if (p1Hero != null) p1Hero.onPhaseChange(phase, resolutionQueue);
-        if (p2Hero != null) p2Hero.onPhaseChange(phase, resolutionQueue);
+        if (p1Hero != null && Boolean.TRUE.equals(p1Hero.getEstaVivo())) p1Hero.onPhaseChange(phase, resolutionQueue);
+        if (p2Hero != null && Boolean.TRUE.equals(p2Hero.getEstaVivo())) p2Hero.onPhaseChange(phase, resolutionQueue);
 
         if (phase == TurnPhase.COMBAT_START || phase == TurnPhase.COMBAT_END) {
             List<Card> allHeroes = new ArrayList<>();
@@ -920,6 +1013,17 @@ public class GameEngine {
 
         int maxCards = Math.max(firstPlayerPending.size(), secondPlayerPending.size());
 
+        for (Card c : firstPlayerPending) {
+            if (c != null && c.getOwnerId() != null && c.getUuid() != null) {
+                playedCardIdsInCurrentTurn.computeIfAbsent(c.getOwnerId(), k -> new HashSet<>()).add(c.getUuid());
+            }
+        }
+        for (Card c : secondPlayerPending) {
+            if (c != null && c.getOwnerId() != null && c.getUuid() != null) {
+                playedCardIdsInCurrentTurn.computeIfAbsent(c.getOwnerId(), k -> new HashSet<>()).add(c.getUuid());
+            }
+        }
+
         for (int i = 0; i < maxCards; i++) {
             if (i < firstPlayerPending.size()) {
                 enqueueCardAndHeroOnPlayResolution(firstPlayerPending.get(i), false);
@@ -1013,12 +1117,106 @@ public class GameEngine {
                         .anyMatch(eff -> eff instanceof com.alkateca.lendasdapoeira.effects.combat.ConvertAttacksToMagicDamageEffect));
     }
 
+    private Player getOpposingPlayerForHero(HeroCard hero) {
+        if (hero == null) return null;
+        if (hero.getOwnerId() != null) {
+            if (player1 != null && hero.getOwnerId().equals(player1.getUuid())) {
+                return player2;
+            }
+            if (player2 != null && hero.getOwnerId().equals(player2.getUuid())) {
+                return player1;
+            }
+        }
+        if (player1 != null && player1.getCurrentDeck() != null && player1.getCurrentDeck().getHeroList() != null
+                && player1.getCurrentDeck().getHeroList().stream().anyMatch(h -> h != null && h.getUuid().equals(hero.getUuid()))) {
+            return player2;
+        }
+        if (player2 != null && player2.getCurrentDeck() != null && player2.getCurrentDeck().getHeroList() != null
+                && player2.getCurrentDeck().getHeroList().stream().anyMatch(h -> h != null && h.getUuid().equals(hero.getUuid()))) {
+            return player1;
+        }
+        return null;
+    }
+
+    public int getEnemyBonusDamageTakenFromAuras(HeroCard defender) {
+        Player opposingPlayer = getOpposingPlayerForHero(defender);
+        if (opposingPlayer == null || opposingPlayer.getCurrentDeck() == null
+                || opposingPlayer.getCurrentDeck().getHeroList() == null) {
+            return 0;
+        }
+        return opposingPlayer.getCurrentDeck().getHeroList().stream()
+                .filter(h -> h != null
+                        && Boolean.TRUE.equals(h.getEstaVivo())
+                        && h.getVidaAtual() > 0
+                        && h.getEffects() != null)
+                .flatMap(h -> h.getEffects().stream())
+                .filter(eff -> eff instanceof com.alkateca.lendasdapoeira.effects.combat.AuraBonusDamageTakenByEnemyEffect)
+                .mapToInt(eff -> ((com.alkateca.lendasdapoeira.effects.combat.AuraBonusDamageTakenByEnemyEffect) eff).getExtraDamage())
+                .sum();
+    }
+
+    public boolean hasEnemyDeadBelowZeroAura(HeroCard targetHero) {
+        Player opposingPlayer = getOpposingPlayerForHero(targetHero);
+        if (opposingPlayer == null || opposingPlayer.getCurrentDeck() == null
+                || opposingPlayer.getCurrentDeck().getHeroList() == null) {
+            return false;
+        }
+        return opposingPlayer.getCurrentDeck().getHeroList().stream()
+                .filter(h -> h != null
+                        && Boolean.TRUE.equals(h.getEstaVivo())
+                        && h.getVidaAtual() > 0
+                        && h.getEffects() != null)
+                .flatMap(h -> h.getEffects().stream())
+                .anyMatch(eff -> eff instanceof com.alkateca.lendasdapoeira.effects.combat.AuraEnemyDeadBelowZeroEffect);
+    }
+
+    public void evaluateInstantDeathByAura() {
+        evaluateInstantDeathByAuraForPlayer(player1);
+        evaluateInstantDeathByAuraForPlayer(player2);
+    }
+
+    private void evaluateInstantDeathByAuraForPlayer(Player player) {
+        if (player == null || player.getCurrentDeck() == null || player.getCurrentDeck().getHeroList() == null) {
+            return;
+        }
+        int newlyDeadAllies = 0;
+        for (Card c : player.getCurrentDeck().getHeroList()) {
+            if (c instanceof HeroCard hero
+                    && Boolean.TRUE.equals(hero.getEstaVivo())
+                    && hero.getVidaAtual() < 0
+                    && hasEnemyDeadBelowZeroAura(hero)) {
+                hero.setEstaVivo(false);
+                hero.setEstaAtivo(false);
+                detachAllCardsFromHero(hero.getUuid(), ZoneId.DISCARD);
+                newlyDeadAllies++;
+                if (player1 != null && player2 != null && player.getUuid() != null) {
+                    UUID killerPlayerId = player.getUuid().equals(player1.getUuid())
+                            ? player2.getUuid()
+                            : player1.getUuid();
+                    if (killerPlayerId != null) {
+                        trackMissionProgress(killerPlayerId, "DEFEAT_HERO", 1);
+                    }
+                }
+            }
+        }
+        if (newlyDeadAllies > 0 && player.getUuid() != null) {
+            trackMissionProgress(player.getUuid(), "ALLY_HEROES_DEAD", newlyDeadAllies);
+        }
+    }
+
     public int calculatePhysicalDamage(HeroCard attacker, HeroCard defender, int basePhysicalDamage) {
         if (defender == null) return 0;
         int bonusDamage = attacker != null ? attacker.getDanoBonus() : 0;
         int rawDamage = basePhysicalDamage + bonusDamage;
         int totalMitigation = defender.getDefesa() + defender.getReducaoDano();
-        return Math.max(0, (rawDamage - totalMitigation) + defender.getVulnerabilidade());
+        int finalDamage = Math.max(0, (rawDamage - totalMitigation) + defender.getVulnerabilidade());
+        if (finalDamage > 0) {
+            finalDamage += getEnemyBonusDamageTakenFromAuras(defender);
+            if (attacker != null && attacker.getUuid() != null) {
+                heroesWhoDealtPhysicalOrMagicDamageInCurrentCombat.add(attacker.getUuid());
+            }
+        }
+        return finalDamage;
     }
 
     public int calculateMagicDamage(HeroCard attacker, HeroCard defender, int baseMagicDamage) {
@@ -1026,14 +1224,25 @@ public class GameEngine {
         int bonusDamage = attacker != null ? attacker.getDanoBonus() : 0;
         int rawMagic = baseMagicDamage + bonusDamage;
         int magicMitigation = defender.getEspirito();
-        return Math.max(0, (rawMagic - magicMitigation) + defender.getVulnerabilidade());
+        int finalDamage = Math.max(0, (rawMagic - magicMitigation) + defender.getVulnerabilidade());
+        if (finalDamage > 0) {
+            finalDamage += getEnemyBonusDamageTakenFromAuras(defender);
+            if (attacker != null && attacker.getUuid() != null) {
+                heroesWhoDealtPhysicalOrMagicDamageInCurrentCombat.add(attacker.getUuid());
+            }
+        }
+        return finalDamage;
     }
 
     public int calculateDirectDamage(HeroCard attacker, HeroCard defender, int baseDirectDamage) {
         if (defender == null) return 0;
         int bonusDamage = attacker != null ? attacker.getDanoBonus() : 0;
         int rawDirect = baseDirectDamage + bonusDamage + defender.getVulnerabilidade();
-        return Math.max(0, rawDirect);
+        int finalDamage = Math.max(0, rawDirect);
+        if (finalDamage > 0) {
+            finalDamage += getEnemyBonusDamageTakenFromAuras(defender);
+        }
+        return finalDamage;
     }
 
     public int calculateBasicAttackDamage(HeroCard attacker, HeroCard defender) {
@@ -1063,6 +1272,7 @@ public class GameEngine {
             // A vida pode ficar abaixo de 0 durante o combate (game_architecture.md)
             p2Hero.setVidaAtual(p2Hero.getVidaAtual() - damageToP2);
             p1Hero.setVidaAtual(p1Hero.getVidaAtual() - damageToP1);
+            evaluateInstantDeathByAura();
 
             // Tira a foto do impacto do combate físico antes de ir para COMBAT_END
             captureSnapshot(p1Hero, null, "PHYSICAL_COMBAT_EXCHANGE");
@@ -1355,6 +1565,9 @@ public class GameEngine {
                 if ("Rapieira de Cristal".equalsIgnoreCase(cardName) || "Dragast".equalsIgnoreCase(cardName)) {
                     invokedCard.setItemType(com.alkateca.lendasdapoeira.enums.ItemType.ARMA);
                     invokedCard.setEmpunhadura(1);
+                } else if ("Espada do Carrasco".equalsIgnoreCase(cardName)) {
+                    invokedCard.setItemType(com.alkateca.lendasdapoeira.enums.ItemType.ARMA);
+                    invokedCard.setEmpunhadura(2);
                 }
             } else if (invokedCard.getCardType() == null) {
                 invokedCard.setCardType(com.alkateca.lendasdapoeira.enums.CardType.SPELL);
@@ -1366,6 +1579,9 @@ public class GameEngine {
             } else if ("Dragast".equalsIgnoreCase(cardName) && invokedCard.getDescricao() == null) {
                 invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.WHITE);
                 invokedCard.setDescricao("Equipar: +2 de Espírito e +2 de Ataque.\nFinal do Combate: Cura 2 de Vida.");
+            } else if ("Espada do Carrasco".equalsIgnoreCase(cardName) && invokedCard.getDescricao() == null) {
+                invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.BLACK);
+                invokedCard.setDescricao("Arma - Empunhadura Dupla\nSeu Herói Recebe +3 de Ataque.\nFinal do Combate: Se o Herói Inimigo tiver 0 ou menos de Vida, Seu Herói recupera 5 pontos de Vida.");
             } else if ("Bola de fogo".equalsIgnoreCase(cardName)) {
                 invokedCard.setCardType(com.alkateca.lendasdapoeira.enums.CardType.SPELL);
                 if (invokedCard.getColor() == null) invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.NEUTRAL);
@@ -1459,6 +1675,11 @@ public class GameEngine {
         // 4. Aloca a carta na zona RESOLVE e na lista de cartas em resolução do jogador (persistindo até o fim do combate!)
         invokedCard.setZoneId(ZoneId.RESOLVE);
         invokedCardIdsInCurrentCombat.add(invokedCard.getUuid());
+        if (owner.getUuid() != null && invokedCard.getUuid() != null) {
+            invokedCardIdsByPlayerInCurrentTurn
+                    .computeIfAbsent(owner.getUuid(), k -> new HashSet<>())
+                    .add(invokedCard.getUuid());
+        }
 
         boolean isP1Owner = owner.getUuid().equals(player1.getUuid());
         List<Card> ownerPlayedList = isP1Owner
@@ -1490,11 +1711,54 @@ public class GameEngine {
                 "✨ Invocado: " + invokedCard.getCardName() + (targetHero != null ? " (" + targetHero.getCardName() + ")" : "")
         );
 
-        // 6. Enfileira os efeitos da carta invocada na frente da ResolutionQueue (pilha encadeada LIFO)
+        // 6. Dispara Auras reativas de invocação do oponente (ex: Grande Inquisidor Vael, Voz do Trono)
+        triggerOpponentInvokeAuras(owner, targetHero);
+
+        // 7. Enfileira os efeitos da carta invocada na frente da ResolutionQueue (pilha encadeada LIFO)
         // para que sejam resolvidos em ordem pelo loop principal da ResolutionQueue!
         enqueueInvokeEffectsAtFront(invokedCard);
 
         return invokedCard;
+    }
+
+    public void triggerOpponentInvokeAuras(Player invokingPlayer, HeroCard defaultTargetHero) {
+        if (invokingPlayer == null || player1 == null || player2 == null) return;
+        boolean isP1Invoking = invokingPlayer.getUuid() != null && invokingPlayer.getUuid().equals(player1.getUuid());
+        Player opposingPlayer = isP1Invoking ? player2 : player1;
+        if (opposingPlayer == null || opposingPlayer.getCurrentDeck() == null
+                || opposingPlayer.getCurrentDeck().getHeroList() == null) {
+            return;
+        }
+
+        UUID invokingActiveHeroId = gameState != null
+                ? (isP1Invoking ? gameState.getActiveHeroPlayer1Id() : gameState.getActiveHeroPlayer2Id())
+                : null;
+        HeroCard enemyTargetHero = getActiveHero(invokingPlayer, invokingActiveHeroId);
+        if (enemyTargetHero == null) {
+            enemyTargetHero = defaultTargetHero;
+        }
+        if (enemyTargetHero == null) {
+            return;
+        }
+
+        for (Card c : opposingPlayer.getCurrentDeck().getHeroList()) {
+            if (c instanceof HeroCard auraHero
+                    && Boolean.TRUE.equals(auraHero.getEstaVivo())
+                    && auraHero.getVidaAtual() > 0
+                    && auraHero.getEffects() != null) {
+                for (com.alkateca.lendasdapoeira.effects.Effect eff : auraHero.getEffects()) {
+                    if (eff instanceof com.alkateca.lendasdapoeira.effects.combat.AuraEnemyDirectDamageOnOpponentInvokeEffect auraEff) {
+                        int dmg = calculateDirectDamage(auraHero, enemyTargetHero, auraEff.getDirectDamage());
+                        enemyTargetHero.setVidaAtual(enemyTargetHero.getVidaAtual() - dmg);
+                        evaluateInstantDeathByAura();
+                        System.out.println("Efeito de " + auraHero.getCardName() + " ativado! -> " +
+                                enemyTargetHero.getCardName() + " sofreu " + dmg +
+                                " de Dano Direto por invocação! Vida restante: " + enemyTargetHero.getVidaAtual());
+                        captureSnapshot(auraHero, auraEff, "EFFECT_RESOLVED");
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -1610,6 +1874,8 @@ public class GameEngine {
             callback.accept(selectedTargetUuid);
         }
 
+        evaluateInstantDeathByAura();
+
         // Tira foto do resultado imediato da escolha e retoma a cadeia de combate!
         captureSnapshot(null, null, "CHOICE_RESOLVED");
         resumeCombatChainFromCurrentPhase();
@@ -1633,6 +1899,11 @@ public class GameEngine {
             ownerPlayedList.add(cardToPlay);
         }
 
+        if (cardToPlay.getOwnerId() != null && cardToPlay.getUuid() != null) {
+            playedCardIdsInCurrentTurn
+                    .computeIfAbsent(cardToPlay.getOwnerId(), k -> new HashSet<>())
+                    .add(cardToPlay.getUuid());
+        }
         incrementCardsPlayed(cardToPlay.getOwnerId(), 1);
         trackCardPlayedMissions(cardToPlay.getOwnerId(), cardToPlay);
 

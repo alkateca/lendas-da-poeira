@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
-import { BOARD_LAYOUT } from '../config/BoardCoordinates.js';
+import { BOARD_LAYOUT, getCardVisualTheme } from '../config/BoardCoordinates.js';
 import HeroCardPrefab from '../prefabs/HeroCardPrefab.js';
 import PlayableCardPrefab from '../prefabs/PlayableCardPrefab.js';
 import SnapshotPlayerManager from '../managers/SnapshotPlayerManager.js';
 import SelectionManager from '../managers/SelectionManager.js';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 import PhantomUIKit from '../ui/PhantomUIKit.js';
+import MatchRecapSidebar from '../ui/MatchRecapSidebar.js';
 
 export default class MatchScene extends Phaser.Scene {
     constructor() {
@@ -33,6 +34,14 @@ export default class MatchScene extends Phaser.Scene {
         this.sfxVolume = Number(localStorage.getItem('ldp_sfx_volume') ?? 0.8);
 
         this.combatStartSpawnedOrder = [];
+
+        this.PHASE_TIMEOUT_SECONDS = 30;
+        this.TIMER_VISIBLE_THRESHOLD = 10;
+        this.phaseTimerInstanceId = 0;
+        this.activeTimerStateKey = null;
+        this.phaseTimerDeadlineMs = null;
+        this.lastDisplayedSecond = null;
+        this.timeoutTriggeredForKey = null;
     }
 
     init(data) {
@@ -205,12 +214,19 @@ export default class MatchScene extends Phaser.Scene {
         this.isPolling = false;
         this.isChoiceModalActive = false;
         this.combatStartSpawnedOrder = [];
+        this.phaseTimerInstanceId = 0;
+        this.activeTimerStateKey = null;
+        this.phaseTimerDeadlineMs = null;
+        this.lastDisplayedSecond = null;
+        this.timeoutTriggeredForKey = null;
 
         this.snapshotPlayer = new SnapshotPlayerManager(this);
         this.selectionManager = new SelectionManager(this);
+        this.recapSidebar = new MatchRecapSidebar(this);
 
         this.drawBoardBackgroundAndSlots();
         this.createPilesPlayerBannersAndMainButton();
+        this.createTurnTimerHUD();
         this.createLiberationZonePanels();
         this.createLargeHoverPreviewPanel();
         this.createDiscardInspectionModal();
@@ -222,9 +238,15 @@ export default class MatchScene extends Phaser.Scene {
         }
 
         this.time.addEvent({
-            delay: 2000,
+            delay: 1000,
             loop: true,
             callback: () => this.pollServerStateIfWaiting()
+        });
+
+        this.turnCountdownEvent = this.time.addEvent({
+            delay: 100,
+            loop: true,
+            callback: () => this.updateTurnTimerTick()
         });
     }
 
@@ -457,11 +479,12 @@ export default class MatchScene extends Phaser.Scene {
             'P1', 'VOCÊ', 'Jogador 1', COLORS.LOCAL_RED
         );
 
-        this.phaseBanner = this.add.text(1035, 88, 'FASE: AGUARDANDO...', {
+        const arenaCenterX = BOARD_LAYOUT.ARENA_CIRCLE.x;
+        this.phaseBanner = this.add.text(arenaCenterX, 88, 'FASE: AGUARDANDO...', {
             fontSize: '18px', color: '#ffd700', fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        this.combatLogText = this.add.text(1035, 114, '', {
+        this.combatLogText = this.add.text(arenaCenterX, 128, '', {
             fontSize: '13px', color: '#e2e8f0', align: 'center', wordWrap: { width: 650 }
         }).setOrigin(0.5);
 
@@ -489,6 +512,250 @@ export default class MatchScene extends Phaser.Scene {
             fontStyle: 'bold',
             align: 'center'
         }).setOrigin(0.5).setDepth(81);
+    }
+
+    createTurnTimerHUD() {
+        const { PILES, COLORS } = BOARD_LAYOUT;
+        const x = PILES.MAIN_BUTTON.x;
+        const y = PILES.MAIN_BUTTON.y - 118;
+
+        this.turnTimerContainer = this.add.container(x, y).setDepth(245).setVisible(false);
+
+        // 1. Sombra dura deslocada estilo Persona 5 / PhantomUIKit
+        this.timerShadowPoly = this.add.polygon(7, 7, [
+            -132, -42,
+             138, -46,
+             128,  46,
+            -138,  40
+        ], COLORS.LOCAL_RED, 1).setOrigin(0);
+
+        // 2. Placa principal chanfrada escura com contorno cortante
+        this.timerBgPoly = this.add.polygon(0, 0, [
+            -134, -46,
+             134, -40,
+             124,  42,
+            -140,  36
+        ], 0x07090e, 0.96).setOrigin(0).setStrokeStyle(2.5, 0xf8fafc);
+
+        // 3. Tag de telemetria superior
+        this.timerHeaderPoly = this.add.polygon(0, 0, [
+            -128, -42,
+              86, -39,
+              78, -19,
+            -134, -22
+        ], COLORS.LOCAL_RED, 1).setOrigin(0);
+
+        this.timerHeaderText = this.add.text(-26, -30, '>_ SYS.TIMER // ALERTA', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '10.5px',
+            color: '#ffe600',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        // 4. Contador digital principal (10s .. 01s)
+        this.timerCountText = this.add.text(-62, 6, '10s', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '36px',
+            color: '#ffe600',
+            fontStyle: 'italic bold',
+            stroke: '#e60012',
+            strokeThickness: 5
+        }).setOrigin(0.5);
+
+        // 5. Rótulo de status lateral
+        this.timerStatusText = this.add.text(38, 6, 'SUA AÇÃO!\nCONFIRME JÁ', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '11.5px',
+            color: '#ffffff',
+            fontStyle: 'bold',
+            align: 'center'
+        }).setOrigin(0.5);
+
+        // 6. Barra de progresso regressiva dos 10 segundos finais
+        this.timerBarBg = this.add.rectangle(-118, 30, 232, 6, 0x1e293b, 1).setOrigin(0, 0.5);
+        this.timerBarFill = this.add.rectangle(-118, 30, 232, 6, COLORS.GOLD_DUST, 1).setOrigin(0, 0.5);
+
+        this.turnTimerContainer.add([
+            this.timerShadowPoly,
+            this.timerBgPoly,
+            this.timerHeaderPoly,
+            this.timerHeaderText,
+            this.timerCountText,
+            this.timerStatusText,
+            this.timerBarBg,
+            this.timerBarFill
+        ]);
+    }
+
+    isCurrentMatchPvp() {
+        if (!this.currentSnapshot) return false;
+        if (typeof this.currentSnapshot.pvpMatch === 'boolean') {
+            return this.currentSnapshot.pvpMatch;
+        }
+        const oppName = (this.currentSnapshot.opponentPlayer?.name || '').toLowerCase();
+        return Boolean(oppName && !oppName.includes('bot') && !oppName.includes('máquina'));
+    }
+
+    doesLocalPlayerNeedToAct() {
+        if (!this.currentSnapshot) return false;
+        const pendingChoice = this.currentSnapshot.pendingChoice;
+        if (pendingChoice) {
+            return String(pendingChoice.choosingPlayerId) === String(this.localPlayerId);
+        }
+        const phase = this.currentSnapshot.turnPhase;
+        if (phase === 'CHOICE') {
+            return String(this.currentSnapshot.activeTurnPlayerId) === String(this.localPlayerId);
+        }
+        if (phase === 'PREPARATION' || phase === 'DISCARD') {
+            return !this.isWaitingOpponentConfirmation;
+        }
+        return false;
+    }
+
+    updateTurnTimerTick() {
+        if (!this.turnTimerContainer) return;
+
+        if (!this.isCurrentMatchPvp() || !this.currentSnapshot || this.currentSnapshot.turnPhase === 'GAME_OVER' || this.gameOverModalContainer?.visible) {
+            if (this.turnTimerContainer.visible) {
+                this.turnTimerContainer.setVisible(false);
+            }
+            this.activeTimerStateKey = null;
+            return;
+        }
+
+        const phase = this.currentSnapshot.turnPhase;
+        const pendingChoice = this.currentSnapshot.pendingChoice;
+        const isInteractivePhase = Boolean(pendingChoice) || ['CHOICE', 'PREPARATION', 'DISCARD'].includes(phase);
+
+        if (!isInteractivePhase) {
+            if (this.turnTimerContainer.visible) {
+                this.turnTimerContainer.setVisible(false);
+            }
+            this.activeTimerStateKey = null;
+            return;
+        }
+
+        const targetTimerKey = pendingChoice
+            ? `PENDING:${this.currentSnapshot.snapshotSequence || 0}:${pendingChoice.choosingPlayerId}`
+            : `${phase}:${this.phaseTimerInstanceId}`;
+
+        if (this.activeTimerStateKey !== targetTimerKey) {
+            if (this.snapshotPlayer.isPlaying) {
+                if (this.turnTimerContainer.visible) {
+                    this.turnTimerContainer.setVisible(false);
+                }
+                return;
+            }
+            this.activeTimerStateKey = targetTimerKey;
+            this.phaseTimerDeadlineMs = Date.now() + (this.PHASE_TIMEOUT_SECONDS * 1000);
+            this.lastDisplayedSecond = null;
+            this.timeoutTriggeredForKey = null;
+        }
+
+        const remainingMs = Math.max(0, this.phaseTimerDeadlineMs - Date.now());
+        const remainingSec = Math.ceil(remainingMs / 1000);
+        const localMustAct = this.doesLocalPlayerNeedToAct();
+
+        if (remainingMs <= 0) {
+            this.timerCountText.setText('00s');
+            this.timerBarFill.width = 0;
+
+            if (this.timeoutTriggeredForKey !== targetTimerKey) {
+                const elapsedPastDeadline = Date.now() - this.phaseTimerDeadlineMs;
+                if (localMustAct || elapsedPastDeadline >= 1200) {
+                    this.timeoutTriggeredForKey = targetTimerKey;
+                    this.triggerPhaseTimeout();
+                }
+            }
+            return;
+        }
+
+        if (remainingSec > this.TIMER_VISIBLE_THRESHOLD) {
+            if (this.turnTimerContainer.visible) {
+                this.turnTimerContainer.setVisible(false);
+            }
+            return;
+        }
+
+        // Faltam 10 segundos ou menos: exibe o timer estilizado
+        const wasHidden = !this.turnTimerContainer.visible;
+        if (wasHidden) {
+            this.turnTimerContainer.setVisible(true);
+            this.turnTimerContainer.setScale(0.85);
+            this.tweens.add({
+                targets: this.turnTimerContainer,
+                scaleX: 1,
+                scaleY: 1,
+                duration: 180,
+                ease: 'Back.easeOut'
+            });
+        }
+
+        const ratio = Phaser.Math.Clamp(remainingMs / (this.TIMER_VISIBLE_THRESHOLD * 1000), 0, 1);
+        this.timerBarFill.width = Math.max(2, 232 * ratio);
+
+        if (localMustAct) {
+            this.timerStatusText.setText('SUA AÇÃO!\nCONFIRME JÁ').setColor('#ffffff');
+            this.timerHeaderText.setText('>_ SYS.TIMER // SUA VEZ');
+        } else {
+            this.timerStatusText.setText('AGUARDANDO\nOPONENTE...').setColor('#00f0ff');
+            this.timerHeaderText.setText('>_ SYS.TIMER // OPONENTE');
+        }
+
+        const isCritical = remainingSec <= 5;
+        this.timerBarFill.setFillStyle(isCritical ? 0xe60012 : BOARD_LAYOUT.COLORS.GOLD_DUST, 1);
+        this.timerBgPoly.setStrokeStyle(2.5, isCritical ? 0xe60012 : 0xf8fafc);
+
+        if (this.lastDisplayedSecond !== remainingSec) {
+            this.lastDisplayedSecond = remainingSec;
+            this.timerCountText.setText(`${String(remainingSec).padStart(2, '0')}s`);
+            this.timerCountText.setColor(isCritical ? '#ff4444' : '#ffe600');
+
+            this.tweens.killTweensOf(this.turnTimerContainer);
+            this.turnTimerContainer.setScale(1.08);
+            this.turnTimerContainer.setAngle(isCritical ? -2.2 : -1.2);
+            this.tweens.add({
+                targets: this.turnTimerContainer,
+                scaleX: 1.0,
+                scaleY: 1.0,
+                angle: 0,
+                duration: 180,
+                ease: 'Sine.easeOut'
+            });
+        }
+    }
+
+    async triggerPhaseTimeout() {
+        if (!this.matchId || !this.currentSnapshot || this.currentSnapshot.turnPhase === 'GAME_OVER') return;
+
+        if (this.turnTimerContainer) {
+            this.turnTimerContainer.setVisible(false);
+        }
+
+        const sinceSeq = this.snapshotPlayer.lastPlayedSequence || this.currentSnapshot.snapshotSequence || 0;
+        try {
+            const response = await fetch(`http://localhost:8080/api/matches/${this.matchId}/timeout`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    playerId: this.localPlayerId,
+                    sinceSequence: sinceSeq
+                })
+            });
+
+            if (response.ok) {
+                const timelineDto = await response.json();
+                const snaps = timelineDto.snapshots || [];
+                if (snaps.length > 0) {
+                    this.isWaitingOpponentConfirmation = false;
+                    this.snapshotPlayer.enqueueSnapshots(snaps);
+                } else {
+                    this.pollServerStateIfWaiting(true);
+                }
+            }
+        } catch (err) {
+            console.warn('Erro ao reportar timeout da fase:', err);
+        }
     }
 
     createMiniDeckIcon(x, y) {
@@ -602,6 +869,15 @@ export default class MatchScene extends Phaser.Scene {
 
         this.lpFrame = this.add.image(0, 0, 'card_frame_hero').setDisplaySize(width, height);
 
+        const headerBarPt = pos(136, 21);
+        this.lpHeaderColorBar = this.add.rectangle(
+            headerBarPt.x,
+            headerBarPt.y,
+            width * (256 / 280),
+            height * (28 / 380),
+            0xffffff
+        );
+
         // 1. Título no Topo (SVG X=132, Y=21)
         const titlePt = pos(132, 21);
         this.lpTitle = this.add.text(titlePt.x, titlePt.y, '', {
@@ -678,6 +954,7 @@ export default class MatchScene extends Phaser.Scene {
             this.lpArtBox,
             this.lpArtLabel,
             this.lpFrame,
+            this.lpHeaderColorBar,
             this.lpTitle,
             this.lpModBonus,
             this.lpModReducao,
@@ -729,6 +1006,10 @@ export default class MatchScene extends Phaser.Scene {
         }
 
         this.lpTitle.setText(cardOrHeroDto.cardName || cardOrHeroDto.nome || '');
+
+        const theme = getCardVisualTheme(cardOrHeroDto.color, cardOrHeroDto.rarity);
+        this.lpHeaderColorBar.setFillStyle(theme.headerBg, 1);
+        this.lpTitle.setColor(theme.textColor);
 
         if (isHero) {
             this.lpArtLabel.setText('⚔ ARTE DO HERÓI');
@@ -1108,11 +1389,15 @@ export default class MatchScene extends Phaser.Scene {
         const deferPhaseAnnouncement = Boolean(options.deferPhaseAnnouncement);
 
         this.currentSnapshot = snapshot;
+        if (this.recapSidebar) {
+            this.recapSidebar.recordSnapshot(snapshot);
+        }
         this.hideLargeCardPreview();
 
         if (previousPhase !== snapshot.turnPhase) {
             this.selectionManager.resetSelections();
             this.isWaitingOpponentConfirmation = false;
+            this.phaseTimerInstanceId = (this.phaseTimerInstanceId || 0) + 1;
         }
 
         const localHasInitiative = String(snapshot.activeTurnPlayerId) === String(this.localPlayerId);
@@ -1500,7 +1785,7 @@ export default class MatchScene extends Phaser.Scene {
             if (total <= BOARD_LAYOUT.LOCAL_HAND_SLOTS.length) {
                 slot = BOARD_LAYOUT.LOCAL_HAND_SLOTS[index];
             } else {
-                const centerX = 1035;
+                const centerX = BOARD_LAYOUT.ARENA_CIRCLE.x;
                 const spacing = Math.max(128, Math.min(136, 780 / (total - 1)));
                 const startX = centerX - ((total - 1) * spacing) / 2;
                 const normOffset = (index - (total - 1) / 2) / Math.max(1, (total - 1) / 2);
@@ -1551,7 +1836,7 @@ export default class MatchScene extends Phaser.Scene {
             if (count <= BOARD_LAYOUT.OPPONENT_HAND_SLOTS.length) {
                 slot = BOARD_LAYOUT.OPPONENT_HAND_SLOTS[i];
             } else {
-                const centerX = 1035;
+                const centerX = BOARD_LAYOUT.ARENA_CIRCLE.x;
                 const spacing = Math.max(126, Math.min(132, 740 / (count - 1)));
                 const startX = centerX - ((count - 1) * spacing) / 2;
                 const normOffset = (i - (count - 1) / 2) / Math.max(1, (count - 1) / 2);
@@ -2026,7 +2311,8 @@ export default class MatchScene extends Phaser.Scene {
     }
 
     showToast(message) {
-        const toast = this.add.text(1035, 450, message, {
+        const centerX = BOARD_LAYOUT.ARENA_CIRCLE.x;
+        const toast = this.add.text(centerX, 450, message, {
             fontSize: '16px', color: '#ffffff', backgroundColor: '#b91c1c', padding: { x: 14, y: 8 }, fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(250);
 
@@ -2385,33 +2671,40 @@ export default class MatchScene extends Phaser.Scene {
         this.isSettingsModalOpen = false;
         if (this.settingsModalContainer) this.settingsModalContainer.setVisible(false);
         if (this.modalContainer) this.modalContainer.setVisible(false);
+        if (this.turnTimerContainer) this.turnTimerContainer.setVisible(false);
 
         const result = snapshot.matchResult || {};
         const winnerId = result.winnerPlayerId || snapshot.winnerPlayerId;
         const isLocalWinner = winnerId && String(winnerId) === String(this.localPlayerId);
         const winReason = result.winReason || snapshot.winReason || 'ELIMINATION';
+        const isTimeout = winReason === 'TIMEOUT' || snapshot.triggerContext?.eventType === 'MATCH_TIMEOUT';
         const isForfeit = winReason === 'FORFEIT' || snapshot.triggerContext?.eventType === 'MATCH_FORFEITED';
 
         if (isLocalWinner) {
             this.goHeaderBanner.setFillStyle(0x14532d, 0.55);
             this.gameOverTitleText.setText('🏆 VITÓRIA GLORIOSA!').setColor('#4ade80');
             this.gameOverSubtitleText.setText(
-                isForfeit
-                    ? 'Seu oponente bateu em retirada! Vitória por W.O.'
-                    : 'Todos os Heróis inimigos tombaram perante sua estratégia!'
+                isTimeout
+                    ? 'O tempo do oponente esgotou (30s sem ação)! Vitória por W.O.'
+                    : isForfeit
+                        ? 'Seu oponente bateu em retirada! Vitória por W.O.'
+                        : 'Todos os Heróis inimigos tombaram perante sua estratégia!'
             );
         } else {
             this.goHeaderBanner.setFillStyle(0x7f1d1d, 0.55);
             this.gameOverTitleText.setText('💀 DERROTA NAS POEIRAS').setColor('#f87171');
             this.gameOverSubtitleText.setText(
-                isForfeit
-                    ? 'Partida encerrada por desistência.'
-                    : 'Seus Heróis foram derrotados em combate.'
+                isTimeout
+                    ? 'Tempo de fase esgotado (30s sem ação). Derrota por W.O.'
+                    : isForfeit
+                        ? 'Partida encerrada por desistência.'
+                        : 'Seus Heróis foram derrotados em combate.'
             );
         }
 
         const turns = result.turnsElapsed || 1;
-        this.goTurnsBadge.setText(`⏳ TURNOS DECORRIDOS: ${turns}   •   MOTIVO: ${isForfeit ? 'DESISTÊNCIA (W.O.)' : 'ELIMINAÇÃO'}`);
+        const reasonLabel = isTimeout ? 'TEMPO ESGOTADO (30s)' : isForfeit ? 'DESISTÊNCIA (W.O.)' : 'ELIMINAÇÃO';
+        this.goTurnsBadge.setText(`⏳ TURNOS DECORRIDOS: ${turns}   •   MOTIVO: ${reasonLabel}`);
 
         const myStats = result.player1Stats || {
             playerName: snapshot.localPlayer?.name || 'Você',
@@ -2617,6 +2910,10 @@ export default class MatchScene extends Phaser.Scene {
         const menuKeys = ['MainMenuScene', 'MainMenu', 'LobbyScene', 'HomeScene', 'Preloader'];
         const registeredScenes = this.scene.manager.keys;
         const targetMenuKey = menuKeys.find(k => registeredScenes[k]);
+
+        if (this.recapSidebar) {
+            this.recapSidebar.destroy();
+        }
 
         if (targetMenuKey) {
             this.scene.start(targetMenuKey, { player: storedPlayer });
@@ -2891,7 +3188,7 @@ export default class MatchScene extends Phaser.Scene {
             }
         });
 
-        const destX = 1035;
+        const destX = BOARD_LAYOUT.ARENA_CIRCLE.x;
         const destY = isLocalOwner ? 964 : 10;
 
         this.tweens.add({

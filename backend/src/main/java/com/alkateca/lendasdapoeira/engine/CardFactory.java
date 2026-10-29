@@ -192,6 +192,23 @@ public class CardFactory {
                 effects.add(new StartOfGameMillSpellsByAffinityEffect(2, "Fogo"));
                 effects.add(new StartOfCombatTutorSpellFromDiscardToHandEffect(2, "Fogo"));
                 break;
+            case "Chefe Carrasco":
+                effects.add(new StartOfCombatInvokeIfNotEquippedEffect("Espada do Carrasco"));
+                effects.add(new StartOfCombatZeroEnemyDefenseIfWoundedEffect());
+                break;
+            case "Izeref, Executor da Ordem Necrótica":
+                effects.add(new AuraEnemyDeadBelowZeroEffect());
+                break;
+            case "Constructo Carniceiro":
+                effects.add(new AuraBonusDamageTakenByEnemyEffect(1));
+                break;
+            case "Grande Inquisidor Vael, Voz do Trono":
+                effects.add(new AuraEnemyDirectDamageOnOpponentInvokeEffect(1));
+                effects.add(new StartOfCombatEnemyVulnerabilityIfAttachedCountEffect(2, 1));
+                break;
+            case "Justiçar Elyon, Balança Imutável":
+                effects.add(new EndOfCombatHealAndMagicDamagePerTwoEnemyPlayedCardsEffect(3, 3));
+                break;
 
             // ==========================================
             // ITENS (Armas, Joias, Ferramentas, etc)
@@ -277,6 +294,23 @@ public class CardFactory {
             case "Manoplas do necromante":
             case "Manoplas do Necromante":
                 effects.add(new StartOfCombatBuffStatsByEnemyMissingHealthEffect(3));
+                break;
+            case "Espada do Carrasco":
+                effects.add(new EquipBuffEffect(0, 3, 0, 0));
+                effects.add(new EndOfCombatHealIfEnemyDefeatedEffect(5));
+                break;
+            case "Cutelo do Suplício":
+                effects.add(new EquipBuffEffect(0, 2, 0, 0));
+                effects.add(new StartOfCombatBuffAttackIfEnemyWoundedEffect(2));
+                break;
+            case "Selo da Confissão":
+                effects.add(new EquipBuffEffect(0, 0, 0, 0));
+                effects.add(new EndOfCombatHealEffect(3));
+                effects.add(new EndOfCombatEnemyVulnerabilityIfDealtDamageEffect(1));
+                break;
+            case "Cetro do Julgamento Perpétuo":
+                effects.add(new EquipBuffEffect(1, 2, 0, 0));
+                effects.add(new StartOfCombatBuffIfEnemyHigherMaxHpEffect(2, 2));
                 break;
 
             // ==========================================
@@ -403,6 +437,20 @@ public class CardFactory {
             case "Girlhões pesados":
                 effects.add(new PlayActionUnequipEnemyItemConditionalWoundedEffect(1, 2));
                 break;
+            case "Cheiro de Sangue":
+                effects.add(new PlayActionPhysicalDamageEffect(3));
+                effects.add(new PlayActionDirectDamageIfEnemyWoundedEffect(2));
+                break;
+            case "Arrastar para o Cadafalso":
+                effects.add(new PlayActionChooseWoundedEnemyHeroOutOfCombatDirectDamageEffect(2));
+                effects.add(new OnEquipEnemyVulnerabilityEffect(1, false));
+                break;
+            case "Colheita dos Condenados":
+                effects.add(new PlayActionDrainPerWoundedEnemyEffect(2, 1));
+                break;
+            case "Sentença da Guilhotina":
+                effects.add(new PlayActionEnemyVulnerabilityIfWoundedEffect(2));
+                break;
 
             // ==========================================
             // TEURGIAS (Theurgies)
@@ -424,6 +472,18 @@ public class CardFactory {
                 break;
             case "Ordem Divina":
                 effects.add(new PlayTheurgyChooseHeroBuffAndHealEffect(2, 2));
+                break;
+            case "Édito contra a Ganância":
+                effects.add(new PlaySpellMagicDamagePlusSpiritEffect(2));
+                effects.add(new PlayTheurgyDirectDamageAndDebuffIfOpponentDrewCardsEffect(3, 2));
+                break;
+            case "Retribuição Dogmática":
+                effects.add(new PlaySpellBuffEffect(0, 0, 2));
+                effects.add(new PlayTheurgyMagicDamagePerOpponentPlayedOrInvokedCardEffect(2));
+                break;
+            case "Interdito Sagrado":
+                effects.add(new PlayZeroEnemyBonusDamageEffect());
+                effects.add(new PlayDebuffEnemyAttackIfWeaponEquippedEffect(2));
                 break;
 
             // ==========================================

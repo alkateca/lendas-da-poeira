@@ -45,12 +45,16 @@ public class SnapshotFactory {
             trigger.setLogMessage("🎯 Escolha necessária: " + engine.getGameState().getPendingChoice().getPromptMessage());
         } else if ("PHYSICAL_COMBAT_EXCHANGE".equals(eventType)) {
             trigger.setLogMessage("⚔️ Combate Físico realizado entre os Heróis ativos!");
-        } else if ("MATCH_FORFEITED".equals(eventType)) {
+        } else if ("MATCH_FORFEITED".equals(eventType) || "MATCH_TIMEOUT".equals(eventType)) {
             Player quitter = (engine.getForfeitedByPlayerId() != null && engine.getForfeitedByPlayerId().equals(engine.getPlayer1().getUuid()))
                     ? engine.getPlayer1()
                     : engine.getPlayer2();
             Player winner = (quitter == engine.getPlayer1()) ? engine.getPlayer2() : engine.getPlayer1();
-            trigger.setLogMessage("🏳️ " + quitter.getName() + " desistiu da partida! Vitória por W.O. para " + winner.getName() + "!");
+            if ("MATCH_TIMEOUT".equals(eventType)) {
+                trigger.setLogMessage("⏱️ Tempo esgotado para " + quitter.getName() + "! Vitória por W.O. para " + winner.getName() + "!");
+            } else {
+                trigger.setLogMessage("🏳️ " + quitter.getName() + " desistiu da partida! Vitória por W.O. para " + winner.getName() + "!");
+            }
         } else if ("MISSION_PROGRESS".equals(eventType) && sourceCard != null) {
             trigger.setMissionProgress(sourceCard.getMissionCurrentProgress());
             trigger.setMissionTarget(sourceCard.getMissionTargetValue());
@@ -78,6 +82,7 @@ public class SnapshotFactory {
         snapshot.setWinnerPlayerId(engine.getWinnerPlayerId());
         snapshot.setForfeitedByPlayerId(engine.getForfeitedByPlayerId());
         snapshot.setWinReason(engine.getWinReason());
+        snapshot.setPvpMatch(engine.isPvpMatch());
         if (engine.getTurnPhase() == TurnPhase.GAME_OVER || engine.getWinnerPlayerId() != null) {
             snapshot.setMatchResult(engine.buildMatchResultSummary());
         }
@@ -316,6 +321,7 @@ public class SnapshotFactory {
         adapted.setWinnerPlayerId(original.getWinnerPlayerId());
         adapted.setForfeitedByPlayerId(original.getForfeitedByPlayerId());
         adapted.setWinReason(original.getWinReason());
+        adapted.setPvpMatch(original.isPvpMatch());
 
         boolean isP1Viewer = original.getLocalPlayer().getPlayerId().equals(viewerPlayerId);
         MatchSnapshotDTO.PlayerViewDTO myView = clonePlayerView(isP1Viewer ? original.getLocalPlayer() : original.getOpponentPlayer(), true);

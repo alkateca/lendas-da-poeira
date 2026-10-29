@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { BOARD_LAYOUT } from '../config/BoardCoordinates.js';
+import { BOARD_LAYOUT, getCardVisualTheme } from '../config/BoardCoordinates.js';
 
 export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
     constructor(scene, x, y, cardDto, isDraggable = false, initialMode = 'COMPACT', homeAngle = 0) {
@@ -36,6 +36,8 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
 
         // 2. Moldura Clara SVG (card_frame_playable.svg)
         this.frameImage = scene.add.image(0, 0, 'card_frame_playable').setDisplaySize(width, height);
+
+        this.headerColorBar = scene.add.rectangle(0, -height * 0.43, width * 0.91, height * 0.075, 0xffffff);
 
         // 3. Título em PRETO forte na barra branca superior
         this.titleText = scene.add.text(0, -height * 0.43, '', {
@@ -85,6 +87,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             this.bg,
             ...(this.artSprite ? [this.artSprite] : []),
             this.frameImage,
+            this.headerColorBar,
             this.titleText,
             this.typeBadge,
             this.descText,
@@ -149,6 +152,10 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         }
 
         const headerPt = pos(138, 22);
+        this.headerColorBar
+            .setPosition(headerPt.x, headerPt.y)
+            .setSize(dim.width * (256 / 280), dim.height * (28 / 380));
+
         const typePt   = pos(138, 208);
         const descPt   = pos(138, 294);
 
@@ -298,6 +305,9 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         this.applySizeLayout(sizeMode);
         if (highlightColor && highlightColor !== BOARD_LAYOUT.COLORS.GOLD_DUST) {
             this.bg.setStrokeStyle(4, highlightColor);
+        } else if (this.cardData && this.cardData.faceUp !== false) {
+            const theme = getCardVisualTheme(this.cardData.color, this.cardData.rarity);
+            this.bg.setStrokeStyle(2.5, theme.border);
         } else {
             this.bg.setStrokeStyle(0, 0x000000);
         }
@@ -330,6 +340,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         if (!isFaceUp) {
             this.bg.setVisible(false);
             this.frameImage.setVisible(false);
+            if (this.headerColorBar) this.headerColorBar.setVisible(false);
             if (this.artSprite) this.artSprite.setVisible(false);
             this.titleText.setVisible(false);
             this.typeBadge.setVisible(false);
@@ -338,6 +349,11 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         } else {
             this.bg.setVisible(true);
             this.frameImage.setVisible(true);
+
+            const theme = getCardVisualTheme(cardDto.color, cardDto.rarity);
+            this.headerColorBar.setFillStyle(theme.headerBg, 1).setVisible(true);
+            this.titleText.setColor(theme.textColor);
+            this.bg.setStrokeStyle(2.5, theme.border);
 
             const artKey = this.resolveArtTextureKey(cardDto);
             if (artKey) {

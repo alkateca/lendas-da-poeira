@@ -414,6 +414,32 @@ public class MatchmakingService {
     // MÉTODOS EXISTENTES (PVE, FILA AUTOMÁTICA E ROTEAMENTO DE PARTIDAS)
     // =========================================================================
 
+    private void syncMatchPlayerProgressToStorage(Player matchPlayer, MatchMode mode, boolean isPlayer1) {
+        if (matchPlayer == null || matchPlayer.getUuid() == null || playerStorageService == null) {
+            return;
+        }
+        if (!isPlayer1 && mode == MatchMode.PVE) {
+            return;
+        }
+        if (PresetDeckService.PLAYER_1_UUID.equals(matchPlayer.getUuid())
+                || PresetDeckService.PLAYER_2_UUID.equals(matchPlayer.getUuid())) {
+            return;
+        }
+
+        Player stored = playerStorageService.getPlayer(matchPlayer.getUuid());
+        if (stored != null) {
+            stored.setGold(matchPlayer.getGold());
+            stored.setPermanentElo(matchPlayer.getPermanentElo());
+            stored.setWeeklyElo(matchPlayer.getWeeklyElo());
+            if (matchPlayer.getLastWeeklyResetWeek() != null) {
+                stored.setLastWeeklyResetWeek(matchPlayer.getLastWeeklyResetWeek());
+            }
+            playerStorageService.saveOrUpdatePlayer(stored);
+        } else {
+            playerStorageService.saveOrUpdatePlayer(matchPlayer);
+        }
+    }
+
     private void applyEloIfMatchFinished(Match match) {
         if (match == null || match.isEloProcessed()) return;
         GameEngine engine = match.getGameEngine();
@@ -546,10 +572,8 @@ public class MatchmakingService {
             }
             applyEloIfMatchFinished(match);
             if (engine.getWinnerPlayerId() != null) {
-                Player p1 = engine.getPlayer1();
-                Player p2 = engine.getPlayer2();
-                if (p1 != null && playerStorageService != null) playerStorageService.saveOrUpdatePlayer(p1);
-                if (p2 != null && playerStorageService != null) playerStorageService.saveOrUpdatePlayer(p2);
+                syncMatchPlayerProgressToStorage(engine.getPlayer1(), match.getMode(), true);
+                syncMatchPlayerProgressToStorage(engine.getPlayer2(), match.getMode(), false);
             }
             releasePlayersFromMatch(match);
 
@@ -604,10 +628,8 @@ public class MatchmakingService {
             applyEloIfMatchFinished(match);
 
             if (engine.getWinnerPlayerId() != null) {
-                Player p1 = engine.getPlayer1();
-                Player p2 = engine.getPlayer2();
-                if (p1 != null && playerStorageService != null) playerStorageService.saveOrUpdatePlayer(p1);
-                if (p2 != null && playerStorageService != null) playerStorageService.saveOrUpdatePlayer(p2);
+                syncMatchPlayerProgressToStorage(engine.getPlayer1(), match.getMode(), true);
+                syncMatchPlayerProgressToStorage(engine.getPlayer2(), match.getMode(), false);
             }
 
             if (match.getStatus() == MatchStatus.FINISHED) {
@@ -618,14 +640,85 @@ public class MatchmakingService {
                     || (!isP1 && engine.isPlayer2Ready() && !engine.isPlayer1Ready());
 
             List<MatchSnapshotDTO> newSnapshots = getAdaptedSnapshotsSince(engine, playerId, lastSeqBeforeAction);
+            match.updatePhaseTimerIfNeeded(newSnapshots.size());
             return new MatchTimelineResponseDTO(waitingForOpponent, newSnapshots);
         });
+    }
+
+    public MatchTimelineResponseDTO processPhaseTimeout(UUID matchId, UUID reportingPlayerId, long sinceSequence) {
+        Match match = getMatchOrThrow(matchId);
+
+        return match.executeLocked(() -> {
+            resolvePhaseTimeoutLocked(match, reportingPlayerId);
+            GameEngine engine = match.getGameEngine();
+            UUID viewerId = reportingPlayerId != null ? reportingPlayerId : engine.getPlayer1().getUuid();
+            List<MatchSnapshotDTO> newSnapshots = getAdaptedSnapshotsSince(engine, viewerId, sinceSequence);
+            return new MatchTimelineResponseDTO(false, newSnapshots);
+        });
+    }
+
+    private void resolvePhaseTimeoutLocked(Match match, UUID reportingPlayerId) {
+        if (match == null || match.getMode() != MatchMode.PVP || match.getStatus() == MatchStatus.FINISHED) {
+            return;
+        }
+        GameEngine engine = match.getGameEngine();
+        if (engine.getTurnPhase() == TurnPhase.GAME_OVER) {
+            match.syncStatusWithEngine();
+            return;
+        }
+
+        UUID timedOutPlayerId = determineTimedOutPlayerId(engine, reportingPlayerId);
+        if (timedOutPlayerId == null) {
+            return;
+        }
+
+        engine.timeoutMatch(timedOutPlayerId);
+        match.syncStatusWithEngine();
+        match.updatePhaseTimerIfNeeded(0);
+        applyEloIfMatchFinished(match);
+
+        if (engine.getWinnerPlayerId() != null) {
+            syncMatchPlayerProgressToStorage(engine.getPlayer1(), match.getMode(), true);
+            syncMatchPlayerProgressToStorage(engine.getPlayer2(), match.getMode(), false);
+        }
+        releasePlayersFromMatch(match);
+
+        System.out.println("⏱️ Partida PvP " + match.getMatchId() + ": Jogador " + timedOutPlayerId
+                + " excedeu o tempo de 30s da fase. Vitória concedida a " + engine.getWinnerPlayerId() + ".");
+    }
+
+    private UUID determineTimedOutPlayerId(GameEngine engine, UUID reportingPlayerId) {
+        if (engine.isWaitingForPlayerChoice() && engine.getGameState().getPendingChoice() != null) {
+            return engine.getGameState().getPendingChoice().getChoosingPlayerId();
+        }
+        TurnPhase phase = engine.getTurnPhase();
+        if (phase == TurnPhase.CHOICE) {
+            return engine.getGameState().getActiveTurnPlayerId();
+        }
+        if (phase == TurnPhase.PREPARATION || phase == TurnPhase.DISCARD) {
+            boolean p1Ready = engine.isPlayer1Ready();
+            boolean p2Ready = engine.isPlayer2Ready();
+            if (p1Ready && !p2Ready) {
+                return engine.getPlayer2().getUuid();
+            }
+            if (p2Ready && !p1Ready) {
+                return engine.getPlayer1().getUuid();
+            }
+            if (reportingPlayerId != null) {
+                return reportingPlayerId;
+            }
+            return engine.getGameState().getActiveTurnPlayerId();
+        }
+        return null;
     }
 
     public MatchTimelineResponseDTO getMatchStateSince(UUID matchId, UUID viewerId, long sinceSequence) {
         Match match = getMatchOrThrow(matchId);
 
         return match.executeLocked(() -> {
+            if (match.isPhaseDeadlineExpired(Instant.now())) {
+                resolvePhaseTimeoutLocked(match, null);
+            }
             GameEngine engine = match.getGameEngine();
             boolean isP1 = viewerId.equals(engine.getPlayer1().getUuid());
             boolean waitingForOpponent = (isP1 && engine.isPlayer1Ready() && !engine.isPlayer2Ready())

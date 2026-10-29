@@ -41,6 +41,7 @@ public class DrawNextCardByTypeEffect implements Effect {
 
         if (cardToDraw != null) {
             cardToDraw.setZoneId(ZoneId.HAND);
+            gameEngine.recordExtraCardDraw(myPlayer.getUuid(), 1);
             System.out.println("-> " + myPlayer.getName() + " adicionou " + cardToDraw.getCardName() +
                     " (" + typeToDraw.name() + ") do baralho para a mão!");
         } else {

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { BOARD_LAYOUT } from '../config/BoardCoordinates.js';
+import { BOARD_LAYOUT, getCardVisualTheme } from '../config/BoardCoordinates.js';
 import PlayableCardPrefab from './PlayableCardPrefab.js';
 
 export default class HeroCardPrefab extends Phaser.GameObjects.Container {
@@ -47,6 +47,15 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
 
         // 2. Moldura SVG (280x380 escalada para width x height)
         this.frameImage = scene.add.image(0, 0, 'card_frame_hero').setDisplaySize(width, height);
+
+        const headerBarPt = pos(136, 21);
+        this.headerColorBar = scene.add.rectangle(
+            headerBarPt.x,
+            headerBarPt.y,
+            width * (256 / 280),
+            height * (28 / 380),
+            0xf8fafc
+        );
 
         // 3. Nome do Herói no Topo (Centro SVG: X=132, Y=21)
         const namePt = pos(132, 21);
@@ -129,6 +138,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             this.bg,
             ...(this.artSprite ? [this.artSprite] : []),
             this.frameImage,
+            this.headerColorBar,
             this.nameText,
             this.modBonusText, this.modReducaoText, this.modVulnText,
             this.traitsText, this.descText,
@@ -313,6 +323,13 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
     }
 
     updateFromSnapshot(newHeroDto) {
+        const theme = getCardVisualTheme(newHeroDto.color, newHeroDto.rarity);
+        this.headerColorBar.setFillStyle(theme.headerBg, 1);
+        this.nameText.setColor(theme.textColor);
+        if (String(newHeroDto.rarity || '').toUpperCase() === 'LENDARIA') {
+            this.bg.setStrokeStyle(3.5, theme.border);
+        }
+
         const prev = this.heroData || newHeroDto;
         this.heroData = newHeroDto;
 

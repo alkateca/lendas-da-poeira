@@ -27,7 +27,8 @@ public class MatchSnapshotDTO {
 
     private UUID winnerPlayerId;
     private UUID forfeitedByPlayerId;
-    private String winReason; // "ELIMINATION" ou "FORFEIT"
+    private String winReason; // "ELIMINATION", "FORFEIT" ou "TIMEOUT"
+    private boolean pvpMatch;
     private MatchResultSummaryDTO matchResult;
 
 

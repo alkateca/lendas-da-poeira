@@ -48,6 +48,10 @@ public class DrawCardsEffect implements Effect {
             }
         }
 
+        if (drawn > 0) {
+            gameEngine.recordExtraCardDraw(myPlayer.getUuid(), drawn);
+        }
+
         System.out.println("-> " + myPlayer.getName() + " comprou " + drawn + " carta(s)!");
     }
 }

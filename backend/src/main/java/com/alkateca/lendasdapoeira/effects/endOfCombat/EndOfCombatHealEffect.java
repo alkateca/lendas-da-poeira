@@ -31,7 +31,7 @@ public class EndOfCombatHealEffect implements Effect {
         HeroCard myHero = (HeroCard) myPlayer.getCurrentDeck().getHeroList().stream()
                 .filter(h -> h.getUuid().equals(myHeroId)).findFirst().orElse(null);
 
-        if (myHero != null) {
+        if (myHero != null && Boolean.TRUE.equals(myHero.getEstaVivo())) {
             int finalHeal = healAmount + gameEngine.getGoblinEffectBonus(sourceCard);
             int novaVida = myHero.getVidaAtual() + finalHeal;
             if (novaVida > myHero.getVidaMaxima()) novaVida = myHero.getVidaMaxima();

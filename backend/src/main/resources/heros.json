@@ -1032,5 +1032,63 @@
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000039",
+    "cardName": "Grande Inquisidor Vael, Voz do Trono",
+    "cardType": "HERO",
+    "color": "YELLOW",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "descricao": "Aura: Sempre que uma carta for invocada pelo oponente, o Herói Inimigo sofre 1 de Dano Direto.\nInício do Combate: Se o Herói Inimigo possuir 2 ou mais cartas anexadas, o Herói Inimigo recebe +1 de Vulnerabilidade até o Final do Combate.",
+    "espirito": 3,
+    "ataque": 4,
+    "defesa": 3,
+    "vidaMaxima": 16,
+    "vidaAtual": 16,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Guardião do Trono"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Transformador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000040",
+    "cardName": "Justiçar Elyon, Balança Imutável",
+    "cardType": "HERO",
+    "color": "YELLOW",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "descricao": "Final do Combate: Para cada duas cartas jogadas pelo oponente neste turno: Seu Herói recupera 3 de Vida e o Herói Inimigo sofre 3 de Dano Mágico.",
+    "espirito": 3,
+    "ataque": 5,
+    "defesa": 3,
+    "vidaMaxima": 17,
+    "vidaAtual": 17,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Guardião do Trono"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Transformador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false
   }
 ]

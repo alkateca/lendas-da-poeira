@@ -303,6 +303,9 @@ export default class MainMenuScene extends Phaser.Scene {
                 this.player.poeira = this.player.balance.gold;
                 if (fresh.ownedCards) this.player.ownedCards = fresh.ownedCards;
                 if (fresh.ownedHeroes) this.player.ownedHeroes = fresh.ownedHeroes;
+                if (Array.isArray(fresh.decks)) this.player.decks = fresh.decks;
+                if (fresh.currentDeck) this.player.currentDeck = fresh.currentDeck;
+                this.refreshSelectedDeckLabel();
 
                 localStorage.setItem('lendas_player', JSON.stringify(this.player));
                 if (this.playerEloText) {

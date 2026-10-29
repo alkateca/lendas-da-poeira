@@ -19,6 +19,8 @@ import java.util.function.Supplier;
 @Setter
 public class Match {
 
+    public static final long TURN_PHASE_TIMEOUT_SECONDS = 30L;
+
     private final UUID matchId;
     private final MatchMode mode;
     private volatile MatchStatus status;
@@ -26,6 +28,9 @@ public class Match {
     private final Map<UUID, ParticipantSession> participants = new ConcurrentHashMap<>();
     private final Instant createdAt;
     private volatile Instant lastActivityAt;
+    private volatile Instant phaseStartedAt;
+    private volatile Instant phaseDeadlineAt;
+    private volatile String activePhaseTimerKey;
     private boolean eloProcessed = false;
 
     // Lock dedicado a esta partida para garantir thread-safety sem bloquear outras partidas
@@ -70,7 +75,40 @@ public class Match {
             this.lastActivityAt = Instant.now();
             this.gameEngine.startGame();
             syncStatusWithEngine();
+            updatePhaseTimerIfNeeded(1);
         }
+    }
+
+    /**
+     * Atualiza o prazo de 30 segundos da fase atual caso a fase interativa ou escolha pendente tenha mudado.
+     */
+    public void updatePhaseTimerIfNeeded(int newSnapshotsCount) {
+        if (this.mode != MatchMode.PVP || this.gameEngine == null || this.gameEngine.getTurnPhase() == TurnPhase.GAME_OVER) {
+            this.phaseDeadlineAt = null;
+            this.activePhaseTimerKey = "GAME_OVER";
+            return;
+        }
+
+        String currentKey = this.gameEngine.isWaitingForPlayerChoice()
+                ? ("PENDING:" + this.gameEngine.getSnapshotHistory().size())
+                : (this.gameEngine.getTurnsElapsed() + ":" + this.gameEngine.getTurnPhase());
+
+        if (!currentKey.equals(this.activePhaseTimerKey)) {
+            this.activePhaseTimerKey = currentKey;
+            this.phaseStartedAt = Instant.now();
+            long animationBufferMs = Math.max(0, newSnapshotsCount) * 1600L + 1500L;
+            this.phaseDeadlineAt = this.phaseStartedAt
+                    .plusSeconds(TURN_PHASE_TIMEOUT_SECONDS)
+                    .plusMillis(animationBufferMs);
+        }
+    }
+
+    public boolean isPhaseDeadlineExpired(Instant now) {
+        return this.mode == MatchMode.PVP
+                && this.status == MatchStatus.RUNNING
+                && this.phaseDeadlineAt != null
+                && now != null
+                && now.isAfter(this.phaseDeadlineAt);
     }
 
     /**
