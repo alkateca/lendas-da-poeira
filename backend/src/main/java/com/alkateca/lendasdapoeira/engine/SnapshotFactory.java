@@ -266,6 +266,7 @@ public class SnapshotFactory {
                 .sum();
         dto.setUsedWeaponSlots(weaponSlotsUsed);
 
+        dto.setKeywords(hero.getKeywords() != null ? new ArrayList<>(hero.getKeywords()) : KeywordExtractor.extract(hero));
         return dto;
     }
 
@@ -288,6 +289,9 @@ public class SnapshotFactory {
         dto.setMissionCurrentProgress(card.getMissionCurrentProgress());
         dto.setTargetBaseHeroName(card.getTargetBaseHeroName());
         dto.setEvolvesIntoHeroName(card.getEvolvesIntoHeroName());
+        dto.setKeywords(card.getKeywords() != null && !card.getKeywords().isEmpty()
+                ? new ArrayList<>(card.getKeywords())
+                : KeywordExtractor.extract(card));
         return dto;
     }
 
@@ -377,6 +381,9 @@ public class SnapshotFactory {
             cardCopy.setItemType(showFace ? c.getItemType() : "NENHUM");
             cardCopy.setEmpunhadura(showFace ? c.getEmpunhadura() : 0);
             cardCopy.setDescricao(showFace ? c.getDescricao() : "");
+            cardCopy.setRarity(showFace ? c.getRarity() : null);
+            cardCopy.setCardSet(showFace ? c.getCardSet() : null);
+            cardCopy.setKeywords(showFace && c.getKeywords() != null ? new ArrayList<>(c.getKeywords()) : List.of());
             return cardCopy;
         }).collect(Collectors.toList()));
 

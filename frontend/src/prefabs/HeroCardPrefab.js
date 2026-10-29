@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BOARD_LAYOUT, getCardVisualTheme } from '../config/BoardCoordinates.js';
 import PlayableCardPrefab from './PlayableCardPrefab.js';
+import { resolveCardKeywords, formatCardDescriptionWithKeywords } from '../config/keywordsConfig.js';
 
 export default class HeroCardPrefab extends Phaser.GameObjects.Container {
     constructor(scene, x, y, heroDto, isOpponent) {
@@ -336,9 +337,10 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.nameText.setText(newHeroDto.cardName);
         this.traitsText.setText(this.formatHeroTraits(newHeroDto));
 
-        const rawDesc = newHeroDto.descricao || '';
+        const rawDesc = formatCardDescriptionWithKeywords(newHeroDto.descricao || '');
         this.descText.setFontSize(rawDesc.length > 95 ? '7.2px' : '8px');
         this.descText.setText(rawDesc);
+        this.heroData.keywords = resolveCardKeywords(newHeroDto).map(k => k.id);
 
         this.espBadge.valueText.setText(`${newHeroDto.espirito}`);
         this.atqBadge.valueText.setText(`${newHeroDto.ataque}`);

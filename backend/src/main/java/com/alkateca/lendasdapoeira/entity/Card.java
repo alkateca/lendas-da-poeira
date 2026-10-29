@@ -33,6 +33,7 @@ public class Card {
     private List<Classe> classe;
     private String descricao;
     private boolean unica;
+    private List<String> keywords = new ArrayList<>();
 
     private UUID attachedToCardId;
     private Integer turnsRemaining;

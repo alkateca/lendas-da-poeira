@@ -1,21 +1,21 @@
 [ {
-  "id" : "91ae238f-f880-433e-88f6-6eaa548b2992",
-  "sellerId" : "4ee992ec-e425-4f67-a964-f7d44d8804a7",
+  "id" : "e22a2a05-3384-44e1-86d6-d394c932ec4f",
+  "sellerId" : "f60b75dd-97d6-40e1-9e5f-a10dd9ebcceb",
   "sellerName" : "Vendedor",
   "cardName" : "Bola de fogo",
   "heroCard" : false,
   "price" : 150,
   "status" : "SOLD",
-  "createdAtEpochMs" : 1793240398146,
-  "buyerId" : "df00f2e5-234e-4e46-9cd3-549867a007b8"
+  "createdAtEpochMs" : 1793293782144,
+  "buyerId" : "bb3b9ebc-5a81-4dbd-aa7f-c35af9261792"
 }, {
-  "id" : "cb098118-c158-4e9a-af91-9de3fe8f5997",
-  "sellerId" : "4ee992ec-e425-4f67-a964-f7d44d8804a7",
+  "id" : "ae470440-6567-42ca-b74c-135a04311e54",
+  "sellerId" : "f60b75dd-97d6-40e1-9e5f-a10dd9ebcceb",
   "sellerName" : "Vendedor",
   "cardName" : "Rapieira de Cristal",
   "heroCard" : false,
   "price" : 90,
   "status" : "CANCELLED",
-  "createdAtEpochMs" : 1793240398147,
+  "createdAtEpochMs" : 1793293782146,
   "buyerId" : null
 } ]

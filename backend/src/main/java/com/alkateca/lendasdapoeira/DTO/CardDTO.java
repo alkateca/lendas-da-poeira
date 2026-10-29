@@ -25,4 +25,6 @@ public class CardDTO {
     private String description;
     
     private Boolean active;
+
+    private java.util.List<String> keywords = new java.util.ArrayList<>();
 }

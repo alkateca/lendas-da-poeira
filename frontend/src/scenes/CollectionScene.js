@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
+import PhantomUIKit from '../ui/PhantomUIKit.js';
 
 export default class CollectionScene extends Phaser.Scene {
     constructor() {
@@ -71,6 +72,22 @@ export default class CollectionScene extends Phaser.Scene {
             color: '#ffe600',
             fontStyle: 'bold'
         }).setOrigin(0, 0.5).setResolution(2);
+
+        this.add.rectangle(1035, 62, 220, 48, 0x0284c7)
+            .setStrokeStyle(2.5, 0xffffff)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => {
+                if (!this.sellModal.visible) {
+                    PhantomUIKit.openGlossaryModal(this);
+                }
+            });
+
+        this.add.text(1035, 62, '📖 GLOSSÁRIO', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '15px',
+            color: '#ffffff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
 
         this.add.rectangle(1320, 62, 310, 48, 0xfaf8f5).setStrokeStyle(3, 0x090d16);
         this.balanceText = this.add.text(1320, 62, `🪙 GOLD: ${this.getGoldBalance()}`, {

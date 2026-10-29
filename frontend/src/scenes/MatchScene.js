@@ -7,6 +7,7 @@ import SelectionManager from '../managers/SelectionManager.js';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 import PhantomUIKit from '../ui/PhantomUIKit.js';
 import MatchRecapSidebar from '../ui/MatchRecapSidebar.js';
+import { formatCardDescriptionWithKeywords } from '../config/keywordsConfig.js';
 
 export default class MatchScene extends Phaser.Scene {
     constructor() {
@@ -1045,7 +1046,7 @@ export default class MatchScene extends Phaser.Scene {
 
             // Descrição logo abaixo da divisória da caixa (SVG X=14, Y=238)
             const descPt = pos(14, 238);
-            let fullDesc = cardOrHeroDto.descricao || '';
+            let fullDesc = formatCardDescriptionWithKeywords(cardOrHeroDto.descricao || '');
             const attached = cardOrHeroDto.attachedCards || [];
             if (attached.length > 0) {
                 const itemsList = attached.map(it => `🗡️ ${it.cardName}`).join('\n');
@@ -1114,7 +1115,7 @@ export default class MatchScene extends Phaser.Scene {
                     lineSpacing: 4,
                     wordWrap: { width: width * (244 / 280) }
                 })
-                .setText(cardOrHeroDto.descricao || '');
+                .setText(formatCardDescriptionWithKeywords(cardOrHeroDto.descricao || ''));
         }
 
         const artKey = cardOrHeroDto.imagem && this.textures.exists(cardOrHeroDto.imagem)
@@ -1147,11 +1148,29 @@ export default class MatchScene extends Phaser.Scene {
             duration: 200,
             ease: 'Cubic.easeOut'
         });
+
+        if (this.keywordTooltipsContainer) {
+            this.keywordTooltipsContainer.destroy(true);
+        }
+        const previewX = this.largePreviewContainer.x;
+        const previewY = this.largePreviewContainer.y;
+        const tooltipOffsetX = previewX > 960 ? -275 : 275;
+
+        this.keywordTooltipsContainer = PhantomUIKit.createKeywordTooltipsContainer(
+            this,
+            cardOrHeroDto,
+            previewX + tooltipOffsetX,
+            previewY - 190
+        );
     }
 
     hideLargeCardPreview() {
         if (this.largePreviewContainer) {
             this.largePreviewContainer.setVisible(false);
+        }
+        if (this.keywordTooltipsContainer) {
+            this.keywordTooltipsContainer.destroy(true);
+            this.keywordTooltipsContainer = null;
         }
     }
 
@@ -2435,20 +2454,29 @@ export default class MatchScene extends Phaser.Scene {
         const gearIcon = this.add.text(0, 0, '⚙️', { fontSize: '26px' }).setOrigin(0.5);
         this.gearBtnContainer.add([gearBg, gearIcon]);
 
+        // 1. Botão rápido de Glossário ao lado da Engrenagem (HUD)
+        this.glossaryHudBtn = this.add.container(488, 72).setDepth(210);
+        const glossHudBg = this.add.rectangle(0, 0, 54, 54, COLORS.ZONE_SURFACE, 0.95)
+            .setStrokeStyle(2, 0x00f0ff)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => PhantomUIKit.openGlossaryModal(this));
+        const glossHudIcon = this.add.text(0, 0, '📖', { fontSize: '24px' }).setOrigin(0.5);
+        this.glossaryHudBtn.add([glossHudBg, glossHudIcon]);
+
         // 2. Overlay e Container Principal do Modal de Configurações (Pausa Visual)
         this.settingsModalContainer = this.add.container(960, 540).setDepth(260).setVisible(false);
 
         const backdrop = this.add.rectangle(0, 0, 1920, 1080, 0x000000, 0.65)
             .setInteractive(); // Bloqueia cliques nos elementos de baixo sem pausar a rede
 
-        const panel = this.add.rectangle(0, 0, 560, 470, 0x0f172a, 0.98)
+        const panel = this.add.rectangle(0, 0, 560, 510, 0x0f172a, 0.98)
             .setStrokeStyle(3, COLORS.GOLD_DUST);
 
-        const title = this.add.text(0, -185, '⚙️ CONFIGURAÇÕES DA PARTIDA', {
+        const title = this.add.text(0, -205, '⚙️ CONFIGURAÇÕES DA PARTIDA', {
             fontSize: '22px', color: '#ffd700', fontStyle: 'bold', fontFamily: 'monospace'
         }).setOrigin(0.5);
 
-        const closeXBtn = this.add.text(245, -185, '✖', {
+        const closeXBtn = this.add.text(245, -205, '✖', {
             fontSize: '20px', color: '#94a3b8', fontStyle: 'bold'
         })
             .setOrigin(0.5)
@@ -2456,36 +2484,50 @@ export default class MatchScene extends Phaser.Scene {
             .on('pointerdown', () => this.toggleSettingsModal(false));
 
         // 3. Controles de Áudio (Música e Efeitos)
-        const musicControl = this.createVolumeControlRow(-95, '🎵 Volume da Música', this.musicVolume, (newVal) => {
+        const musicControl = this.createVolumeControlRow(-115, '🎵 Volume da Música', this.musicVolume, (newVal) => {
             this.musicVolume = newVal;
             localStorage.setItem('ldp_music_volume', String(newVal));
             this.applyAudioSettings();
         });
 
-        const sfxControl = this.createVolumeControlRow(-15, '🔊 Efeitos Sonoros (SFX)', this.sfxVolume, (newVal) => {
+        const sfxControl = this.createVolumeControlRow(-45, '🔊 Efeitos Sonoros (SFX)', this.sfxVolume, (newVal) => {
             this.sfxVolume = newVal;
             localStorage.setItem('ldp_sfx_volume', String(newVal));
             this.applyAudioSettings();
         });
 
-        // 4. Visão Padrão dos Botões (Continuar / Desistir)
-        this.settingsMainButtonsGroup = this.add.container(0, 105);
+        // 4. Visão Padrão dos Botões (Continuar / Glossário / Desistir)
+        this.settingsMainButtonsGroup = this.add.container(0, 95);
 
-        const resumeBtnBg = this.add.rectangle(0, -20, 340, 50, 0x16a34a)
+        const resumeBtnBg = this.add.rectangle(0, -35, 340, 44, 0x16a34a)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => this.toggleSettingsModal(false));
-        const resumeBtnTxt = this.add.text(0, -20, 'VOLTAR À PARTIDA', {
-            fontSize: '16px', color: '#ffffff', fontStyle: 'bold'
+        const resumeBtnTxt = this.add.text(0, -35, 'VOLTAR À PARTIDA', {
+            fontSize: '15px', color: '#ffffff', fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        const forfeitBtnBg = this.add.rectangle(0, 50, 340, 50, 0xb91c1c)
+        const glossaryBtnBg = this.add.rectangle(0, 18, 340, 44, 0x0284c7)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => {
+                this.toggleSettingsModal(false);
+                PhantomUIKit.openGlossaryModal(this);
+            });
+        const glossaryBtnTxt = this.add.text(0, 18, '📖 GLOSSÁRIO DE REGRAS', {
+            fontSize: '15px', color: '#ffffff', fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        const forfeitBtnBg = this.add.rectangle(0, 71, 340, 44, 0xb91c1c)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => this.showForfeitConfirmation(true));
-        const forfeitBtnTxt = this.add.text(0, 50, '🏳️ SAIR DA PARTIDA / DESISTIR', {
-            fontSize: '16px', color: '#ffffff', fontStyle: 'bold'
+        const forfeitBtnTxt = this.add.text(0, 71, '🏳️ SAIR DA PARTIDA / DESISTIR', {
+            fontSize: '15px', color: '#ffffff', fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        this.settingsMainButtonsGroup.add([resumeBtnBg, resumeBtnTxt, forfeitBtnBg, forfeitBtnTxt]);
+        this.settingsMainButtonsGroup.add([
+            resumeBtnBg, resumeBtnTxt,
+            glossaryBtnBg, glossaryBtnTxt,
+            forfeitBtnBg, forfeitBtnTxt
+        ]);
 
         // 5. Sub-painel de Confirmação ("Tem certeza que deseja sair?")
         this.forfeitConfirmGroup = this.add.container(0, 105).setVisible(false);

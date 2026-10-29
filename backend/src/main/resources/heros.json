@@ -22,7 +22,10 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "AURA"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000004",
@@ -49,7 +52,11 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "UMA_VEZ_POR_COMBATE",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000005",
@@ -76,7 +83,10 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "AURA"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000006",
@@ -103,7 +113,10 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DA_PARTIDA"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000007",
@@ -133,7 +146,10 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000008",
@@ -161,7 +177,10 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000009",
@@ -191,7 +210,11 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE",
+      "INVOCAR"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000010",
@@ -220,7 +243,12 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "AURA",
+      "FINAL_DO_COMBATE",
+      "DANO_MAGICO"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000011",
@@ -249,7 +277,12 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE",
+      "DANO_MAGICO",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000012",
@@ -278,7 +311,11 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DA_PARTIDA",
+      "INVOCAR"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000013",
@@ -305,7 +342,10 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000014",
@@ -334,7 +374,12 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE",
+      "FINAL_DO_COMBATE",
+      "DANO_DIRETO"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000015",
@@ -363,7 +408,11 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE",
+      "INVOCAR"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000016",
@@ -394,7 +443,12 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "AURA",
+      "MORTO",
+      "VIVO"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000017",
@@ -423,7 +477,10 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "UMA_VEZ_POR_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000018",
@@ -452,7 +509,12 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE",
+      "FINAL_DO_COMBATE",
+      "DANO_MAGICO"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000019",
@@ -479,7 +541,10 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000020",
@@ -506,7 +571,10 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000021",
@@ -535,7 +603,11 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE",
+      "DANO_DIRETO"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000022",
@@ -565,7 +637,11 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE",
+      "INVOCAR"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000023",
@@ -598,7 +674,12 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE",
+      "FINAL_DO_COMBATE",
+      "DANO_DIRETO"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000024",
@@ -627,7 +708,12 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "AURA",
+      "MORTO",
+      "VULNERABILIDADE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000025",
@@ -656,7 +742,11 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE",
+      "VULNERABILIDADE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000026",
@@ -685,7 +775,12 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DA_PARTIDA",
+      "INICIO_DO_COMBATE",
+      "VULNERABILIDADE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000027",
@@ -714,7 +809,12 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "AURA",
+      "INICIO_DO_COMBATE",
+      "INVOCAR"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000028",
@@ -743,7 +843,10 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000029",
@@ -773,7 +876,11 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000030",
@@ -802,7 +909,10 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000031",
@@ -831,7 +941,10 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000032",
@@ -858,7 +971,11 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA",
+      "INICIO_DO_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000033",
@@ -890,7 +1007,13 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "AURA",
+      "DANO_BONUS",
+      "INICIO_DO_COMBATE",
+      "INVOCAR"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000034",
@@ -921,7 +1044,12 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE",
+      "DANO_MAGICO",
+      "INVOCAR"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000035",
@@ -950,7 +1078,11 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DA_PARTIDA",
+      "INICIO_DO_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000036",
@@ -975,7 +1107,12 @@
     "classe": [],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE",
+      "INVOCAR",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000037",
@@ -1002,7 +1139,11 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "AURA",
+      "MORTO"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000038",
@@ -1031,7 +1172,10 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "AURA"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000039",
@@ -1060,7 +1204,15 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "AURA",
+      "INVOCAR",
+      "DANO_DIRETO",
+      "INICIO_DO_COMBATE",
+      "VULNERABILIDADE",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000040",
@@ -1089,6 +1241,10 @@
     ],
     "estaVivo": true,
     "estaAtivo": true,
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE",
+      "DANO_MAGICO"
+    ]
   }
 ]

@@ -117,6 +117,7 @@ public class MatchSnapshotDTO {
         private Boolean estaVivo;
         private Boolean estaAtivo;
         private boolean evolved;
+        private List<String> keywords = new ArrayList<>();
         private List<CardSnapshotDTO> attachedCards = new ArrayList<>();
     }
 
@@ -139,6 +140,7 @@ public class MatchSnapshotDTO {
         private int missionCurrentProgress;
         private String targetBaseHeroName;
         private String evolvesIntoHeroName;
+        private List<String> keywords = new ArrayList<>();
     }
 
     @Data

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { BOARD_LAYOUT, getCardVisualTheme } from '../config/BoardCoordinates.js';
+import { resolveCardKeywords, formatCardDescriptionWithKeywords } from '../config/keywordsConfig.js';
 
 export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
     constructor(scene, x, y, cardDto, isDraggable = false, initialMode = 'COMPACT', homeAngle = 0) {
@@ -82,6 +83,8 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         // 7. Verso da Carta
         this.cardBackPattern = scene.add.image(0, 0, 'card_back').setDisplaySize(width, height);
 
+        this.keywordDotsContainer = scene.add.container(0, height * 0.44);
+
         const children = [
             this.shadow,
             this.bg,
@@ -91,6 +94,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             this.titleText,
             this.typeBadge,
             this.descText,
+            this.keywordDotsContainer,
             this.discardBadge,
             this.cardBackPattern
         ];
@@ -345,6 +349,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             this.titleText.setVisible(false);
             this.typeBadge.setVisible(false);
             this.descText.setVisible(false);
+            if (this.keywordDotsContainer) this.keywordDotsContainer.setVisible(false);
             this.cardBackPattern.setVisible(true);
         } else {
             this.bg.setVisible(true);
@@ -380,11 +385,38 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
                 ? ` • ${cardDto.itemType}`
                 : '';
             this.typeBadge.setText(`${cardDto.cardType || ''}${subInfo}${empInfo}`);
-            this.descText.setText(cardDto.descricao || '');
+            this.descText.setText(formatCardDescriptionWithKeywords(cardDto.descricao || ''));
             this.cardBackPattern.setVisible(false);
 
+            this.renderKeywordMicroBadges(cardDto);
             this.applySizeLayout(this.currentMode);
         }
+    }
+
+    renderKeywordMicroBadges(cardDto) {
+        if (!this.keywordDotsContainer) return;
+        this.keywordDotsContainer.removeAll(true);
+
+        const kwList = resolveCardKeywords(cardDto).slice(0, 5);
+        if (kwList.length === 0) {
+            this.keywordDotsContainer.setVisible(false);
+            return;
+        }
+
+        const dim = (this.currentMode === 'MEDIUM') ? BOARD_LAYOUT.MEDIUM_CARD : BOARD_LAYOUT.COMPACT_CARD;
+        this.keywordDotsContainer.setPosition(0, dim.height * 0.44).setVisible(true);
+
+        const pillW = 14;
+        const gap = 4;
+        const totalW = kwList.length * pillW + (kwList.length - 1) * gap;
+        const startX = -totalW / 2 + pillW / 2;
+
+        kwList.forEach((kw, idx) => {
+            const colorInt = Phaser.Display.Color.HexStringToColor(kw.badgeColor).color;
+            const pill = this.scene.add.rectangle(startX + idx * (pillW + gap), 0, pillW, 4, colorInt, 1)
+                .setStrokeStyle(1, 0x090d16);
+            this.keywordDotsContainer.add(pill);
+        });
     }
 
     pulseSourceEffect() {

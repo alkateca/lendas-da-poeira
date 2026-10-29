@@ -56,6 +56,7 @@ public class CardFactory {
 
         if (rawCardFromJson.getCardName() == null) {
             rawCardFromJson.setEffects(effects);
+            rawCardFromJson.setKeywords(KeywordExtractor.extract(rawCardFromJson));
             return rawCardFromJson;
         }
 
@@ -543,8 +544,9 @@ public class CardFactory {
                 break;
         }
 
-        // Injeta a lista de efeitos na carta
+        // Injeta a lista de efeitos e extrai as keywords da carta
         rawCardFromJson.setEffects(effects);
+        rawCardFromJson.setKeywords(KeywordExtractor.extract(rawCardFromJson));
 
         return rawCardFromJson;
     }

@@ -15,7 +15,11 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000002",
@@ -33,7 +37,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": []
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000003",
@@ -51,7 +56,10 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA"
+    ]
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000004",
@@ -70,7 +78,11 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE",
+      "DANO_MAGICO"
+    ]
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000005",
@@ -88,7 +100,11 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE",
+      "DANO_DIRETO"
+    ]
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000006",
@@ -106,7 +122,11 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA",
+      "INICIO_DO_COMBATE"
+    ]
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000007",
@@ -124,7 +144,11 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000008",
@@ -142,7 +166,10 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA"
+    ]
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000009",
@@ -160,7 +187,12 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA",
+      "FINAL_DO_COMBATE",
+      "DANO_MAGICO"
+    ]
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000010",
@@ -176,7 +208,14 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA",
+      "INICIO_DO_COMBATE",
+      "FINAL_DO_COMBATE",
+      "DANO_MAGICO",
+      "DANO_FISICO"
+    ]
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000011",
@@ -192,7 +231,12 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA",
+      "AO_EQUIPAR",
+      "VULNERABILIDADE"
+    ]
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000012",
@@ -208,7 +252,12 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA",
+      "AO_EQUIPAR",
+      "VULNERABILIDADE"
+    ]
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000013",
@@ -226,7 +275,11 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000001",
@@ -244,7 +297,10 @@
     "afinidades": [
       "Fogo"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "DANO_MAGICO"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000002",
@@ -262,7 +318,11 @@
     "afinidades": [
       "Fogo"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INVOCAR",
+      "EXILAR"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000003",
@@ -280,7 +340,11 @@
     "afinidades": [
       "Ar"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "DANO_MAGICO",
+      "INVOCAR"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000004",
@@ -298,7 +362,11 @@
     "afinidades": [
       "Ar"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE",
+      "INVOCAR"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000005",
@@ -318,7 +386,8 @@
     "afinidades": [
       "Ar"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": []
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000006",
@@ -336,7 +405,8 @@
     "afinidades": [
       "Ar"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": []
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000007",
@@ -354,7 +424,8 @@
     "afinidades": [
       "Agua"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": []
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000008",
@@ -372,7 +443,10 @@
     "afinidades": [
       "Agua"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "AO_EQUIPAR"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000009",
@@ -390,7 +464,10 @@
     "afinidades": [
       "Agua"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "VULNERABILIDADE"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000010",
@@ -410,7 +487,10 @@
     "afinidades": [
       "Cristal"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000011",
@@ -428,7 +508,10 @@
     "afinidades": [
       "Cristal"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000012",
@@ -446,7 +529,10 @@
     "afinidades": [
       "Cristal"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000013",
@@ -466,7 +552,11 @@
     "afinidades": [
       "Cristal"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000014",
@@ -484,7 +574,8 @@
     "afinidades": [
       "Cristal"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": []
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000015",
@@ -502,7 +593,10 @@
     "afinidades": [
       "Cristal"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000016",
@@ -518,7 +612,11 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "DANO_MAGICO",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000017",
@@ -536,7 +634,11 @@
     "afinidades": [
       "Fogo"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "AO_EQUIPAR",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000018",
@@ -554,7 +656,10 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000019",
@@ -572,7 +677,10 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000020",
@@ -590,7 +698,10 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "DANO_DIRETO"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000001",
@@ -606,7 +717,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": []
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000002",
@@ -625,7 +737,10 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000003",
@@ -641,7 +756,10 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "ATIVO"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000004",
@@ -657,7 +775,10 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "DANO_DIRETO"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000005",
@@ -675,7 +796,10 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "MORTO"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000006",
@@ -693,7 +817,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": []
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000007",
@@ -709,7 +834,10 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EXILAR"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000008",
@@ -727,7 +855,11 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "DANO_BONUS",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000009",
@@ -743,7 +875,10 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EXILAR"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000010",
@@ -759,7 +894,10 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000011",
@@ -777,7 +915,10 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000012",
@@ -793,7 +934,10 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000013",
@@ -809,7 +953,10 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000014",
@@ -825,7 +972,10 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000015",
@@ -841,7 +991,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": []
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000016",
@@ -857,7 +1008,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": []
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000017",
@@ -873,7 +1025,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": []
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000018",
@@ -889,7 +1042,10 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000019",
@@ -905,7 +1061,10 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "DANO_FISICO"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000020",
@@ -921,7 +1080,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": []
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000021",
@@ -937,7 +1097,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": []
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000022",
@@ -955,7 +1116,10 @@
     "afinidades": [
       "Fogo"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "DANO_MAGICO"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000023",
@@ -973,7 +1137,8 @@
     "afinidades": [
       "Fogo"
     ],
-    "unica": false
+    "unica": false,
+    "keywords": []
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000024",
@@ -989,7 +1154,11 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE",
+      "EXILAR"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000025",
@@ -1005,7 +1174,11 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000026",
@@ -1021,7 +1194,11 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "DANO_DIRETO",
+      "ATIVO"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000027",
@@ -1037,7 +1214,10 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FERIDO"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000028",
@@ -1053,7 +1233,11 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000029",
@@ -1069,7 +1253,12 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "DANO_FISICO",
+      "FERIDO",
+      "DANO_DIRETO"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000030",
@@ -1085,7 +1274,12 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FERIDO",
+      "DANO_DIRETO",
+      "VULNERABILIDADE"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000031",
@@ -1101,7 +1295,11 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FERIDO",
+      "DANO_DIRETO"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000032",
@@ -1117,7 +1315,12 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FERIDO",
+      "VULNERABILIDADE",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000033",
@@ -1133,7 +1336,13 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA",
+      "INICIO_DO_COMBATE",
+      "FERIDO",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000034",
@@ -1151,7 +1360,13 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "DANO_MAGICO",
+      "FASE",
+      "DANO_DIRETO",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000035",
@@ -1169,7 +1384,12 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE",
+      "DANO_MAGICO",
+      "INVOCAR"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000036",
@@ -1187,7 +1407,11 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "DANO_BONUS",
+      "FINAL_DO_COMBATE"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000037",
@@ -1205,7 +1429,13 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE",
+      "DANO_FISICO",
+      "DANO_MAGICO",
+      "VULNERABILIDADE"
+    ]
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000038",
@@ -1223,6 +1453,11 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA",
+      "INICIO_DO_COMBATE",
+      "FINAL_DO_COMBATE"
+    ]
   }
 ]

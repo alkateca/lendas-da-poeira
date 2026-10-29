@@ -2,6 +2,12 @@ import Phaser from 'phaser';
 import { BOARD_LAYOUT } from '../config/BoardCoordinates.js';
 import DeckRestrictionValidator from '../managers/DeckRestrictionValidator.js';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
+import PhantomUIKit from '../ui/PhantomUIKit.js';
+import {
+    KEYWORDS_REGISTRY,
+    resolveCardKeywords,
+    formatCardDescriptionWithKeywords
+} from '../config/keywordsConfig.js';
 
 export default class DeckBuilderScene extends Phaser.Scene {
     constructor() {
@@ -27,7 +33,8 @@ export default class DeckBuilderScene extends Phaser.Scene {
             afinidade: 'ALL',
             classe: 'ALL',
             ordem: 'ALL',
-            empunhadura: 'ALL'
+            empunhadura: 'ALL',
+            keyword: 'ALL'
         };
     }
 
@@ -128,12 +135,27 @@ export default class DeckBuilderScene extends Phaser.Scene {
             this.saveCurrentDeck();
         });
 
-        this.createUIButton(1375, 48, 205, 40, '★ USAR EM PARTIDA', 0xca8a04, () => {
+        this.createUIButton(1355, 48, 185, 40, '★ USAR EM PARTIDA', 0xca8a04, () => {
             this.setAsCurrentPlayableDeck();
         });
 
-        this.createUIButton(1735, 48, 250, 40, '⬅ VOLTAR AO MENU', 0x475569, () => {
+        this.createUIButton(1545, 48, 155, 40, '📖 GLOSSÁRIO', 0x0284c7, () => {
+            this.openDeckBuilderGlossary();
+        });
+
+        this.createUIButton(1755, 48, 220, 40, '⬅ VOLTAR AO MENU', 0x475569, () => {
             this.scene.start('MainMenuScene', { player: this.player });
+        });
+    }
+
+    openDeckBuilderGlossary() {
+        if (this.deckNameDom) this.deckNameDom.setVisible(false);
+        if (this.filterDom) this.filterDom.setVisible(false);
+
+        const modal = PhantomUIKit.openGlossaryModal(this);
+        modal.on('destroy', () => {
+            if (this.deckNameDom) this.deckNameDom.setVisible(true);
+            if (this.filterDom) this.filterDom.setVisible(true);
         });
     }
 
@@ -272,6 +294,10 @@ export default class DeckBuilderScene extends Phaser.Scene {
                     <option value="0">Sem Emp. (0)</option>
                 </select>
 
+                <select id="db-filter-keyword" class="phantom-crt-select" style="width: 132px; height: 28px; font-size: 11.5px; font-weight: bold; outline: none;">
+                    <option value="ALL">⚡ Mecânica: Todas</option>
+                </select>
+
                 <button type="button" id="db-clear-filters-btn" style="
                     height: 28px; padding: 0 10px; background: #b91c1c; color: #ffffff;
                     border: 1px solid #f87171; border-radius: 4px; font-size: 11.5px;
@@ -298,6 +324,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
         const classeEl = root.querySelector('#db-filter-classe');
         const ordemEl = root.querySelector('#db-filter-ordem');
         const empEl = root.querySelector('#db-filter-empunhadura');
+        const keywordEl = root.querySelector('#db-filter-keyword');
         const clearBtn = root.querySelector('#db-clear-filters-btn');
 
         if (searchEl) {
@@ -324,6 +351,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
         bindSelect(classeEl, 'classe');
         bindSelect(ordemEl, 'ordem');
         bindSelect(empEl, 'empunhadura');
+        bindSelect(keywordEl, 'keyword');
 
         if (clearBtn) {
             clearBtn.addEventListener('click', () => this.resetAllFilters());
@@ -411,6 +439,11 @@ export default class DeckBuilderScene extends Phaser.Scene {
         fillOptions('#db-filter-afinidade', '🔥 Afinidade: Todas', afinidadesMap);
         fillOptions('#db-filter-classe', '⚔️ Classe: Todas', classesMap);
         fillOptions('#db-filter-ordem', '🛡️ Ordem: Todas', ordensMap);
+
+        const keywordsMap = new Map(
+            Object.values(KEYWORDS_REGISTRY).map(kw => [kw.id, kw.label])
+        );
+        fillOptions('#db-filter-keyword', '⚡ Mecânica: Todas', keywordsMap);
     }
 
     resetAllFilters() {
@@ -429,6 +462,10 @@ export default class DeckBuilderScene extends Phaser.Scene {
             const root = this.filterDom.node;
             const searchEl = root.querySelector('#db-search-input');
             if (searchEl) searchEl.value = '';
+            this.filters.keyword = 'ALL';
+            const kwSelect = this.filterDom?.node?.querySelector('#db-filter-keyword');
+            if (kwSelect) kwSelect.value = 'ALL';
+
             [
                 '#db-filter-color',
                 '#db-filter-type',
@@ -436,7 +473,8 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 '#db-filter-afinidade',
                 '#db-filter-classe',
                 '#db-filter-ordem',
-                '#db-filter-empunhadura'
+                '#db-filter-empunhadura',
+                '#db-filter-keyword'
             ].forEach(sel => {
                 const el = root.querySelector(sel);
                 if (el) el.value = 'ALL';
@@ -751,6 +789,12 @@ export default class DeckBuilderScene extends Phaser.Scene {
             if (Number(emp) !== Number(f.empunhadura)) return false;
         }
 
+        // 9. Keyword / Mecânica Estruturada
+        if (f.keyword && f.keyword !== 'ALL') {
+            const itemKeywords = resolveCardKeywords(item);
+            if (!itemKeywords.some(kw => kw.id === f.keyword)) return false;
+        }
+
         return true;
     }
 
@@ -912,7 +956,8 @@ export default class DeckBuilderScene extends Phaser.Scene {
             ? `ESP:${data.espirito}  ATQ:${data.ataque}  DEF:${data.defesa}  HP:${data.vidaMaxima}\n`
             : '';
 
-        const desc = this.add.text(-w / 2 + 12, -h / 2 + 64, statsStr + (data.descricao || ''), {
+        const formattedDesc = formatCardDescriptionWithKeywords(data.descricao || '');
+        const desc = this.add.text(-w / 2 + 12, -h / 2 + 64, statsStr + formattedDesc, {
             fontFamily: 'IoskeleyMono, monospace',
             fontSize: '10.5px',
             color: '#090d16',
@@ -1132,7 +1177,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
                     ? `HERÓI • Cor: ${data.color}`
                     : `${data.liberationCard ? '★ CARTA DE LIBERAÇÃO • ' : ''}${data.cardType} • Cor: ${data.color}${data.unica ? ' • ÚNICA' : ''}`
             );
-            this.lpDesc.setText(data.descricao || '');
+            this.lpDesc.setText(formatCardDescriptionWithKeywords(data.descricao || ''));
             this.lpStats.setText(
                 isHero
                     ? `ESP: ${data.espirito} | ATQ: ${data.ataque} | DEF: ${data.defesa} | HP: ${data.vidaMaxima}`
@@ -1141,6 +1186,13 @@ export default class DeckBuilderScene extends Phaser.Scene {
                         : (data.empunhadura > 0 ? `Empunhadura: ${data.empunhadura}` : ''))
             );
             this.largePreview.setVisible(true);
+
+            this.keywordTooltipsContainer = PhantomUIKit.createKeywordTooltipsContainer(
+                this,
+                data,
+                1330,
+                350
+            );
         });
     }
 
@@ -1150,6 +1202,10 @@ export default class DeckBuilderScene extends Phaser.Scene {
             this.longHoverTimer = null;
         }
         if (this.largePreview) this.largePreview.setVisible(false);
+        if (this.keywordTooltipsContainer) {
+            this.keywordTooltipsContainer.destroy(true);
+            this.keywordTooltipsContainer = null;
+        }
     }
 
     createUIButton(x, y, w, h, label, color, onClick) {
