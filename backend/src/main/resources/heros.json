@@ -49,7 +49,10 @@
     ],
     "afinidades": [],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Emissor",
+      "Transformador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -80,7 +83,10 @@
     ],
     "afinidades": [],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Emissor",
+      "Transformador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -110,7 +116,10 @@
     ],
     "afinidades": [],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Emissor",
+      "Transformador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -174,7 +183,9 @@
     ],
     "afinidades": [],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Transformador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -240,7 +251,9 @@
       "Cristal"
     ],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Criador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -274,7 +287,9 @@
       "Cristal"
     ],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Criador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -308,7 +323,9 @@
       "Cristal"
     ],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Criador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -405,7 +422,9 @@
     "ordem": [
       "Cavaleiro"
     ],
-    "classe": [],
+    "classe": [
+      "Criador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -440,7 +459,9 @@
     "ordem": [
       "Cavaleiro"
     ],
-    "classe": [],
+    "classe": [
+      "Criador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -474,7 +495,9 @@
     "ordem": [
       "Cavaleiro"
     ],
-    "classe": [],
+    "classe": [
+      "Criador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -506,7 +529,9 @@
       "Cristal"
     ],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Criador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -527,8 +552,8 @@
     "espirito": 3,
     "ataque": 5,
     "defesa": 3,
-    "vidaMaxima": 13,
-    "vidaAtual": 13,
+    "vidaMaxima": 12,
+    "vidaAtual": 12,
     "maxWeaponSlots": 2,
     "reducaoDano": 0,
     "danoBonus": 0,
@@ -538,7 +563,10 @@
     ],
     "afinidades": [],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Emissor",
+      "Transformador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -600,7 +628,9 @@
       "Terra"
     ],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Criador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -634,7 +664,9 @@
       "Agua"
     ],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Criador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -705,7 +737,9 @@
       "Agua"
     ],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Criador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -739,7 +773,9 @@
       "Agua"
     ],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Criador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -772,7 +808,9 @@
       "Agua"
     ],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Criador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -968,7 +1006,9 @@
     ],
     "afinidades": [],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Criador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -1040,7 +1080,8 @@
     ],
     "ordem": [],
     "classe": [
-      "Criador"
+      "Criador",
+      "Emissor"
     ],
     "estaVivo": true,
     "estaAtivo": true,
@@ -1075,7 +1116,9 @@
       "Fogo"
     ],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Criador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -1104,7 +1147,9 @@
     "racas": [],
     "afinidades": [],
     "ordem": [],
-    "classe": [],
+    "classe": [
+      "Criador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
@@ -1187,9 +1232,9 @@
     "descricao": "Aura: Sempre que uma carta for invocada pelo oponente, o Herói Inimigo sofre 1 de Dano Direto.\nInício do Combate: Se o Herói Inimigo possuir 2 ou mais cartas anexadas, o Herói Inimigo recebe +1 de Vulnerabilidade até o Final do Combate.",
     "espirito": 3,
     "ataque": 4,
-    "defesa": 3,
-    "vidaMaxima": 16,
-    "vidaAtual": 16,
+    "defesa": 0,
+    "vidaMaxima": 19,
+    "vidaAtual": 19,
     "maxWeaponSlots": 2,
     "reducaoDano": 0,
     "danoBonus": 0,
@@ -1224,9 +1269,9 @@
     "descricao": "Final do Combate: Para cada duas cartas jogadas pelo oponente neste turno: Seu Herói recupera 3 de Vida e o Herói Inimigo sofre 3 de Dano Mágico.",
     "espirito": 3,
     "ataque": 5,
-    "defesa": 3,
-    "vidaMaxima": 17,
-    "vidaAtual": 17,
+    "defesa": 0,
+    "vidaMaxima": 20,
+    "vidaAtual": 20,
     "maxWeaponSlots": 2,
     "reducaoDano": 0,
     "danoBonus": 0,
@@ -1257,9 +1302,9 @@
     "descricao": "Aura: Sempre que uma Tristeza for descartada, Seus Heróis recebem +1 de Ataque.\nInício do Combate: Invocar: Risada Sarcástica.",
     "espirito": 3,
     "ataque": 4,
-    "defesa": 3,
-    "vidaMaxima": 15,
-    "vidaAtual": 15,
+    "defesa": 0,
+    "vidaMaxima": 18,
+    "vidaAtual": 18,
     "maxWeaponSlots": 2,
     "reducaoDano": 0,
     "danoBonus": 0,
@@ -1271,7 +1316,9 @@
     "ordem": [
       "Guardião do Trono"
     ],
-    "classe": [],
+    "classe": [
+      "Transformador"
+    ],
     "estaVivo": true,
     "estaAtivo": true,
     "unica": false,
