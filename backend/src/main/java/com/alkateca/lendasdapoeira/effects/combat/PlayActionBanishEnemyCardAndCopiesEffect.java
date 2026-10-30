@@ -34,43 +34,33 @@ public class PlayActionBanishEnemyCardAndCopiesEffect implements Effect {
             return;
         }
 
+        // Alvos válidos: cartas inimigas anexadas em campo (ATTACHED) ou na pilha de resolução ainda não resolvidas (RESOLVE)
         List<UUID> validTargetUuids = enemyPlayer.getCurrentDeck().getCardList().stream()
-                .filter(c -> c.getZoneId() == ZoneId.ATTACHED || c.getZoneId() == ZoneId.DISCARD)
+                .filter(c -> c.getZoneId() == ZoneId.ATTACHED
+                        || (c.getZoneId() == ZoneId.RESOLVE && !gameEngine.getResolvedCardsInCurrentCombat().contains(c)))
                 .map(Card::getUuid)
                 .collect(Collectors.toList());
 
         gameEngine.requestPlayerChoice(
                 myPlayer.getUuid(),
                 sourceCard,
-                "ENEMY_IN_PLAY_OR_DISCARD",
-                "Escolha uma carta Inimiga Em Jogo ou no Descarte para exilar todas as suas cópias",
+                "ENEMY_IN_PLAY_OR_RESOLVE",
+                "Escolha 1 carta Inimiga em jogo ou na fila de resolução para descartar e anular",
                 validTargetUuids,
                 false,
                 chosenCardUuid -> {
                     if (chosenCardUuid == null) return;
+
                     Card chosenCard = enemyPlayer.getCurrentDeck().getCardList().stream()
                             .filter(c -> c.getUuid().equals(chosenCardUuid)
-                                    && (c.getZoneId() == ZoneId.ATTACHED || c.getZoneId() == ZoneId.DISCARD))
+                                    && (c.getZoneId() == ZoneId.ATTACHED || c.getZoneId() == ZoneId.RESOLVE))
                             .findFirst()
                             .orElse(null);
 
-                    if (chosenCard != null && chosenCard.getCardName() != null) {
-                        String targetCardName = chosenCard.getCardName();
-                        int exiledCount = 0;
-
-                        for (Card c : enemyPlayer.getCurrentDeck().getCardList()) {
-                            if (targetCardName.equalsIgnoreCase(c.getCardName()) && c.getZoneId() != ZoneId.EXILE) {
-                                if (c.getZoneId() == ZoneId.ATTACHED) {
-                                    gameEngine.detachCard(c, ZoneId.EXILE);
-                                } else {
-                                    c.setZoneId(ZoneId.EXILE);
-                                }
-                                exiledCount++;
-                            }
-                        }
-
-                        System.out.println("-> " + sourceCard.getCardName() + " exilou " + exiledCount +
-                                " cópia(s) de '" + targetCardName + "' do oponente!");
+                    if (chosenCard != null) {
+                        gameEngine.cancelOrDiscardCardInPlay(chosenCard);
+                        System.out.println("-> " + sourceCard.getCardName() + " retirou '"
+                                + chosenCard.getCardName() + "' de jogo/resolução e a enviou para o descarte!");
                     }
                 }
         );

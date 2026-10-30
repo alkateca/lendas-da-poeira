@@ -991,9 +991,26 @@ public class GameEngine {
         }
     }
 
+    public boolean hasPriority(Card card) {
+        if (card == null) return false;
+        if (card.getDescricao() != null && card.getDescricao().toUpperCase().contains("PRIORIDADE")) {
+            return true;
+        }
+        try {
+            java.lang.reflect.Method m = card.getClass().getMethod("getKeywords");
+            Object kw = m.invoke(card);
+            if (kw instanceof Collection<?> col) {
+                return col.stream().anyMatch(k -> "PRIORIDADE".equalsIgnoreCase(String.valueOf(k)));
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
+    }
+
     private void enqueueInitialResolutionCards() {
         boolean p1HasInitiative = gameState.getActiveTurnPlayerId() == null
                 || gameState.getActiveTurnPlayerId().equals(gameState.getPlayer1().getUuid());
+
         List<Card> firstPlayerCards = p1HasInitiative
                 ? gameState.getPlayer1PlayedCards()
                 : gameState.getPlayer2PlayedCards();
@@ -1002,7 +1019,11 @@ public class GameEngine {
                 ? gameState.getPlayer2PlayedCards()
                 : gameState.getPlayer1PlayedCards();
 
-        // Filtra apenas as cartas de PREPARATION que ainda não foram resolvidas/invocadas no COMBAT_START
+        // Reordena visualmente as listas de resolução de cada jogador colocando cartas com Prioridade na frente
+        Comparator<Card> priorityComparator = Comparator.comparing((Card c) -> !hasPriority(c));
+        firstPlayerCards.sort(priorityComparator);
+        secondPlayerCards.sort(priorityComparator);
+
         List<Card> firstPlayerPending = firstPlayerCards.stream()
                 .filter(c -> !resolvedCardsInCurrentCombat.contains(c) && !invokedCardIdsInCurrentCombat.contains(c.getUuid()))
                 .toList();
@@ -1010,8 +1031,6 @@ public class GameEngine {
         List<Card> secondPlayerPending = secondPlayerCards.stream()
                 .filter(c -> !resolvedCardsInCurrentCombat.contains(c) && !invokedCardIdsInCurrentCombat.contains(c.getUuid()))
                 .toList();
-
-        int maxCards = Math.max(firstPlayerPending.size(), secondPlayerPending.size());
 
         for (Card c : firstPlayerPending) {
             if (c != null && c.getOwnerId() != null && c.getUuid() != null) {
@@ -1024,13 +1043,55 @@ public class GameEngine {
             }
         }
 
-        for (int i = 0; i < maxCards; i++) {
-            if (i < firstPlayerPending.size()) {
-                enqueueCardAndHeroOnPlayResolution(firstPlayerPending.get(i), false);
+        // 1ª Passada: Cartas com PRIORIDADE (Jogador que escolheu os Heróis do turno resolve primeiro no empate)
+        List<Card> firstPriority = firstPlayerPending.stream().filter(this::hasPriority).toList();
+        List<Card> secondPriority = secondPlayerPending.stream().filter(this::hasPriority).toList();
+        int maxPriority = Math.max(firstPriority.size(), secondPriority.size());
+
+        for (int i = 0; i < maxPriority; i++) {
+            if (i < firstPriority.size()) {
+                enqueueCardAndHeroOnPlayResolution(firstPriority.get(i), false);
             }
-            if (i < secondPlayerPending.size()) {
-                enqueueCardAndHeroOnPlayResolution(secondPlayerPending.get(i), false);
+            if (i < secondPriority.size()) {
+                enqueueCardAndHeroOnPlayResolution(secondPriority.get(i), false);
             }
+        }
+
+        // 2ª Passada: Demais cartas normais sem Prioridade
+        List<Card> firstNormal = firstPlayerPending.stream().filter(c -> !hasPriority(c)).toList();
+        List<Card> secondNormal = secondPlayerPending.stream().filter(c -> !hasPriority(c)).toList();
+        int maxNormal = Math.max(firstNormal.size(), secondNormal.size());
+
+        for (int i = 0; i < maxNormal; i++) {
+            if (i < firstNormal.size()) {
+                enqueueCardAndHeroOnPlayResolution(firstNormal.get(i), false);
+            }
+            if (i < secondNormal.size()) {
+                enqueueCardAndHeroOnPlayResolution(secondNormal.get(i), false);
+            }
+        }
+    }
+
+    /**
+     * Cancela uma carta na pilha de resolução ou desanexa uma carta em jogo, enviando-a ao Descarte.
+     */
+    public void cancelOrDiscardCardInPlay(Card targetCard) {
+        if (targetCard == null) return;
+
+        resolutionQueue.removeEffectsForCard(targetCard.getUuid());
+
+        if (targetCard.getZoneId() == ZoneId.ATTACHED) {
+            detachCard(targetCard, ZoneId.DISCARD);
+            return;
+        }
+
+        targetCard.setAttachedToCardId(null);
+        targetCard.setTurnsRemaining(null);
+        targetCard.setZoneId(ZoneId.DISCARD);
+
+        if (gameState != null) {
+            gameState.getPlayer1PlayedCards().remove(targetCard);
+            gameState.getPlayer2PlayedCards().remove(targetCard);
         }
     }
 
@@ -1041,7 +1102,7 @@ public class GameEngine {
     private void enqueueCardAndHeroOnPlayResolution(Card card, boolean atFront) {
         if (card == null) return;
 
-        com.alkateca.lendasdapoeira.effects.Effect markResolvedStep = new com.alkateca.lendasdapoeira.effects.Effect() {
+        com.alkateca.lendasdapoeira.effects.Effect resolveEntryStep = new com.alkateca.lendasdapoeira.effects.Effect() {
             @Override
             public boolean predicate(Card sourceCard, TurnPhase turnPhase) {
                 return turnPhase == TurnPhase.RESOLUTION;
@@ -1054,6 +1115,10 @@ public class GameEngine {
 
             @Override
             public void resolve(GameEngine gameEngine, Card sourceCard) {
+                // Se a carta foi removida/anulada da pilha de resolução (ex: por Banir!), aborta sua execução
+                if (sourceCard.getZoneId() != ZoneId.RESOLVE) {
+                    return;
+                }
                 gameEngine.markCardAsResolved(sourceCard);
             }
         };
@@ -1082,7 +1147,7 @@ public class GameEngine {
         }
 
         if (!atFront) {
-            resolutionQueue.enqueue(markResolvedStep, card);
+            resolutionQueue.enqueue(resolveEntryStep, card);
             for (com.alkateca.lendasdapoeira.effects.Effect eff : cardEffects) {
                 resolutionQueue.enqueue(eff, card);
             }
@@ -1096,7 +1161,7 @@ public class GameEngine {
             for (int i = cardEffects.size() - 1; i >= 0; i--) {
                 resolutionQueue.enqueueFirst(cardEffects.get(i), card);
             }
-            resolutionQueue.enqueueFirst(markResolvedStep, card);
+            resolutionQueue.enqueueFirst(resolveEntryStep, card);
         }
     }
     public boolean hasMagicBasicAttacks(UUID heroId) {
@@ -1440,6 +1505,8 @@ public class GameEngine {
                         .findFirst()
                         .ifPresent(card -> card.setZoneId(ZoneId.DISCARD));
             }
+            triggerDiscardPhaseEffects();
+            resolutionQueue.resolveAll(this);
         }
 
         if (isP1) {
@@ -1455,6 +1522,27 @@ public class GameEngine {
             this.isPlayer1Ready = false;
             this.isPlayer2Ready = false;
             discard();
+        }
+    }
+
+    private void triggerDiscardPhaseEffects() {
+        List<HeroCard> allHeroes = new ArrayList<>();
+        if (player1 != null && player1.getCurrentDeck() != null && player1.getCurrentDeck().getHeroList() != null) {
+            allHeroes.addAll(player1.getCurrentDeck().getHeroList());
+        }
+        if (player2 != null && player2.getCurrentDeck() != null && player2.getCurrentDeck().getHeroList() != null) {
+            allHeroes.addAll(player2.getCurrentDeck().getHeroList());
+        }
+
+        for (HeroCard hero : allHeroes) {
+            if (hero != null && Boolean.TRUE.equals(hero.getEstaVivo()) && hero.getEffects() != null) {
+                for (com.alkateca.lendasdapoeira.effects.Effect eff : hero.getEffects()) {
+                    if (eff.predicate(hero, TurnPhase.DISCARD)
+                            && (hero.getZoneId() == ZoneId.BATTLE || eff.canTriggerFromBench())) {
+                        resolutionQueue.enqueue(eff, hero);
+                    }
+                }
+            }
         }
     }
 

@@ -829,14 +829,14 @@
     "cardSet": "BASE",
     "itemType": "NENHUM",
     "empunhadura": 0,
-    "descricao": "Escolha uma carta Inimiga Em Jogo ou no descarte. Exile todas as suas Cópias.\nExilar.",
+    "descricao": "Prioridade.\nDescarte 1 carta Inimiga em jogo ou na fila de resolução.",
     "racas": [],
     "ordem": [],
     "classe": [],
     "afinidades": [],
     "unica": false,
     "keywords": [
-      "EXILAR"
+      "PRIORIDADE"
     ]
   },
   {

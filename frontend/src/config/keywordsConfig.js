@@ -73,6 +73,15 @@ export const KEYWORDS_REGISTRY = {
         summary: 'Efeito ativado ou mantido pelo item anexado.',
         description: 'Dispara quando o Item é anexado ao Herói na Fase de Resolução ou mantém o bônus ativo enquanto permanecer anexado.'
     },
+    PRIORIDADE: {
+        id: 'PRIORIDADE',
+        label: 'Prioridade',
+        category: KEYWORD_CATEGORIES.ACAO_GATILHO,
+        badgeColor: '#10b981',
+        pattern: /\bprioridade\b/i,
+        summary: 'Resolve antes das cartas normais na fila de Resolução.',
+        description: 'Refaz a fila na Fase de Resolução (TurnPhase.RESOLUTION), colocando esta carta no início da pilha antes de qualquer carta sem Prioridade. Se ambos os jogadores jogarem cartas com Prioridade, o jogador ativo que escolheu os Heróis do turno resolve primeiro.'
+    },
 
     // ==========================================
     // 2. TIPOS DE DANO E COMBATE
@@ -263,6 +272,7 @@ export function formatCardDescriptionWithKeywords(rawText) {
         formatted = formatted.replace(regex, match => `▸ ${match.toUpperCase()}`);
     });
 
+    formatted = formatted.replace(/\bPrioridade\./gi, '[PRIORIDADE]');
     formatted = formatted.replace(/\bInvocar:\s*/gi, '⚡INVOCAR: ');
     formatted = formatted.replace(/\bExilar\./gi, '[EXILAR]');
 

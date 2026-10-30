@@ -210,6 +210,10 @@ public class CardFactory {
             case "Justiçar Elyon, Balança Imutável":
                 effects.add(new EndOfCombatHealAndMagicDamagePerTwoEnemyPlayedCardsEffect(3, 3));
                 break;
+            case "Constructo Arquivista":
+                effects.add(new AuraOnDiscardCardBuffAlliesEffect("Tristeza", 0, 1, 0));
+                effects.add(new StartOfCombatInvokeCardEffect("Risada Sarcástica"));
+                break;
 
             // ==========================================
             // ITENS (Armas, Joias, Ferramentas, etc)

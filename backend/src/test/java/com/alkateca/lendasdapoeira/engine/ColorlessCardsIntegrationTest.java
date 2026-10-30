@@ -17,6 +17,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ColorlessCardsIntegrationTest {
@@ -397,22 +398,16 @@ class ColorlessCardsIntegrationTest {
         engine.submitPlayerChoice(p1.getUuid(), enemyBench.getUuid());
         assertEquals(12, enemyBench.getVidaAtual(), "Mirar na cabeça deve causar 3 de Dano Direto no Herói Inimigo escolhido (15 -> 12).");
 
-        // Testa Banir!: escolhe Lamina de Cristal no descarte inimigo e exila tanto ela quanto outra cópia no DECK/HAND do inimigo
-        Card copyInEnemyDeck = new Card();
-        copyInEnemyDeck.setUuid(UUID.randomUUID());
-        copyInEnemyDeck.setCardName("Lamina de Cristal");
-        copyInEnemyDeck.setCardType(CardType.ITEM);
-        copyInEnemyDeck.setOwnerId(p2.getUuid());
-        copyInEnemyDeck.setZoneId(ZoneId.DECK);
-        deck2.getCardList().add(copyInEnemyDeck);
-
-        Card copyInEnemyHand = new Card();
-        copyInEnemyHand.setUuid(UUID.randomUUID());
-        copyInEnemyHand.setCardName("Lamina de Cristal");
-        copyInEnemyHand.setCardType(CardType.ITEM);
-        copyInEnemyHand.setOwnerId(p2.getUuid());
-        copyInEnemyHand.setZoneId(ZoneId.HAND);
-        deck2.getCardList().add(copyInEnemyHand);
+        // Testa Banir!: descarta 1 carta Inimiga em jogo (ATTACHED) ou na fila de resolução (RESOLVE)
+        Card enemyAttachedWeapon = new Card();
+        enemyAttachedWeapon.setUuid(UUID.randomUUID());
+        enemyAttachedWeapon.setCardName("Lamina de Cristal");
+        enemyAttachedWeapon.setCardType(CardType.ITEM);
+        enemyAttachedWeapon.setItemType(ItemType.ARMA);
+        enemyAttachedWeapon.setOwnerId(p2.getUuid());
+        enemyAttachedWeapon.setZoneId(ZoneId.ATTACHED);
+        enemyAttachedWeapon.setAttachedToCardId(enemyActive.getUuid());
+        deck2.getCardList().add(enemyAttachedWeapon);
 
         gameState.setActiveHeroPlayer1Id(myHero.getUuid());
         gameState.setActiveHeroPlayer2Id(enemyActive.getUuid());
@@ -428,11 +423,10 @@ class ColorlessCardsIntegrationTest {
         CardFactory.buildCardLogic(banir);
 
         banir.getEffects().forEach(eff -> eff.resolve(engine, banir));
-        assertNotNull(gameState.getPendingChoice(), "Banir! deve solicitar a escolha de uma carta inimiga em jogo ou no descarte.");
-        engine.submitPlayerChoice(p1.getUuid(), itemActive.getUuid());
+        assertNotNull(gameState.getPendingChoice(), "Banir! deve solicitar a escolha de uma carta inimiga em jogo ou na fila de resolução.");
+        engine.submitPlayerChoice(p1.getUuid(), enemyAttachedWeapon.getUuid());
 
-        assertEquals(ZoneId.EXILE, itemActive.getZoneId(), "A carta escolhida no descarte deve ser exilada.");
-        assertEquals(ZoneId.EXILE, copyInEnemyDeck.getZoneId(), "A cópia no baralho inimigo deve ser exilada.");
-        assertEquals(ZoneId.EXILE, copyInEnemyHand.getZoneId(), "A cópia na mão inimiga deve ser exilada.");
+        assertEquals(ZoneId.DISCARD, enemyAttachedWeapon.getZoneId(), "A carta escolhida em jogo deve ser enviada para o descarte.");
+        assertNull(enemyAttachedWeapon.getAttachedToCardId(), "A carta deve ser desanexada.");
     }
 }

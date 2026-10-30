@@ -50,6 +50,12 @@ public class ResolutionQueue {
         }
     }
 
+    public void removeEffectsForCard(java.util.UUID cardUuid) {
+        if (cardUuid == null) return;
+        queue.removeIf(pending -> pending.getSourceCard() != null
+                && cardUuid.equals(pending.getSourceCard().getUuid()));
+    }
+
     public boolean isEmpty() {
         return queue.isEmpty();
     }

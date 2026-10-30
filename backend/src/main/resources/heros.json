@@ -1246,5 +1246,39 @@
       "FINAL_DO_COMBATE",
       "DANO_MAGICO"
     ]
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000041",
+    "cardName": "Constructo Arquivista",
+    "cardType": "HERO",
+    "color": "YELLOW",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "descricao": "Aura: Sempre que uma Tristeza for descartada, Seus Heróis recebem +1 de Ataque.\nInício do Combate: Invocar: Risada Sarcástica.",
+    "espirito": 3,
+    "ataque": 4,
+    "defesa": 3,
+    "vidaMaxima": 15,
+    "vidaAtual": 15,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Constructo"
+    ],
+    "afinidades": [],
+    "ordem": [
+      "Guardião do Trono"
+    ],
+    "classe": [],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false,
+    "keywords": [
+      "AURA",
+      "INVOCAR",
+      "INICIO_DO_COMBATE"
+    ]
   }
 ]
