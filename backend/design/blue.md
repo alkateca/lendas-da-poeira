@@ -44,6 +44,17 @@
   * **Feitiços de Auto-Fortalecimento:** Uso de magias como *Contra-Ataque* e *Golpes Pesados*.
 * **Equipamento Lendário Único:**
   * `Quimera` (*Arma - Empunhadura Simples - Cavaleiro*): Concede altos bônus de Ataque, Defesa e Espírito, e dobra a recuperação de Vida baseada em Espírito no Final do Combate.
+* **As 10 Cartas do Baralho:**
+  1. `Quimera` (Arma Simples - Lendária)
+  2. `Dragast` (Arma Simples)
+  3. `Fragmento Afiado` (Arma Simples)
+  4. `Baluarte de Espelhos do Dragão` (Escudo Único)
+  5. `Placas de Cristal Draconiano` (Armadura Única)
+  6. `Dragão de Cristal` (Joia)
+  7. `Contra Ataque` (Feitiço - Afinidade Cristal)
+  8. `Voto dos Cavaleiros Caídos` (Feitiço - Afinidade Cristal)
+  9. `Golpes Pesados` (Feitiço - Afinidade Cristal)
+  10. `Determinação Cristalina` (Ação)
 
 ---
 
@@ -60,7 +71,19 @@
   * **Múltiplos Pings de Dano Mágico:** Ataques que se dividem entre a fase de Resolução e o Final do Combate (*Massacre Cristalino*, *Ataque Mágico*).
   * **O Golpe de Misericórdia (*Ponto Final*):** Feitiço supremo de dano concentrado para abater alvos já desgastados pela ressonância.
 * **Equipamento Lendário Único:**
-  * `Coração de Cristal Puro` (*Joia - Cristal*): Joia lendária que maximiza o Espírito e projeta aura de amplificação direta para todos os feitiços de cristal.
+  * `Coração de Cristal Puro` (*Joia - Cristal*): Joia lendária que concede aura de +2 de Dano Bônus e +2 de Defesa a todos os seus heróis.
+* **As 11 Cartas do Baralho:**
+  1. `Coração de Cristal Puro` (Joia - Lendária)
+  2. `Broche de Cristal` (Joia)
+  3. `Dragão de Cristal` (Joia)
+  4. `Lamina de Cristal` (Arma Simples)
+  5. `Rapieira de Cristal` (Arma Simples)
+  6. `Dança das Mil Lâminas` (Feitiço - Afinidade Cristal)
+  7. `Massacre Cristalino` (Feitiço - Afinidade Cristal)
+  8. `Ataque Mágico` (Feitiço - Afinidade Cristal)
+  9. `Ponto Final` (Feitiço - Afinidade Cristal)
+  10. `Auto Defesa Magica` (Feitiço - Afinidade Cristal)
+  11. `Impulso de Poder` (Ação)
 
 ---
 

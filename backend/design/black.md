@@ -45,6 +45,17 @@
   * **Corrupção de Atributos:** Enfraquecimento definitivo dos recursos do oponente (*Atmosfera Pesada*, *Quimera Negra*).
 * **Equipamento Lendário Único:**
   * `Filactéria das Areias Negras` (*Joia - Zumbi*): Relicário que converte a presença e morte de zumbis em drenagem de vida direta no encerramento de cada turno.
+* **As 10 Cartas do Baralho:**
+  1. `Filactéria das Areias Negras` (Joia - Lendária Única)
+  2. `Homunculo Carniceiro` (Joia)
+  3. `Amuleto de Ossos da Fábrica` (Joia)
+  4. `Quimera Negra` (Arma - Simples)
+  5. `Manoplas do Necromante` (Armadura Única)
+  6. `Atmosfera Pesada` (Feitiço - Afinidade Ar)
+  7. `Peste das Areias Negras` (Feitiço - Afinidade Ar)
+  8. `Ritos Fúnebres` (Ação)
+  9. `Exumação` (Ação)
+  10. `Pilhagem de Cadáveres` (Ação)
 
 ---
 
@@ -61,7 +72,18 @@
   * **Ataques a Heróis Fora de Combate:** Habilidade de atingir ou arrastar heróis feridos que estão no banco de reservas (*Seguindo Ordens*, *Arrastar para o Cadafalso*).
   * **Armas Pesadas de Empunhadura Dupla:** Uso massivo de armas de 2 slots para maximizar o golpe de misericórdia.
 * **Equipamento Lendário Único:**
-  * `Espada do Carrasco` (*Arma - Empunhadura Dupla*): Concede alto Ataque, inflige Vulnerabilidade ao entrar se o alvo estiver ferido, e recupera 5 de Vida caso execute o adversário.
+  * `Espada do Carrasco` (*Arma - Empunhadura Dupla*): Concede alto Ataque e recupera 5 de Vida caso o oponente tenha 0 ou menos de Vida no encerramento da batalha.
+* **As 10 Cartas do Baralho:**
+  1. `Espada do Carrasco` (Arma Dupla - Lendária do Chefe)
+  2. `Cutelo do Suplício` (Arma Simples)
+  3. `Manto de Ferro do Algoz` (Armadura Única)
+  4. `Correntes do Cadafalso` (Ferramenta)
+  5. `Seguindo Ordens` (Ação)
+  6. `Grilhões Pesados` (Ação)
+  7. `Cheiro de Sangue` (Ação)
+  8. `Arrastar para o Cadafalso` (Ação)
+  9. `Colheita dos Condenados` (Ação)
+  10. `Sentença da Guilhotina` (Ação)
 
 ---
 

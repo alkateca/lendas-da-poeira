@@ -48,6 +48,17 @@
   * **Intervenções de Cura Sagrada:** Sustentação e bênçãos através de *Ordem Divina*.
 * **Equipamento Lendário Único:**
   * `Cetro do Julgamento Perpétuo` (*Arma - Empunhadura Dupla*): Concede Ataque e Espírito; se o oponente possuir mais vida máxima, fortalece os atributos do portador para equilibrar o duelo.
+* **As 10 Cartas do Baralho:**
+  1. `Cetro do Julgamento Perpétuo` (Arma Dupla - Lendária do Inquisidor)
+  2. `Selo da Confissão` (Joia)
+  3. `Tomo das Sentenças Antigas` (Joia)
+  4. `Édito contra a Ganância` (Teurgia)
+  5. `Retribuição Dogmática` (Teurgia)
+  6. `Interdito Sagrado` (Teurgia)
+  7. `Decreto de Excomunhão` (Teurgia)
+  8. `Liturgia da Balança` (Teurgia)
+  9. `Bênção do Rei Imóvel` (Teurgia)
+  10. `Veredito Inquisitorial` (Ação)
 
 ---
 
@@ -65,6 +76,17 @@
   * **Acúmulo de Armas:** Exploração dos 4 slots do Guardião Perpétuo com *Artefatos Cortantes* e armas cerimoniais.
 * **Equipamento Lendário Único:**
   * `Selo da Confissão` (*Joia - Guardião do Trono*): Restaura vida no final do combate e marca permanentemente o inimigo com Vulnerabilidade se ele tiver ousado ferir o servo do Trono.
+* **As 10 Cartas do Baralho:**
+  1. `Artefato Cortante` (Arma Dupla)
+  2. `Alabarda Cerimonial do Trono` (Arma Simples)
+  3. `Glaive da Guarda Eterna` (Arma Simples)
+  4. `Manto Cerimonial do Trono` (Armadura Única)
+  5. `Escudo da Devoção Cega` (Escudo Único)
+  6. `Fortaleça sua Fé` (Teurgia)
+  7. `Saque Rápido` (Teurgia)
+  8. `Ordem Divina` (Teurgia)
+  9. `Disciplina` (Ação)
+  10. `Fervor Penitencial` (Ação)
 
 ---
 

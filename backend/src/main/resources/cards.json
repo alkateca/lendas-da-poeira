@@ -1583,5 +1583,617 @@
     "afinidades": [
       "Fogo"
     ]
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000047",
+    "cardName": "Baluarte de Espelhos do Dragão",
+    "cardType": "ITEM",
+    "color": "BLUE",
+    "rarity": "INCOMUM",
+    "cardSet": "BASE",
+    "itemType": "ESCUDO",
+    "empunhadura": 0,
+    "descricao": "Escudo - Cavaleiro\nSeu Herói recebe +1 de Defesa.\nAo Jogar: Invocar: Escolha um feitiço Cristal do seu descarte.\nFinal do Combate: Retorne 1 Feitiço Cristal do seu descarte para seu baralho.",
+    "racas": [],
+    "ordem": [
+      "Cavaleiro"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000048",
+    "cardName": "Placas de Cristal Draconiano",
+    "cardType": "ITEM",
+    "color": "BLUE",
+    "rarity": "RARA",
+    "cardSet": "BASE",
+    "itemType": "ARMADURA",
+    "empunhadura": 0,
+    "descricao": "Armadura - Cavaleiro\nSeu Herói recebe +2 de Defesa.\nInício do Combate: Para cada Herói Aliado Morto, Seu Herói recebe +2 de Ataque e +1 de Espírito até o Final do Combate.",
+    "racas": [],
+    "ordem": [
+      "Cavaleiro"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000049",
+    "cardName": "Voto dos Cavaleiros Caídos",
+    "cardType": "SPELL",
+    "color": "BLUE",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Afinidade Cristal - Cavaleiro\nSeu Herói recebe +2 de Ataque até o Final do Combate.\nSe houver algum Herói Aliado Morto: Seu Herói recebe +3 de Ataque adicional até o Final do Combate e recupere 3 de Vida.",
+    "racas": [],
+    "ordem": [
+      "Cavaleiro"
+    ],
+    "classe": [],
+    "afinidades": [
+      "Cristal"
+    ]
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000050",
+    "cardName": "Coração de Cristal Puro",
+    "cardType": "ITEM",
+    "color": "BLUE",
+    "rarity": "LENDARIA",
+    "cardSet": "BASE",
+    "itemType": "JOIA",
+    "empunhadura": 0,
+    "descricao": "Jóia - Cristal\nAura: Seus Heróis recebem +2 de Dano Bônus e +2 de Defesa.",
+    "racas": [],
+    "ordem": [
+      "Cristal"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000051",
+    "cardName": "Dança das Mil Lâminas",
+    "cardType": "SPELL",
+    "color": "BLUE",
+    "rarity": "RARA",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Afinidade Cristal - Cristal\nO Espírito do Herói Inimigo torna-se 1 até o Final do Combate.\nO Herói Inimigo Sofre 4 de Dano Mágico.\nFinal do Combate: O Herói Inimigo Sofre 3 de Dano Mágico.",
+    "racas": [],
+    "ordem": [
+      "Cristal"
+    ],
+    "classe": [],
+    "afinidades": [
+      "Cristal"
+    ]
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000052",
+    "cardName": "Filactéria das Areias Negras",
+    "cardType": "ITEM",
+    "color": "BLACK",
+    "rarity": "LENDARIA",
+    "cardSet": "BASE",
+    "itemType": "JOIA",
+    "empunhadura": 0,
+    "descricao": "Jóia - Zumbi\nSeu Herói recebe +2 de Espírito e +2 de Defesa.\nFinal do Combate: Para cada Aliado Zumbi, Seu Herói recupera 1 de Vida e o Herói Inimigo sofre 1 de Dano Direto.",
+    "racas": [],
+    "ordem": [
+      "Zumbi"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000053",
+    "cardName": "Peste das Areias Negras",
+    "cardType": "SPELL",
+    "color": "BLACK",
+    "rarity": "INCOMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Afinidade Ar - Zumbi\nO Herói Inimigo Sofre 2 mais seu Espírito de Dano Mágico.\nPara cada Aliado Zumbi Vivo: O Herói Inimigo sofre 2 de Dano Direto.",
+    "racas": [],
+    "ordem": [
+      "Zumbi"
+    ],
+    "classe": [],
+    "afinidades": [
+      "Ar"
+    ]
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000054",
+    "cardName": "Amuleto de Ossos da Fábrica",
+    "cardType": "ITEM",
+    "color": "BLACK",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "JOIA",
+    "empunhadura": 0,
+    "descricao": "Jóia - Zumbi\nSeu Herói recebe +1 de Espírito e +1 de Ataque.\nInício do Combate: Para cada Aliado Zumbi Vivo, Seu Herói recebe +1 de Ataque até o Final do Combate.",
+    "racas": [],
+    "ordem": [
+      "Zumbi"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000055",
+    "cardName": "Pilhagem de Cadáveres",
+    "cardType": "ACTION",
+    "color": "BLACK",
+    "rarity": "RARA",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Zumbi\nPara cada Herói Morto na partida: Seu Herói recebe +1 de Ataque e +1 de Defesa até o Final do Combate.\nJogue uma Carta do seu descarte.",
+    "racas": [],
+    "ordem": [
+      "Zumbi"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000056",
+    "cardName": "Manto de Ferro do Algoz",
+    "cardType": "ITEM",
+    "color": "BLACK",
+    "rarity": "RARA",
+    "cardSet": "BASE",
+    "itemType": "ARMADURA",
+    "empunhadura": 0,
+    "descricao": "Armadura\nSeu Herói recebe +1 de Defesa.\nInício do Combate: Se o Herói Inimigo estiver Ferido, Seu Herói recebe +2 de Defesa até o Final do Combate.\nFinal do Combate: Se o Herói Inimigo estiver com 0 ou menos de Vida, Seu Herói recupera 4 de Vida.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000057",
+    "cardName": "Correntes do Cadafalso",
+    "cardType": "ITEM",
+    "color": "BLACK",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "FERRAMENTA",
+    "empunhadura": 0,
+    "descricao": "Ferramenta\nInício do Combate: Se o Herói Inimigo estiver Ferido, Seu Herói recebe +2 de Ataque até o Final do Combate.\nFinal do Combate: Se o Herói Inimigo estiver Ferido, o Herói Inimigo sofre 2 de Dano Direto.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000058",
+    "cardName": "Decreto de Excomunhão",
+    "cardType": "THEURGY",
+    "color": "YELLOW",
+    "rarity": "INCOMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Guardião do Trono\nO Herói Inimigo sofre 3 mais seu Espírito de Dano Mágico.\nSe o Herói Inimigo possuir algum Item equipado: Descarte um Item do Herói Inimigo.",
+    "racas": [],
+    "ordem": [
+      "Guardião do Trono"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000059",
+    "cardName": "Liturgia da Balança",
+    "cardType": "THEURGY",
+    "color": "YELLOW",
+    "rarity": "RARA",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Guardião do Trono\nSeu Herói recupera 4 de Vida.\nSe o Herói Inimigo possuir mais Ataque que Seu Herói: O Ataque do Herói Inimigo torna-se igual ao Ataque do Seu Herói até o Final do Combate.",
+    "racas": [],
+    "ordem": [
+      "Guardião do Trono"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000060",
+    "cardName": "Tomo das Sentenças Antigas",
+    "cardType": "ITEM",
+    "color": "YELLOW",
+    "rarity": "INCOMUM",
+    "cardSet": "BASE",
+    "itemType": "JOIA",
+    "empunhadura": 0,
+    "descricao": "Jóia - Guardião do Trono\nSeu Herói recebe +1 de Espírito e +1 de Defesa.\nInício do Combate: Adicione uma Tristeza no baralho do Herói Inimigo.",
+    "racas": [],
+    "ordem": [
+      "Guardião do Trono"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000061",
+    "cardName": "Bênção do Rei Imóvel",
+    "cardType": "THEURGY",
+    "color": "YELLOW",
+    "rarity": "RARA",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Guardião do Trono\nSeu Herói recupera 3 de Vida.\nAura: Sempre que o oponente jogar uma carta na Fase de Resolução, o Herói Inimigo sofre 1 de Dano Direto.",
+    "racas": [],
+    "ordem": [
+      "Guardião do Trono"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000062",
+    "cardName": "Veredito Inquisitorial",
+    "cardType": "ACTION",
+    "color": "YELLOW",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Guardião do Trono\nSe o Herói Inimigo possuir mais Vida Atual que Seu Herói: O Herói Inimigo sofre 3 de Dano Direto e recebe +1 de Vulnerabilidade até o Final do Combate.",
+    "racas": [],
+    "ordem": [
+      "Guardião do Trono"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000063",
+    "cardName": "Alabarda Cerimonial do Trono",
+    "cardType": "ITEM",
+    "color": "YELLOW",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "ARMA",
+    "empunhadura": 1,
+    "descricao": "Arma - Empunhadura Simples - Guardião do Trono\nSeu Herói recebe +1 de Ataque e +1 de Espírito.\nFinal do Combate: Seu Herói recupera 2 de Vida.",
+    "racas": [],
+    "ordem": [
+      "Guardião do Trono"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000064",
+    "cardName": "Glaive da Guarda Eterna",
+    "cardType": "ITEM",
+    "color": "YELLOW",
+    "rarity": "INCOMUM",
+    "cardSet": "BASE",
+    "itemType": "ARMA",
+    "empunhadura": 1,
+    "descricao": "Arma - Empunhadura Simples - Guardião do Trono\nSeu Herói recebe +2 de Ataque.\nAo equipar: Jogue uma Arma de Empunhadura Simples de sua mão.",
+    "racas": [],
+    "ordem": [
+      "Guardião do Trono"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000065",
+    "cardName": "Manto Cerimonial do Trono",
+    "cardType": "ITEM",
+    "color": "YELLOW",
+    "rarity": "RARA",
+    "cardSet": "BASE",
+    "itemType": "ARMADURA",
+    "empunhadura": 0,
+    "descricao": "Armadura - Guardião do Trono\nSeu Herói recebe +1 de Defesa.\nInício do Combate: Seu Herói recupera 3 de Vida.\nFinal do Combate: Adicione uma Teurgia do seu descarte para a sua mão.",
+    "racas": [],
+    "ordem": [
+      "Guardião do Trono"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000066",
+    "cardName": "Fervor Penitencial",
+    "cardType": "ACTION",
+    "color": "YELLOW",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Guardião do Trono\nSeu Herói sofre 3 de Dano Direto.\nSeu Herói recebe +5 de Ataque até o Final do Combate.",
+    "racas": [],
+    "ordem": [
+      "Guardião do Trono"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000067",
+    "cardName": "Escudo da Devoção Cega",
+    "cardType": "ITEM",
+    "color": "YELLOW",
+    "rarity": "INCOMUM",
+    "cardSet": "BASE",
+    "itemType": "ESCUDO",
+    "empunhadura": 0,
+    "descricao": "Escudo - Guardião do Trono\nSeu Herói recebe +1 de Defesa.\nInício do Combate: Para cada Arma equipada no Seu Herói, Seu Herói recupera 2 de Vida.",
+    "racas": [],
+    "ordem": [
+      "Guardião do Trono"
+    ],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000068",
+    "cardName": "Baluarte da Tundra Ancestral",
+    "cardType": "ITEM",
+    "color": "GREEN",
+    "rarity": "LENDARIA",
+    "cardSet": "BASE",
+    "itemType": "ESCUDO",
+    "empunhadura": 0,
+    "descricao": "Escudo\nSeu Herói recebe +3 de Defesa e +1 de Redução de Dano.\nInício do Combate: O Herói Inimigo recebe +1 de Vulnerabilidade até o Final da Partida.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000069",
+    "cardName": "Couraça da Tundra Profunda",
+    "cardType": "ITEM",
+    "color": "GREEN",
+    "rarity": "RARA",
+    "cardSet": "BASE",
+    "itemType": "ARMADURA",
+    "empunhadura": 0,
+    "descricao": "Armadura\nSeu Herói recebe +2 de Defesa.\nInício do Combate: Para cada 2 pontos de Vulnerabilidade do Herói Inimigo, Seu Herói recebe +1 de Defesa até o Final do Combate.\nFinal do Combate: Seu Herói recupera 2 de Vida.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000070",
+    "cardName": "Uivo da Matilha Gélida",
+    "cardType": "SPELL",
+    "color": "GREEN",
+    "rarity": "INCOMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Afinidade Agua\nO Herói Inimigo Sofre 1 mais seu Espírito de Dano Mágico.\nO Herói Inimigo recebe +1 de Vulnerabilidade até o Final da Partida.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": [
+      "Agua"
+    ]
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000071",
+    "cardName": "Chamado do Domador",
+    "cardType": "ACTION",
+    "color": "GREEN",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Seus Constructos recebem +2 de Ataque e +1 de Defesa até o Final do Combate.\nCure seus Aliados em 2.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000072",
+    "cardName": "Garras Congeladas",
+    "cardType": "ITEM",
+    "color": "GREEN",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "ARMA",
+    "empunhadura": 1,
+    "descricao": "Arma - Empunhadura Simples\nSeu Herói recebe +2 de Ataque e +1 de Defesa.\nInício do Combate: Se o Herói Inimigo possuir Vulnerabilidade maior que 0, Seu Herói recebe +2 de Ataque até o Final do Combate.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000073",
+    "cardName": "Núcleo de Invenções do Rei Goblin",
+    "cardType": "ITEM",
+    "color": "GREEN",
+    "rarity": "LENDARIA",
+    "cardSet": "BASE",
+    "itemType": "FERRAMENTA",
+    "empunhadura": 0,
+    "descricao": "Ferramenta - Goblin\nSeu Herói recebe +1 de Ataque e +1 de Espírito.\nAura: Ao jogar qualquer carta: Seus Heróis recebem +1 de Ataque e +1 de Defesa até o Final do Combate.\nFinal do Combate: Seu Herói recupera 2 de Vida.",
+    "racas": [
+      "Goblin"
+    ],
+    "ordem": [],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000074",
+    "cardName": "Bateria de Cristal de Poeira",
+    "cardType": "ITEM",
+    "color": "GREEN",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "FERRAMENTA",
+    "empunhadura": 0,
+    "descricao": "Ferramenta - Goblin\nSeu Herói recebe +1 de Espírito e +1 de Defesa.\nAo jogar Feitiço: Jogue uma Ação de sua mão.",
+    "racas": [
+      "Goblin"
+    ],
+    "ordem": [],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000075",
+    "cardName": "Chave Mecânica de Precisão",
+    "cardType": "ITEM",
+    "color": "GREEN",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "ARMA",
+    "empunhadura": 1,
+    "descricao": "Arma - Empunhadura Simples - Goblin\nSeu Herói recebe +2 de Ataque e +1 de Defesa.\nFinal do Combate: Se você jogou uma Ação neste combate, Seu Herói recupera 2 de Vida.",
+    "racas": [
+      "Goblin"
+    ],
+    "ordem": [],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000076",
+    "cardName": "Engrenagem de Ressonância",
+    "cardType": "ITEM",
+    "color": "GREEN",
+    "rarity": "INCOMUM",
+    "cardSet": "BASE",
+    "itemType": "JOIA",
+    "empunhadura": 0,
+    "descricao": "Jóia - Goblin\nSeu Herói recebe +1 de Espírito e +1 de Ataque.\nAo jogar Item: Seu Herói recebe +1 de Ataque até o Final da Partida.",
+    "racas": [
+      "Goblin"
+    ],
+    "ordem": [],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000077",
+    "cardName": "Descarga de Poeira Elétrica",
+    "cardType": "SPELL",
+    "color": "GREEN",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Afinidade Ar - Goblin\nO Herói Inimigo Sofre 4 mais seu Espírito de Dano Mágico.\nSe jogado por um Goblin: Jogue um Item de sua mão.",
+    "racas": [
+      "Goblin"
+    ],
+    "ordem": [],
+    "classe": [],
+    "afinidades": [
+      "Ar"
+    ]
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000078",
+    "cardName": "Circuito de Sobrecarga",
+    "cardType": "SPELL",
+    "color": "GREEN",
+    "rarity": "INCOMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Afinidade Ar - Goblin\nO Herói Inimigo Sofre 4 mais seu Espírito de Dano Mágico.\nFinal do Combate: Se você jogou pelo menos 3 cartas neste combate, o Herói Inimigo sofre 2 de Dano Direto.",
+    "racas": [
+      "Goblin"
+    ],
+    "ordem": [],
+    "classe": [],
+    "afinidades": [
+      "Ar"
+    ]
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000079",
+    "cardName": "Campo de Força de Cristal",
+    "cardType": "SPELL",
+    "color": "GREEN",
+    "rarity": "RARA",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Afinidade Cristal - Goblin\nEnquanto estiver Equipada: Seus Heróis recebem +2 de Defesa e +1 de Espírito.\nInício do Combate: Seus Heróis recebem +1 de Ataque até o Final do Combate.",
+    "racas": [
+      "Goblin"
+    ],
+    "ordem": [],
+    "classe": [],
+    "afinidades": [
+      "Cristal"
+    ]
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000080",
+    "cardName": "Engenharia Rápida",
+    "cardType": "ACTION",
+    "color": "GREEN",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Goblin\nSeu Herói recebe +2 de Defesa até o Final do Combate.\nJogue um Item de sua mão.",
+    "racas": [
+      "Goblin"
+    ],
+    "ordem": [],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000081",
+    "cardName": "Recalibração de Energia",
+    "cardType": "ACTION",
+    "color": "GREEN",
+    "rarity": "INCOMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Goblin\nSeu Herói recebe +1 de Ataque e +1 de Espírito até o Final do Combate.\nJogue um Feitiço de sua mão.",
+    "racas": [
+      "Goblin"
+    ],
+    "ordem": [],
+    "classe": [],
+    "afinidades": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000082",
+    "cardName": "Conferência dos Sábios Goblins",
+    "cardType": "ACTION",
+    "color": "GREEN",
+    "rarity": "RARA",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Goblin\nSeus Heróis recebem +1 de Ataque, +1 de Defesa e +1 de Espírito até o Final do Combate.\nSe o Rei Goblin estiver Ativo: Cure seus Aliados em 3.",
+    "racas": [
+      "Goblin"
+    ],
+    "ordem": [],
+    "classe": [],
+    "afinidades": []
   }
 ]

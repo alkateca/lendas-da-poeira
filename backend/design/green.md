@@ -53,6 +53,17 @@
   * **Ataque Duplo Condicional:** Execução rápida com Fenrir assim que o threshold de vulnerabilidade for atingido.
 * **Equipamento Lendário Único:**
   * `Baluarte da Tundra Ancestral` (*Escudo Único*): Oferece alta Defesa, Redução de Dano e aplica Vulnerabilidade contínua no inimigo ao início do combate.
+* **As 10 Cartas do Baralho:**
+  1. `Baluarte da Tundra Ancestral` (Escudo Único - Lendário)
+  2. `Couraça da Tundra Profunda` (Armadura Única)
+  3. `Machado de Gelo` (Arma Simples)
+  4. `Grande Machado Sombrio` (Arma Dupla)
+  5. `Garras Congeladas` (Arma Simples)
+  6. `Barreira de Gelo` (Feitiço - Afinidade Água)
+  7. `Mordida Glacial` (Feitiço - Afinidade Água)
+  8. `Uivo da Matilha Gélida` (Feitiço - Afinidade Água)
+  9. `Luz da Lua` (Ação)
+  10. `Chamado do Domador` (Ação)
 
 ---
 
@@ -69,7 +80,18 @@
   * **Isenção de Restrições:** Liberdade para utilizar cartas de diversas afinidades sem penalidade.
   * **Amplificação pelo Rei:** O Rei Goblin duplica ou incrementa a potência de cada gatilho ativado pela equipe.
 * **Equipamento Lendário Único:**
-  * `Núcleo de Invenções do Rei Goblin` (*Ferramenta Lendária*): Artefato de energia pura que concede atributos a cada carta jogada e gera compra de cartas adicional no encerramento da batalha.
+  * `Núcleo de Invenções do Rei Goblin` (*Ferramenta Lendária*): Artefato de energia pura que concede atributos a cada carta jogada e recupera Vida no Final do Combate.
+* **As 10 Cartas do Baralho:**
+  1. `Núcleo de Invenções do Rei Goblin` (Ferramenta - Lendária)
+  2. `Bateria de Cristal de Poeira` (Ferramenta)
+  3. `Chave Mecânica de Precisão` (Arma Simples)
+  4. `Engrenagem de Ressonância` (Joia)
+  5. `Descarga de Poeira Elétrica` (Feitiço - Afinidade Ar)
+  6. `Circuito de Sobrecarga` (Feitiço - Afinidade Ar)
+  7. `Campo de Força de Cristal` (Feitiço - Afinidade Cristal)
+  8. `Engenharia Rápida` (Ação)
+  9. `Recalibração de Energia` (Ação)
+  10. `Conferência dos Sábios Goblins` (Ação)
 
 ---
 
