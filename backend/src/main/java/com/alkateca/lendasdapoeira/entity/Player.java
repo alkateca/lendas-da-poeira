@@ -21,7 +21,7 @@ public class Player {
 
     private UUID uuid;
     private String name;
-    private Deck currentDeck;
+    private Deck currentDeck = new Deck();
     private List<Deck> decks = new ArrayList<>();
 
     // Inventário / Coleção Pessoal do Jogador (Chave: cardName -> Valor: Quantidade possuída)

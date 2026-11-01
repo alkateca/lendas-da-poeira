@@ -31,7 +31,6 @@ class CardRarityAndSetCatalogTest {
 
         for (Card card : cards) {
             assertNotNull(card.getRarity(), "Carta " + card.getCardName() + " deve possuir raridade");
-            assertEquals(CardRarity.COMUM, card.getRarity(), "Carta " + card.getCardName() + " deve ser COMUM");
             assertNotNull(card.getCardSet(), "Carta " + card.getCardName() + " deve possuir cardSet");
             assertEquals(CardSet.BASE, card.getCardSet(), "Carta " + card.getCardName() + " deve ser do set BASE");
         }

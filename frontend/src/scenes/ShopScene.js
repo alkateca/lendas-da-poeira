@@ -41,6 +41,9 @@ export default class ShopScene extends Phaser.Scene {
         if (!this.textures.exists('card_frame_playable')) {
             this.load.svg('card_frame_playable', 'images/ui/card_frame_playable.svg', { width: 280, height: 380 });
         }
+        if (!this.textures.exists('card_frame_item')) {
+            this.load.svg('card_frame_item', 'images/ui/card_frame_item.svg', { width: 280, height: 380 });
+        }
         if (!this.textures.exists('ui_p5_crt_button')) {
             this.load.svg('ui_p5_crt_button', 'images/ui/p5_crt_button.svg', { width: 520, height: 84 });
         }

@@ -31,6 +31,9 @@ export default class CollectionScene extends Phaser.Scene {
         if (!this.textures.exists('card_frame_playable')) {
             this.load.svg('card_frame_playable', 'images/ui/card_frame_playable.svg', { width: 280, height: 380 });
         }
+        if (!this.textures.exists('card_frame_item')) {
+            this.load.svg('card_frame_item', 'images/ui/card_frame_item.svg', { width: 280, height: 380 });
+        }
     }
 
     create() {

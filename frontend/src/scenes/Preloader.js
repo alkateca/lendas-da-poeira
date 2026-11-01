@@ -39,6 +39,7 @@ export class Preloader extends Scene
         // Sobrescreve também as chaves de molduras de carta caso queira que os prefabs usem o SVG direto:
         this.load.svg('card_frame_hero', 'images/ui/card_frame_hero.svg', { width: 280, height: 380 });
         this.load.svg('card_frame_playable', 'images/ui/card_frame_playable.svg', { width: 280, height: 380 });
+        this.load.svg('card_frame_item', 'images/ui/card_frame_item.svg', { width: 280, height: 380 });
 
         if (!this.textures.exists('vga_chains_overlay')) {
             this.load.svg('vga_chains_overlay', 'images/ui/vga_chains_overlay.svg', { width: 280, height: 380 });

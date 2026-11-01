@@ -1,51 +1,88 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 380" width="280" height="380">
-  <!-- Sombra Externa -->
-  <polygon points="10,8 276,4 272,376 6,374" fill="#090d16" />
+  <defs>
+    <pattern id="crtHeroScan" width="4" height="4" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="4" y2="0" stroke="#00f0ff" stroke-width="0.6" stroke-opacity="0.12" />
+    </pattern>
+  </defs>
 
-  <!-- Corpo Base com Janela de Arte Vazada (y: 42 a 192) -->
-  <path fill-rule="evenodd" d="M 4,4 L 272,2 L 268,372 L 2,370 Z
-           M 12,42 L 262,40 L 260,192 L 12,192 Z" fill="#e6dec8" stroke="#090d16" stroke-width="3.5" />
+  <!-- Sombra Dura Deslocada -->
+  <polygon points="8,6 276,2 278,374 4,378" fill="#e60012" />
 
-  <!-- Contorno da Janela de Arte -->
-  <rect x="12" y="41" width="249" height="151" fill="none" stroke="#090d16" stroke-width="2" />
+  <!-- Carcaça Preta (#07090e) com Janela de Arte Vazada (x:14..232, y:42..192) -->
+  <path fill-rule="evenodd" d="M 4,2 L 274,4 L 276,374 L 2,376 Z
+           M 14,42 L 232,42 L 232,192 L 14,192 Z" fill="#07090e" stroke="#f8fafc" stroke-width="2.5" />
 
-  <!-- Barra Superior do Nome (Centro Y = 22) -->
-  <polygon points="4,6 270,4 266,40 6,40" fill="#ffffff" stroke="#090d16" stroke-width="3" />
-  <rect x="6" y="35" width="260" height="5" fill="#e60012" />
-  <!-- Detalhe Angular Superior Direito -->
-  <polygon points="246,2 276,6 266,36 240,26" fill="#cbd5e1" stroke="#090d16" stroke-width="2.5" />
+  <path fill-rule="evenodd" d="M 4,2 L 274,4 L 276,374 L 2,376 Z
+           M 14,42 L 232,42 L 232,192 L 14,192 Z" fill="url(#crtHeroScan)" />
 
-  <!-- Coluna Direita de Atributos (x: 214..270, dividida em 4 células iguais de 43px) -->
-  <!-- Célula 1: ESP (y: 198..241 | Centro Y = 220) -->
-  <!-- Célula 2: ATQ (y: 241..284 | Centro Y = 263) -->
-  <!-- Célula 3: DEF (y: 284..327 | Centro Y = 306) -->
-  <!-- Célula 4: HP  (y: 327..372 | Centro Y = 350) -->
-  <rect x="214" y="198" width="56" height="174" fill="#f5efe2" stroke="#090d16" stroke-width="2.5" />
-  <line x1="216" y1="241" x2="268" y2="241" stroke="#94a3b8" stroke-width="1.5" />
-  <line x1="216" y1="284" x2="268" y2="284" stroke="#94a3b8" stroke-width="1.5" />
-  <line x1="216" y1="327" x2="268" y2="327" stroke="#090d16" stroke-width="2" />
+  <!-- Moldura na Janela de Arte -->
+  <rect x="13" y="41" width="220" height="152" fill="none" stroke="#ffe600" stroke-width="2" />
+  <polygon points="12,40 36,40 32,46 18,46 18,60 12,64" fill="#e60012" />
 
-  <!-- Escudo/Destaque Claro para a Célula de HP (y: 327..372) -->
-  <polygon points="214,327 272,327 270,372 214,372" fill="#e2e8f0" stroke="#090d16" stroke-width="2.5" />
+  <!-- Cabeçalho Poligonal do Nome do Herói (Centro Y = 21) -->
+  <polygon points="12,9 250,7 246,37 8,35" fill="#ffe600" />
+  <polygon points="10,6 246,5 242,34 8,33" fill="#faf8f5" stroke="#07090e" stroke-width="2.5" />
 
-  <!-- Rótulos Fixos na Esquerda de Cada Célula -->
-  <text x="219" y="212" font-family="monospace" font-size="8.5" font-weight="bold" fill="#475569">ESP</text>
-  <text x="219" y="255" font-family="monospace" font-size="8.5" font-weight="bold" fill="#475569">ATQ</text>
-  <text x="219" y="298" font-family="monospace" font-size="8.5" font-weight="bold" fill="#475569">DEF</text>
-  <text x="219" y="341" font-family="monospace" font-size="8.5" font-weight="bold" fill="#b91c1c">HP</text>
+  <!-- Selo Octogonal Cyber à Direita do Nome -->
+  <polygon points="248,5 270,5 274,20 268,35 244,35 240,20" fill="#07090e" stroke="#f8fafc" stroke-width="2" />
+  <circle cx="257" cy="20" r="6" fill="#00f0ff" />
 
-  <!-- Caixa de Modificadores de Dano (x: 166..274, y: 154..194 | Centro Y = 174) -->
-  <!-- 3 Casas: Verde (X = 185), Vermelho (X = 220), Roxo (X = 255) -->
-  <rect x="166" y="154" width="108" height="40" rx="3" fill="#cbd5e1" stroke="#090d16" stroke-width="3" />
-  <rect x="170" y="158" width="100" height="32" fill="#ffffff" stroke="#475569" stroke-width="1.2" />
-  <line x1="203" y1="158" x2="203" y2="190" stroke="#cbd5e1" stroke-width="1.5" />
-  <line x1="237" y1="158" x2="237" y2="190" stroke="#cbd5e1" stroke-width="1.5" />
+  <!-- ===================================================================== -->
+  <!-- TRILHA VERTICAL DE ATIVAÇÃO (x: 234..272, y: 42..192)                 -->
+  <!-- ===================================================================== -->
+  <rect x="234" y="42" width="38" height="150" fill="#07090e" stroke="#f8fafc" stroke-width="1.5" />
+  <line x1="253" y1="54" x2="253" y2="180" stroke="#334155" stroke-width="2.5" />
 
-  <!-- Caixa Inferior Esquerda de Texto (Alta e Larga: x: 8..212, y: 196..372) -->
-  <rect x="8" y="196" width="204" height="176" fill="#faf8f5" stroke="#090d16" stroke-width="3" />
-  <!-- Faixa Superior Interna para os Atributos (Classe - Raça - Afinidade) -->
-  <rect x="10" y="198" width="200" height="36" fill="#efe6d5" />
-  <line x1="10" y1="234" x2="210" y2="234" stroke="#d6cbb5" stroke-width="1.5" />
-  <!-- Detalhe Vermelho no Topo da Caixa -->
-  <rect x="8" y="195" width="76" height="4" fill="#e60012" />
+  <!-- Slot 1 (Y = 62): AO JOGAR / ENTRADA -->
+  <polygon points="253,51 264,62 253,73 242,62" fill="#111827" stroke="#475569" stroke-width="1.5" />
+  <text x="253" y="65" font-family="monospace" font-size="8.5" font-weight="bold" fill="#475569" text-anchor="middle">⚡</text>
+
+  <!-- Slot 2 (Y = 98): INÍCIO DO COMBATE -->
+  <polygon points="245,89 261,89 265,98 261,107 245,107 241,98" fill="#111827" stroke="#475569" stroke-width="1.5" />
+  <text x="253" y="101" font-family="monospace" font-size="8.5" font-weight="bold" fill="#475569" text-anchor="middle">☀</text>
+
+  <!-- Slot 3 (Y = 134): AURA / COMBATE -->
+  <polygon points="253,123 264,134 253,145 242,134" fill="#111827" stroke="#475569" stroke-width="1.5" />
+  <text x="253" y="137" font-family="monospace" font-size="8.5" font-weight="bold" fill="#475569" text-anchor="middle">♾</text>
+
+  <!-- Slot 4 (Y = 170): FINAL DO COMBATE -->
+  <polygon points="245,161 261,161 265,170 261,179 245,179 241,170" fill="#111827" stroke="#475569" stroke-width="1.5" />
+  <text x="253" y="173" font-family="monospace" font-size="8.5" font-weight="bold" fill="#475569" text-anchor="middle">⏳</text>
+
+  <!-- ===================================================================== -->
+  <!-- CAIXA INFERIOR ESQUERDA: TRAITS + DESCRIÇÃO LIVRE (Sem "Capacidade")  -->
+  <!-- ===================================================================== -->
+  <rect x="8" y="196" width="202" height="176" fill="#faf8f5" stroke="#07090e" stroke-width="2.5" />
+  <rect x="10" y="198" width="198" height="31" fill="#e6dec8" />
+  <polygon points="10,198 18,198 14,229 10,229" fill="#07090e" />
+  <line x1="10" y1="229" x2="208" y2="229" stroke="#07090e" stroke-width="2" />
+  <line x1="10" y1="232" x2="140" y2="232" stroke="#00f0ff" stroke-width="2" />
+
+  <!-- Coluna Direita de Atributos Base (x: 214..272, y: 198..372) -->
+  <rect x="213" y="196" width="60" height="176" fill="#07090e" stroke="#f8fafc" stroke-width="2" />
+
+  <!-- ESP (Y = 224) -->
+  <rect x="215" y="198" width="56" height="42" fill="#f5efe2" />
+  <polygon points="215,198 242,198 237,210 215,210" fill="#07090e" />
+  <text x="218" y="207" font-family="monospace" font-size="7.5" font-weight="bold" fill="#c084fc">ESP</text>
+  <rect x="268" y="198" width="3" height="42" fill="#9333ea" />
+
+  <!-- ATQ (Y = 267) -->
+  <rect x="215" y="242" width="56" height="41" fill="#efe9da" />
+  <polygon points="215,242 242,242 237,254 215,254" fill="#07090e" />
+  <text x="218" y="251" font-family="monospace" font-size="7.5" font-weight="bold" fill="#f87171">ATQ</text>
+  <rect x="268" y="242" width="3" height="41" fill="#e60012" />
+
+  <!-- DEF (Y = 310) -->
+  <rect x="215" y="285" width="56" height="41" fill="#f5efe2" />
+  <polygon points="215,285 242,285 237,297 215,297" fill="#07090e" />
+  <text x="218" y="294" font-family="monospace" font-size="7.5" font-weight="bold" fill="#38bdf8">DEF</text>
+  <rect x="268" y="285" width="3" height="41" fill="#0284c7" />
+
+  <!-- VIDA (Y = 353) -->
+  <rect x="215" y="328" width="56" height="42" fill="#fee2e2" />
+  <polygon points="215,328 246,328 241,340 215,340" fill="#e60012" />
+  <text x="218" y="337" font-family="monospace" font-size="7.5" font-weight="bold" fill="#ffffff">VIDA</text>
+  <rect x="268" y="328" width="3" height="42" fill="#e60012" />
+  <line x1="215" y1="328" x2="271" y2="328" stroke="#e60012" stroke-width="2" />
 </svg>

@@ -16,7 +16,7 @@ import java.util.*;
 @Setter
 public class GameEngine {
 
-    private GameState gameState;
+    private GameState gameState = new GameState();
     private Player player1;
     private Player player2;
     private List<Card> cardsOnBoard;
@@ -770,8 +770,12 @@ public class GameEngine {
     public int getUsedWeaponSlotsForHero(UUID heroId) {
         if (heroId == null) return 0;
         List<Card> allCards = new ArrayList<>();
-        allCards.addAll(player1.getCurrentDeck().getCardList());
-        allCards.addAll(player2.getCurrentDeck().getCardList());
+        if (player1 != null && player1.getCurrentDeck() != null && player1.getCurrentDeck().getCardList() != null) {
+            allCards.addAll(player1.getCurrentDeck().getCardList());
+        }
+        if (player2 != null && player2.getCurrentDeck() != null && player2.getCurrentDeck().getCardList() != null) {
+            allCards.addAll(player2.getCurrentDeck().getCardList());
+        }
 
         return allCards.stream()
                 .filter(c -> c.getZoneId() == ZoneId.ATTACHED

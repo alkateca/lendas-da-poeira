@@ -65,6 +65,9 @@ export default class MatchScene extends Phaser.Scene {
         if (!this.textures.exists('card_frame_playable')) {
             this.load.svg('card_frame_playable', 'images/ui/card_frame_playable.svg', { width: 280, height: 380 });
         }
+        if (!this.textures.exists('card_frame_item')) {
+            this.load.svg('card_frame_item', 'images/ui/card_frame_item.svg', { width: 280, height: 380 });
+        }
         if (!this.textures.exists('ui_hud_panel_light')) {
             this.load.svg('ui_hud_panel_light', 'images/ui/ui_hud_panel_light.svg', { width: 360, height: 80 });
         }
@@ -950,6 +953,22 @@ export default class MatchScene extends Phaser.Scene {
             wordWrap: { width: width * (194 / 280) }
         }).setOrigin(0, 0).setResolution(2);
 
+        this.lpPhaseNodes = [0, 1, 2, 3].map(() => {
+            const bg = this.add.rectangle(0, 0, width * (22 / 280), height * (18 / 380), 0x111827, 1)
+                .setStrokeStyle(1.5, 0x475569)
+                .setVisible(false);
+            const txt = this.add.text(0, 0, '', {
+                fontFamily: 'IoskeleyMono, monospace',
+                fontSize: '13px',
+                color: '#475569',
+                fontStyle: 'bold'
+            }).setOrigin(0.5).setResolution(2).setVisible(false);
+            return { bg, txt };
+        });
+
+        const lpPhaseElements = [];
+        this.lpPhaseNodes.forEach(n => lpPhaseElements.push(n.bg, n.txt));
+
         this.largePreviewContainer.add([
             this.lpShadow,
             this.lpArtBox,
@@ -965,7 +984,8 @@ export default class MatchScene extends Phaser.Scene {
             this.lpStatDef,
             this.lpStatHp,
             this.lpTypeLine,
-            this.lpDesc
+            this.lpDesc,
+            ...lpPhaseElements
         ]);
     }
 
@@ -1001,7 +1021,45 @@ export default class MatchScene extends Phaser.Scene {
             y: ((svgY / 380) - 0.5) * height
         });
 
-        const frameKey = isHero ? 'card_frame_hero' : 'card_frame_playable';
+        const isItem = !isHero && (
+            cardOrHeroDto.cardType === 'ITEM' ||
+            (cardOrHeroDto.itemType && cardOrHeroDto.itemType !== 'NENHUM') ||
+            cardOrHeroDto.cardName === 'Alma em Chamas'
+        );
+
+        const hasPhaseTrack = isHero || isItem;
+        const artCenter = pos(hasPhaseTrack ? 123 : 137, 117);
+        const artW = width * ((hasPhaseTrack ? 218 : 248) / 280);
+        const artH = height * (150 / 380);
+        this.lpArtBox.setPosition(artCenter.x, artCenter.y).setSize(artW, artH);
+        this.lpArtLabel.setPosition(artCenter.x, artCenter.y);
+
+        if (hasPhaseTrack && this.lpPhaseNodes) {
+            const phaseStates = PlayableCardPrefab.resolveActivePhaseNodes(cardOrHeroDto);
+            this.lpPhaseNodes.forEach((node, idx) => {
+                const st = phaseStates[idx];
+                const pt = pos(st.svgX, st.svgY);
+                node.bg
+                    .setPosition(pt.x, pt.y)
+                    .setFillStyle(st.active ? st.color : 0x111827, 1)
+                    .setStrokeStyle(st.active ? 2 : 1.5, st.active ? 0xffffff : 0x475569)
+                    .setVisible(true);
+                node.txt
+                    .setPosition(pt.x, pt.y)
+                    .setText(st.icon)
+                    .setColor(st.active ? st.textColor : '#475569')
+                    .setVisible(true);
+            });
+        } else if (this.lpPhaseNodes) {
+            this.lpPhaseNodes.forEach(node => {
+                node.bg.setVisible(false);
+                node.txt.setVisible(false);
+            });
+        }
+
+        const frameKey = isHero
+            ? 'card_frame_hero'
+            : ((isItem && this.textures.exists('card_frame_item')) ? 'card_frame_item' : 'card_frame_playable');
         if (this.textures.exists(frameKey)) {
             this.lpFrame.setTexture(frameKey).setDisplaySize(width, height);
         }
@@ -1026,7 +1084,7 @@ export default class MatchScene extends Phaser.Scene {
             this.lpStatEsp.setText(String(cardOrHeroDto.espirito ?? 0)).setVisible(true);
             this.lpStatAtq.setText(String(cardOrHeroDto.ataque ?? 0)).setVisible(true);
             this.lpStatDef.setText(String(cardOrHeroDto.defesa ?? 0)).setVisible(true);
-            this.lpStatHp.setText(String(cardOrHeroDto.vidaAtual ?? cardOrHeroDto.vidaMaxima ?? 0)).setVisible(true);
+            this.lpStatHp.setText(String(cardOrHeroDto.vidaAtual ?? cardOrHeroDto.vidaMaxima ?? 0)).setStyle({ color: '#b91c1c' }).setVisible(true);
 
             // Faixa de Atributos no topo da caixa esquerda (SVG X=14, Y=201)
             const traitsPt = pos(14, 201);
@@ -1067,8 +1125,53 @@ export default class MatchScene extends Phaser.Scene {
                 })
                 .setText(fullDesc);
 
+        } else if (isItem) {
+            // Carta de Equipamento / Item
+            this.lpModBonus.setVisible(false);
+            this.lpModReducao.setVisible(false);
+            this.lpModVulnerabilidade.setVisible(false);
+
+            const stats = PlayableCardPrefab.extractItemStatBonuses(cardOrHeroDto);
+            this.lpStatEsp.setText(stats.esp > 0 ? ('+' + stats.esp) : '-').setStyle({ color: '#6b21a8' }).setVisible(true);
+            this.lpStatAtq.setText(stats.atq > 0 ? ('+' + stats.atq) : '-').setStyle({ color: '#991b1b' }).setVisible(true);
+            this.lpStatDef.setText(stats.def > 0 ? ('+' + stats.def) : '-').setStyle({ color: '#0369a1' }).setVisible(true);
+            this.lpStatHp.setText(String(stats.emp || 0)).setStyle({ color: '#fde047' }).setVisible(true);
+
+            const subType = (cardOrHeroDto.itemType && cardOrHeroDto.itemType !== 'NENHUM')
+                ? (' • ' + cardOrHeroDto.itemType)
+                : '';
+            this.lpArtLabel.setText('✦ ARTE (' + (cardOrHeroDto.cardType || 'ITEM') + ')');
+
+            const typePt = pos(110, 214);
+            this.lpTypeLine
+                .setOrigin(0.5, 0.5)
+                .setPosition(typePt.x, typePt.y)
+                .setStyle({
+                    fontFamily: 'IoskeleyMono, monospace',
+                    fontSize: '12px',
+                    color: '#4a3520',
+                    fontStyle: 'bold',
+                    align: 'center',
+                    wordWrap: { width: width * (192 / 280) }
+                })
+                .setText((cardOrHeroDto.cardType || 'ITEM') + subType);
+
+            const descPt = pos(14, 236);
+            this.lpDesc
+                .setOrigin(0, 0)
+                .setPosition(descPt.x, descPt.y)
+                .setStyle({
+                    fontFamily: 'IoskeleyMono, monospace',
+                    fontSize: '13px',
+                    color: '#090d16',
+                    fontStyle: 'bold',
+                    align: 'left',
+                    lineSpacing: 3,
+                    wordWrap: { width: width * (192 / 280) }
+                })
+                .setText(stats.cleanDesc || formatCardDescriptionWithKeywords(cardOrHeroDto.descricao || ''));
         } else {
-            // Carta Jogável (Magia, Item, Ação, Teurgia)
+            // Carta Jogável Geral (Magia, Ação, Teurgia)
             this.lpModBonus.setVisible(false);
             this.lpModReducao.setVisible(false);
             this.lpModVulnerabilidade.setVisible(false);
@@ -1131,7 +1234,7 @@ export default class MatchScene extends Phaser.Scene {
             } else {
                 this.lpArtSprite.setTexture(artKey).setVisible(true);
             }
-            this.lpArtSprite.setDisplaySize(this.lpArtBox.width, this.lpArtBox.height);
+            this.lpArtSprite.setPosition(this.lpArtBox.x, this.lpArtBox.y).setDisplaySize(this.lpArtBox.width, this.lpArtBox.height);
             this.lpArtLabel.setVisible(false);
         } else {
             if (this.lpArtSprite) this.lpArtSprite.setVisible(false);

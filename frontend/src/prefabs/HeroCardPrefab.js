@@ -35,8 +35,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             .setStrokeStyle(3, teamColor);
 
         // 1. Arte do Herói na janela (x: 12..261, y: 41..192 -> centro 136.5, 116.5)
-        const artCenter = pos(137, 117);
-        const artW = width * (248 / 280);
+        const artCenter = pos(123, 117);
+        const artW = width * (218 / 280);
         const artH = height * (150 / 380);
 
         this.artSprite = null;
@@ -128,6 +128,21 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.defBadge = this.createStatNumber(defPt.x, defPt.y, '12px', '#090d16');
         this.hpBadge  = this.createStatNumber(hpPt.x, hpPt.y, '13px', '#b91c1c');
 
+        this.phaseNodes = [0, 1, 2, 3].map(() => {
+            const nodeBg = scene.add.rectangle(0, 0, width * (22 / 280), height * (18 / 380), 0x111827, 1)
+                .setStrokeStyle(1.2, 0x475569);
+            const nodeTxt = scene.add.text(0, 0, '', {
+                fontFamily: 'IoskeleyMono, monospace',
+                fontSize: '7.5px',
+                color: '#475569',
+                fontStyle: 'bold'
+            }).setOrigin(0.5).setResolution(2);
+            return { bg: nodeBg, txt: nodeTxt };
+        });
+
+        const phaseElements = [];
+        this.phaseNodes.forEach(n => phaseElements.push(n.bg, n.txt));
+
         // 8. Ícones de Status (💤 e 💀)
         this.sleepStatusIcon = scene.add.text(0, -height * 0.12, '💤', { fontSize: '24px' }).setOrigin(0.5).setVisible(false);
         this.deadOverlayBg = scene.add.rectangle(0, 0, width, height, 0x090d16, 0.5).setVisible(false);
@@ -145,6 +160,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             this.traitsText, this.descText,
             ...this.espBadge.elements, ...this.atqBadge.elements,
             ...this.defBadge.elements, ...this.hpBadge.elements,
+            ...phaseElements,
             this.sleepStatusIcon, this.deadOverlayBg, this.deadOverlayText,
             this.attachedFrontLayer // Fica NA FRENTE do Herói quando um anexo recebe hover
         ]);
@@ -347,6 +363,23 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.defBadge.valueText.setText(`${newHeroDto.defesa}`);
         this.hpBadge.valueText.setText(`${newHeroDto.vidaAtual}`);
 
+        const phaseStates = PlayableCardPrefab.resolveActivePhaseNodes(newHeroDto);
+        this.phaseNodes.forEach((node, idx) => {
+            const st = phaseStates[idx];
+            const pt = {
+                x: ((st.svgX / 280) - 0.5) * this.cardW,
+                y: ((st.svgY / 380) - 0.5) * this.cardH
+            };
+            node.bg
+                .setPosition(pt.x, pt.y)
+                .setFillStyle(st.active ? st.color : 0x111827, 1)
+                .setStrokeStyle(st.active ? 1.5 : 1, st.active ? 0xffffff : 0x475569);
+            node.txt
+                .setPosition(pt.x, pt.y)
+                .setText(st.icon)
+                .setColor(st.active ? st.textColor : '#475569');
+        });
+
         const bonus = newHeroDto.danoBonus ?? newHeroDto.DanoBonus ?? 0;
         const reducao = newHeroDto.reducaoDano ?? 0;
         const vuln = newHeroDto.vulnerabilidade ?? 0;
@@ -454,7 +487,6 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.attachedFrontLayer.removeAll(true);
         this.attachedCardNodes = [];
 
-        // Filtra itens que ainda estão visualmente na fila de resolução (evita anexar antes do COMBAT_END)
         const snap = this.scene?.currentSnapshot;
         const inResolveUuids = new Set([
             ...(snap?.localPlayer?.playedCardsInResolve || []).map(c => c.uuid),
@@ -471,19 +503,19 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         const inBattle = this.heroData?.zoneId === 'BATTLE';
         const count = visibleAttached.length;
 
-        const maxSpreadX = inBattle ? 138 : 42;
-        const stepX = inBattle
-            ? Math.min(46, Math.max(24, Math.floor(maxSpreadX / count)))
-            : Math.min(20, Math.max(12, Math.floor(maxSpreadX / count)));
-        const baseY = inBattle ? 38 : 28;
-        const restScale = inBattle ? 0.92 : 0.84;
+        // Largura exata da coluna lateral e trilha de fases para o empilhamento em cascata (fichas coladas)
+        // Cada carta empilhada desloca-se exactamente para a direita da coluna anterior (~34px em MEDIUM)
+        const stepX = inBattle ? 34 : 28;
+        const baseY = 0; // Alinhadas horizontalmente na mesma altura do herói
+        const restScale = 1.0;
 
         const currentUuids = new Set();
 
-        for (let i = visibleAttached.length - 1; i >= 0; i--) {
+        for (let i = 0; i < visibleAttached.length; i++) {
             const attDto = visibleAttached[i];
             if (attDto.uuid) currentUuids.add(attDto.uuid);
 
+            // A primeira carta fica encostada à coluna do herói, a segunda empilhada logo a seguir, etc.
             const baseX = (i + 1) * stepX;
             const isNewlyEquipped = Boolean(attDto.uuid && !this.knownAttachedUuids.has(attDto.uuid));
 
@@ -501,6 +533,9 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             attCard.removeAllListeners('pointerout');
             attCard.removeAllListeners('pointerdown');
 
+            // Garante que a profundidade respeita a ordem de empilhamento na cascata
+            attCard.setDepth(i + 1);
+
             attCard.on('pointerover', () => {
                 if (this.isDragging) return;
                 this.setDepth(95);
@@ -509,10 +544,10 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
                 this.scene.tweens.killTweensOf(attCard);
                 this.scene.tweens.add({
                     targets: attCard,
-                    x: baseX,
-                    y: baseY - 58,
-                    scaleX: 1.08,
-                    scaleY: 1.08,
+                    x: baseX + 16, // Desliza ligeiramente para a direita ao passar o rato para facilitar a leitura
+                    y: baseY - 24,
+                    scaleX: 1.04,
+                    scaleY: 1.04,
                     duration: 140,
                     ease: 'Back.easeOut'
                 });
@@ -525,15 +560,6 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
                 if (!attCard.scene) return;
 
                 this.attachedBackLayer.add(attCard);
-                this.attachedCardNodes
-                    .slice()
-                    .reverse()
-                    .forEach(node => {
-                        if (node && node.parentContainer === this.attachedBackLayer) {
-                            this.attachedBackLayer.bringToTop(node);
-                        }
-                    });
-
                 this.scene.tweens.killTweensOf(attCard);
                 this.scene.tweens.add({
                     targets: attCard,
@@ -544,7 +570,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
                     duration: 150,
                     ease: 'Power2'
                 });
-                attCard.bg.setStrokeStyle(0, 0x000000);
+                const theme = getCardVisualTheme(attDto.color, attDto.rarity);
+                attCard.bg.setStrokeStyle(2.5, theme.border);
                 if (!this.isDragging) this.setDepth(10);
             });
 
@@ -563,7 +590,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
 
                 attCard.setPosition(worldOriginX - this.x, worldOriginY - this.y);
                 attCard.setScale(1.0);
-                attCard.bg.setStrokeStyle(4, 0x55ffff);
+                attCard.bg.setStrokeStyle(4, 0xffe600);
                 this.attachedFrontLayer.add(attCard);
 
                 this.scene.tweens.add({
@@ -576,16 +603,9 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
                     ease: 'Back.easeInOut',
                     onComplete: () => {
                         if (!attCard.scene) return;
-                        attCard.bg.setStrokeStyle(0, 0x000000);
+                        const theme = getCardVisualTheme(attDto.color, attDto.rarity);
+                        attCard.bg.setStrokeStyle(2.5, theme.border);
                         this.attachedBackLayer.add(attCard);
-                        this.attachedCardNodes
-                            .slice()
-                            .reverse()
-                            .forEach(node => {
-                                if (node && node.parentContainer === this.attachedBackLayer) {
-                                    this.attachedBackLayer.bringToTop(node);
-                                }
-                            });
                     }
                 });
             } else {
