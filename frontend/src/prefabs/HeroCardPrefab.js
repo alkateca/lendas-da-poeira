@@ -14,6 +14,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.dragStartPos = { x, y };
         this.prevDragX = x;
         this.isDragging = false;
+        this.isHovered = false;
         this.longHoverTimer = null;
 
         const { width, height } = BOARD_LAYOUT.MEDIUM_CARD; // 140 x 190
@@ -228,27 +229,31 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
     setupDragAndHoverEvents() {
         this.on('pointerover', () => {
             if (this.isDragging) return;
-            this.setDepth(45);
+            this.isHovered = true;
+            this.setDepth(95);
 
             if (this.heroData.estaVivo !== false) {
                 this.scene.tweens.killTweensOf(this);
                 this.scene.tweens.add({
                     targets: this,
-                    scaleX: 1.06,
-                    scaleY: 1.06,
-                    duration: 120
+                    angle: 0,
+                    scaleX: 1.14,
+                    scaleY: 1.14,
+                    duration: 140,
+                    ease: 'Back.easeOut'
                 });
             }
 
             this.clearLongHoverTimer();
-            this.longHoverTimer = this.scene.time.delayedCall(350, () => {
-                if (!this.isDragging) {
+            this.longHoverTimer = this.scene.time.delayedCall(180, () => {
+                if (!this.isDragging && this.isHovered) {
                     this.scene.showLargeCardPreview(this.heroData, true);
                 }
             });
         });
 
         this.on('pointerout', () => {
+            this.isHovered = false;
             this.clearLongHoverTimer();
             this.scene.hideLargeCardPreview();
             if (!this.isDragging) {
@@ -265,14 +270,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             }
         });
 
-        this.on('pointerup', () => {
-            if (this.isDragging) return;
-            if (!this.scene.canDragHero(this) && this.heroData?.attachedCards?.length > 0) {
-                this.scene.openAttachedCardsModal(this.heroData);
-            }
-        });
-
         this.on('dragstart', () => {
+            this.isHovered = false;
             this.clearLongHoverTimer();
             this.scene.hideLargeCardPreview();
             if (!this.scene.canDragHero(this)) return;
@@ -281,7 +280,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             this.prevDragX = this.x;
             this.scene.tweens.killTweensOf(this);
             this.setAngle(0);
-            this.setScale(1.08);
+            this.setScale(1.14);
             this.setDepth(100);
             this.scene.highlightTargetBattleSlot(this.isOpponent, true);
         });
@@ -327,13 +326,17 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         }
 
         const posture = this.getTargetPosture();
+        const targetScaleX = (this.isHovered && !this.isDragging) ? 1.14 : posture.scaleX;
+        const targetScaleY = (this.isHovered && !this.isDragging) ? 1.14 : posture.scaleY;
+        const targetAngle  = (this.isHovered && !this.isDragging) ? 0 : posture.angle;
+
         this.scene.tweens.add({
             targets: this,
             x: targetX,
             y: targetY,
-            angle: posture.angle,
-            scaleX: posture.scaleX,
-            scaleY: posture.scaleY,
+            angle: targetAngle,
+            scaleX: targetScaleX,
+            scaleY: targetScaleY,
             duration: 280,
             ease: 'Back.easeOut'
         });
@@ -457,9 +460,9 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         const posture = this.getTargetPosture();
         this.scene.tweens.add({
             targets: this,
-            angle: posture.angle,
-            scaleX: posture.scaleX,
-            scaleY: posture.scaleY,
+            angle: (this.isHovered && !this.isDragging) ? 0 : posture.angle,
+            scaleX: (this.isHovered && !this.isDragging) ? 1.14 : posture.scaleX,
+            scaleY: (this.isHovered && !this.isDragging) ? 1.14 : posture.scaleY,
             duration: 320,
             ease: 'Power2'
         });
@@ -484,7 +487,9 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
 
     syncAttachedCardsVisuals(attachedCards = []) {
         this.attachedBackLayer.removeAll(true);
-        this.attachedFrontLayer.removeAll(true);
+        if (this.attachedFrontLayer) {
+            this.attachedFrontLayer.removeAll(true);
+        }
         this.attachedCardNodes = [];
 
         const snap = this.scene?.currentSnapshot;
@@ -497,17 +502,21 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
 
         if (visibleAttached.length === 0) {
             this.knownAttachedUuids.clear();
+            if (this.input?.hitArea) {
+                this.input.hitArea.width = this.cardW;
+            }
             return;
         }
 
         const inBattle = this.heroData?.zoneId === 'BATTLE';
-        const count = visibleAttached.length;
-
-        // Largura exata da coluna lateral e trilha de fases para o empilhamento em cascata (fichas coladas)
-        // Cada carta empilhada desloca-se exactamente para a direita da coluna anterior (~34px em MEDIUM)
         const stepX = inBattle ? 34 : 28;
-        const baseY = 0; // Alinhadas horizontalmente na mesma altura do herói
+        const baseY = 0;
         const restScale = 1.0;
+
+        // Estende a área de hover do Herói para cobrir também as colunas das cartas anexadas à direita
+        if (this.input?.hitArea) {
+            this.input.hitArea.width = this.cardW + (visibleAttached.length * stepX);
+        }
 
         const currentUuids = new Set();
 
@@ -515,7 +524,6 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             const attDto = visibleAttached[i];
             if (attDto.uuid) currentUuids.add(attDto.uuid);
 
-            // A primeira carta fica encostada à coluna do herói, a segunda empilhada logo a seguir, etc.
             const baseX = (i + 1) * stepX;
             const isNewlyEquipped = Boolean(attDto.uuid && !this.knownAttachedUuids.has(attDto.uuid));
 
@@ -529,57 +537,11 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
                 0
             );
 
-            attCard.removeAllListeners('pointerover');
-            attCard.removeAllListeners('pointerout');
-            attCard.removeAllListeners('pointerdown');
-
-            // Garante que a profundidade respeita a ordem de empilhamento na cascata
-            attCard.setDepth(i + 1);
-
-            attCard.on('pointerover', () => {
-                if (this.isDragging) return;
-                this.setDepth(95);
-                this.attachedFrontLayer.add(attCard);
-
-                this.scene.tweens.killTweensOf(attCard);
-                this.scene.tweens.add({
-                    targets: attCard,
-                    x: baseX + 16, // Desliza ligeiramente para a direita ao passar o rato para facilitar a leitura
-                    y: baseY - 24,
-                    scaleX: 1.04,
-                    scaleY: 1.04,
-                    duration: 140,
-                    ease: 'Back.easeOut'
-                });
-                attCard.bg.setStrokeStyle(3, 0xffe600);
-                this.scene.showLargeCardPreview(attDto, false);
-            });
-
-            attCard.on('pointerout', () => {
-                this.scene.hideLargeCardPreview();
-                if (!attCard.scene) return;
-
-                this.attachedBackLayer.add(attCard);
-                this.scene.tweens.killTweensOf(attCard);
-                this.scene.tweens.add({
-                    targets: attCard,
-                    x: baseX,
-                    y: baseY,
-                    scaleX: restScale,
-                    scaleY: restScale,
-                    duration: 150,
-                    ease: 'Power2'
-                });
-                const theme = getCardVisualTheme(attDto.color, attDto.rarity);
-                attCard.bg.setStrokeStyle(2.5, theme.border);
-                if (!this.isDragging) this.setDepth(10);
-            });
-
-            attCard.on('pointerdown', () => {
-                if (this.scene && typeof this.scene.openAttachedCardsModal === 'function') {
-                    this.scene.openAttachedCardsModal(this.heroData);
-                }
-            });
+            // Desativa completamente a interatividade individual na mesa:
+            // a carta equipada NUNCA sobe nem rouba o hover do Herói
+            attCard.clearLongHoverTimer();
+            attCard.removeAllListeners();
+            attCard.disableInteractive();
 
             if (isNewlyEquipped && this.scene) {
                 const resolveSource = (this.scene.resolveCardPrefabs || []).find(c => c.uuid === attDto.uuid);
@@ -591,7 +553,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
                 attCard.setPosition(worldOriginX - this.x, worldOriginY - this.y);
                 attCard.setScale(1.0);
                 attCard.bg.setStrokeStyle(4, 0xffe600);
-                this.attachedFrontLayer.add(attCard);
+                this.attachedBackLayer.add(attCard);
 
                 this.scene.tweens.add({
                     targets: attCard,
@@ -605,7 +567,6 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
                         if (!attCard.scene) return;
                         const theme = getCardVisualTheme(attDto.color, attDto.rarity);
                         attCard.bg.setStrokeStyle(2.5, theme.border);
-                        this.attachedBackLayer.add(attCard);
                     }
                 });
             } else {
@@ -613,6 +574,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
                 this.attachedBackLayer.add(attCard);
             }
 
+            // Mantém a ordem da cascata: o 1º item fica logo atrás do Herói, o 2º atrás do 1º, etc.
+            this.attachedBackLayer.sendToBack(attCard);
             this.attachedCardNodes[i] = attCard;
         }
 

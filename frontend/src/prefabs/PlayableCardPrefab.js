@@ -13,6 +13,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         this.prevDragX = x;
         this.isDraggableCard = isDraggable;
         this.isDragging = false;
+        this.isHovered = false;
         this.isMarkedForDiscard = false;
         this.currentMode = initialMode;
         this.longHoverTimer = null;
@@ -359,35 +360,46 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             const isFaceUp = this.cardData && this.cardData.faceUp !== false;
             if (!isFaceUp) return;
 
+            this.isHovered = true;
             this.setDepth(90);
             this.shadow.setPosition(10, 12).setFillStyle(0xc59b27, 0.85);
 
             if (this.isDraggableCard) {
                 this.applySizeLayout('MEDIUM');
                 const isAllocatedInResolve = this.scene.selectionManager.playedCardSlotMap.has(this.uuid);
-                const hoverY = isAllocatedInResolve ? this.y : (this.homePos.y - 54);
+                const hoverY = isAllocatedInResolve ? this.y : (this.homePos.y - 58);
 
                 this.scene.tweens.killTweensOf(this);
                 this.scene.tweens.add({
                     targets: this,
                     y: hoverY,
                     angle: 0,
-                    scaleX: 1.05,
-                    scaleY: 1.05,
+                    scaleX: 1.14,
+                    scaleY: 1.14,
+                    duration: 140,
+                    ease: 'Back.easeOut'
+                });
+            } else {
+                this.scene.tweens.killTweensOf(this);
+                this.scene.tweens.add({
+                    targets: this,
+                    scaleX: 1.12,
+                    scaleY: 1.12,
                     duration: 140,
                     ease: 'Back.easeOut'
                 });
             }
 
             this.clearLongHoverTimer();
-            this.longHoverTimer = this.scene.time.delayedCall(450, () => {
-                if (!this.isDragging) {
+            this.longHoverTimer = this.scene.time.delayedCall(180, () => {
+                if (!this.isDragging && this.isHovered) {
                     this.scene.showLargeCardPreview(this.cardData, false);
                 }
             });
         });
 
         this.on('pointerout', () => {
+            this.isHovered = false;
             this.clearLongHoverTimer();
             this.scene.hideLargeCardPreview();
             if (this.isDragging) return;
@@ -399,6 +411,14 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
                 const isAllocatedInResolve = this.scene.selectionManager.playedCardSlotMap.has(this.uuid);
                 if (isAllocatedInResolve) {
                     this.applySizeLayout('MEDIUM');
+                    this.scene.tweens.killTweensOf(this);
+                    this.scene.tweens.add({
+                        targets: this,
+                        scaleX: 1.0,
+                        scaleY: 1.0,
+                        duration: 150,
+                        ease: 'Power2'
+                    });
                 } else {
                     this.applySizeLayout('COMPACT');
                     const restY = this.isMarkedForDiscard ? (this.homePos.y - 30) : this.homePos.y;
@@ -414,12 +434,22 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
                         ease: 'Power2'
                     });
                 }
+            } else {
+                this.scene.tweens.killTweensOf(this);
+                this.scene.tweens.add({
+                    targets: this,
+                    scaleX: 1.0,
+                    scaleY: 1.0,
+                    duration: 150,
+                    ease: 'Power2'
+                });
             }
         });
 
         if (!this.isDraggableCard) return;
 
         this.on('dragstart', () => {
+            this.isHovered = false;
             this.clearLongHoverTimer();
             this.scene.hideLargeCardPreview();
             if (!this.scene.canDragHandCard()) return;
@@ -429,6 +459,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             this.scene.tweens.killTweensOf(this);
             this.applySizeLayout('MEDIUM');
             this.setAngle(0);
+            this.setScale(1.12);
             this.setDepth(130);
             this.scene.highlightValidDropZonesForHandCard(true);
         });
@@ -467,7 +498,12 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
 
     snapToPosition(targetX, targetY, highlightColor = null, targetAngle = 0, sizeMode = 'COMPACT') {
         this.scene.tweens.killTweensOf(this);
-        this.applySizeLayout(sizeMode);
+
+        const isAllocatedInResolve = this.scene?.selectionManager?.playedCardSlotMap?.has(this.uuid);
+        const keepHandHover = this.isHovered && !this.isDragging && this.isDraggableCard && !isAllocatedInResolve;
+
+        this.applySizeLayout(keepHandHover ? 'MEDIUM' : sizeMode);
+
         if (highlightColor && highlightColor !== BOARD_LAYOUT.COLORS.GOLD_DUST) {
             this.bg.setStrokeStyle(4, highlightColor);
         } else {
@@ -475,13 +511,17 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             this.bg.setStrokeStyle(2.5, theme.border);
         }
 
+        const finalY = keepHandHover ? (targetY - 58) : targetY;
+        const finalAngle = keepHandHover ? 0 : targetAngle;
+        const finalScale = (this.isHovered && !this.isDragging) ? 1.14 : 1.0;
+
         this.scene.tweens.add({
             targets: this,
             x: targetX,
-            y: targetY,
-            angle: targetAngle,
-            scaleX: 1.0,
-            scaleY: 1.0,
+            y: finalY,
+            angle: finalAngle,
+            scaleX: finalScale,
+            scaleY: finalScale,
             duration: 260,
             ease: 'Back.easeOut'
         });
