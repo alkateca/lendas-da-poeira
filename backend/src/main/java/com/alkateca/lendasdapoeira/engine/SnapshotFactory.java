@@ -292,6 +292,11 @@ public class SnapshotFactory {
         dto.setKeywords(card.getKeywords() != null && !card.getKeywords().isEmpty()
                 ? new ArrayList<>(card.getKeywords())
                 : KeywordExtractor.extract(card));
+        dto.setEquipable(card.isEquipable());
+        dto.setBonusEspirito(card.getBonusEspirito());
+        dto.setBonusAtaque(card.getBonusAtaque());
+        dto.setBonusDefesa(card.getBonusDefesa());
+        dto.setActivePhaseKeys(card.getActivePhaseKeys());
         return dto;
     }
 
@@ -384,6 +389,11 @@ public class SnapshotFactory {
             cardCopy.setRarity(showFace ? c.getRarity() : null);
             cardCopy.setCardSet(showFace ? c.getCardSet() : null);
             cardCopy.setKeywords(showFace && c.getKeywords() != null ? new ArrayList<>(c.getKeywords()) : List.of());
+            cardCopy.setEquipable(showFace && c.isEquipable());
+            cardCopy.setBonusEspirito(showFace ? c.getBonusEspirito() : 0);
+            cardCopy.setBonusAtaque(showFace ? c.getBonusAtaque() : 0);
+            cardCopy.setBonusDefesa(showFace ? c.getBonusDefesa() : 0);
+            cardCopy.setActivePhaseKeys(showFace && c.getActivePhaseKeys() != null ? new ArrayList<>(c.getActivePhaseKeys()) : List.of());
             return cardCopy;
         }).collect(Collectors.toList()));
 

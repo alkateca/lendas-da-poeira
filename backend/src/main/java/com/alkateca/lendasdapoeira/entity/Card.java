@@ -4,6 +4,7 @@ import com.alkateca.lendasdapoeira.effects.Effect;
 import com.alkateca.lendasdapoeira.engine.ResolutionQueue;
 import com.alkateca.lendasdapoeira.enums.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 @Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Card {
 
     private UUID uuid;
@@ -57,5 +59,65 @@ public class Card {
                 queue.enqueue(effect, this);
             }
         }
+    }
+
+    // Adicionar dentro de src/main/java/com/alkateca/lendasdapoeira/entity/Card.java:
+
+    @JsonIgnore
+    public boolean isEquipable() {
+        if (this.cardType == CardType.ITEM || (this.itemType != null && this.itemType != ItemType.NENHUM)) {
+            return true;
+        }
+        return this.effects != null && this.effects.stream()
+                .anyMatch(e -> e instanceof com.alkateca.lendasdapoeira.effects.combat.EquipBuffEffect);
+    }
+
+    @JsonIgnore
+    public int getBonusEspirito() {
+        if (this.effects == null) return 0;
+        return this.effects.stream()
+                .filter(e -> e instanceof com.alkateca.lendasdapoeira.effects.combat.EquipBuffEffect)
+                .mapToInt(e -> ((com.alkateca.lendasdapoeira.effects.combat.EquipBuffEffect) e).getBonusEspirito())
+                .sum();
+    }
+
+    @JsonIgnore
+    public int getBonusAtaque() {
+        if (this.effects == null) return 0;
+        return this.effects.stream()
+                .filter(e -> e instanceof com.alkateca.lendasdapoeira.effects.combat.EquipBuffEffect)
+                .mapToInt(e -> ((com.alkateca.lendasdapoeira.effects.combat.EquipBuffEffect) e).getBonusAtaque())
+                .sum();
+    }
+
+    @JsonIgnore
+    public int getBonusDefesa() {
+        if (this.effects == null) return 0;
+        return this.effects.stream()
+                .filter(e -> e instanceof com.alkateca.lendasdapoeira.effects.combat.EquipBuffEffect)
+                .mapToInt(e -> ((com.alkateca.lendasdapoeira.effects.combat.EquipBuffEffect) e).getBonusDefesa())
+                .sum();
+    }
+
+    @JsonIgnore
+    public java.util.List<String> getActivePhaseKeys() {
+        java.util.List<String> phases = new java.util.ArrayList<>();
+        if (this.effects == null) return phases;
+
+        for (com.alkateca.lendasdapoeira.effects.Effect effect : this.effects) {
+            if (effect instanceof com.alkateca.lendasdapoeira.effects.combat.EquipBuffEffect) {
+                continue;
+            }
+            if (effect.predicate(this, TurnPhase.COMBAT_START) && !phases.contains("COMBAT_START")) {
+                phases.add("COMBAT_START");
+            } else if (effect.predicate(this, TurnPhase.COMBAT_END) && !phases.contains("COMBAT_END")) {
+                phases.add("COMBAT_END");
+            } else if (effect.predicate(this, TurnPhase.COMBAT) && !phases.contains("AURA_COMBAT")) {
+                phases.add("AURA_COMBAT");
+            } else if (effect.predicate(this, TurnPhase.RESOLUTION) && !phases.contains("ON_PLAY")) {
+                phases.add("ON_PLAY");
+            }
+        }
+        return phases;
     }
 }

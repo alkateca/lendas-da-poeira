@@ -112,6 +112,12 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             wordWrap: { width: textMaxW }
         }).setOrigin(0, 0).setResolution(2);
 
+        this.modBonusText.setVisible(false);
+        this.modReducaoText.setVisible(false);
+        this.modVulnText.setVisible(false);
+        this.traitsText.setVisible(false);
+        this.descText.setVisible(false);
+
         // 6. Camadas de Cartas Anexadas (Traseira em repouso / Frontal em Hover)
         this.attachedBackLayer = scene.add.container(0, 0);
         this.attachedFrontLayer = scene.add.container(0, 0);
@@ -354,11 +360,11 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.heroData = newHeroDto;
 
         this.nameText.setText(newHeroDto.cardName);
-        this.traitsText.setText(this.formatHeroTraits(newHeroDto));
-
-        const rawDesc = formatCardDescriptionWithKeywords(newHeroDto.descricao || '');
-        this.descText.setFontSize(rawDesc.length > 95 ? '7.2px' : '8px');
-        this.descText.setText(rawDesc);
+        this.traitsText.setVisible(false);
+        this.descText.setVisible(false);
+        this.modBonusText.setVisible(false);
+        this.modReducaoText.setVisible(false);
+        this.modVulnText.setVisible(false);
         this.heroData.keywords = resolveCardKeywords(newHeroDto).map(k => k.id);
 
         this.espBadge.valueText.setText(`${newHeroDto.espirito}`);
@@ -509,7 +515,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         }
 
         const inBattle = this.heroData?.zoneId === 'BATTLE';
-        const stepX = inBattle ? 34 : 28;
+        const exactColWidth = Math.round(this.cardW * (58 / 280));
+        const stepX = inBattle ? exactColWidth : Math.round(exactColWidth * 0.85);
         const baseY = 0;
         const restScale = 1.0;
 

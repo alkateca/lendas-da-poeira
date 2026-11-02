@@ -18,6 +18,9 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         this.currentMode = initialMode;
         this.longHoverTimer = null;
 
+        // Por padrão, NUNCA mostra descrição/subtipo na mão, banco ou fila de resolução (apenas no Hover lateral)
+        this.showFullText = false;
+
         this.setAngle(homeAngle);
 
         const { width, height } = BOARD_LAYOUT.COMPACT_CARD;
@@ -40,9 +43,9 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         // Barra de cor temática no topo
         this.headerColorBar = scene.add.rectangle(0, -height * 0.43, width * 0.91, height * 0.075, 0xffffff);
 
-        // 3. Título no Topo
+        // 3. Título no Topo (Sempre visível em cartas abertas)
         this.titleText = scene.add.text(0, -height * 0.43, '', {
-            fontSize: '10.5px',
+            fontSize: '10px',
             color: '#090d16',
             fontStyle: 'bold',
             fontFamily: 'IoskeleyMono, monospace',
@@ -50,16 +53,16 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             wordWrap: { width: width * 0.84 }
         }).setOrigin(0.5).setResolution(2);
 
-        // 4. Faixa de Tipo
+        // 4. Faixa de Tipo (Oculta na mão e na fila de resolução)
         this.typeBadge = scene.add.text(0, height * 0.06, '', {
             fontSize: '9px',
             color: '#4a3520',
             fontStyle: 'bold',
             fontFamily: 'IoskeleyMono, monospace',
             align: 'center'
-        }).setOrigin(0.5).setResolution(2);
+        }).setOrigin(0.5).setResolution(2).setVisible(false);
 
-        // 5. Caixa de Descrição
+        // 5. Caixa de Descrição (Oculta na mão e na fila de resolução)
         this.descText = scene.add.text(0, height * 0.25, '', {
             fontSize: '9.5px',
             color: '#090d16',
@@ -68,7 +71,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             align: 'left',
             lineSpacing: 1,
             wordWrap: { width: width * 0.82 }
-        }).setOrigin(0, 0).setResolution(2);
+        }).setOrigin(0, 0).setResolution(2).setVisible(false);
 
         // 6. Coluna Direita de Atributos para Itens/Equipamentos (+ESP, +ATQ, +DEF, EMP)
         const statBaseStyle = {
@@ -139,15 +142,34 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         scene.add.existing(this);
     }
 
+    /**
+     * Ativado apenas nas cartas abertas dentro do painel de Hover ao lado do Herói.
+     */
+    setShowFullText(show) {
+        this.showFullText = Boolean(show);
+        this.applySizeLayout(this.currentMode);
+    }
+
     isEquipmentLayout(cardDto) {
         if (!cardDto) return false;
+        if (cardDto.equipable) return true;
         if (cardDto.cardType === 'ITEM') return true;
         if (cardDto.itemType && cardDto.itemType !== 'NENHUM') return true;
-        if (cardDto.cardName === 'Alma em Chamas') return true;
+        if (cardDto.zoneId === 'ATTACHED' || cardDto.attachedToCardId) return true;
         return false;
     }
 
     static resolveActivePhaseNodes(cardOrHeroDto) {
+        if (Array.isArray(cardOrHeroDto?.activePhaseKeys) && cardOrHeroDto.activePhaseKeys.length > 0) {
+            const activeSet = new Set(cardOrHeroDto.activePhaseKeys);
+            return [
+                { key: 'ON_PLAY',      svgX: 253, svgY: 62,  icon: '⚡', color: 0x22c55e, textColor: '#07090e', active: activeSet.has('ON_PLAY') },
+                { key: 'COMBAT_START', svgX: 253, svgY: 98,  icon: '☀', color: 0x00f0ff, textColor: '#07090e', active: activeSet.has('COMBAT_START') },
+                { key: 'AURA_COMBAT',  svgX: 253, svgY: 134, icon: '♾', color: 0xffe600, textColor: '#07090e', active: activeSet.has('AURA_COMBAT') },
+                { key: 'COMBAT_END',   svgX: 253, svgY: 170, icon: '⏳', color: 0xe60012, textColor: '#ffffff', active: activeSet.has('COMBAT_END') }
+            ];
+        }
+
         const desc = String(cardOrHeroDto?.descricao || '');
         return [
             {
@@ -180,34 +202,20 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
     static extractItemStatBonuses(cardDto) {
         if (!cardDto) return { esp: 0, atq: 0, def: 0, emp: 0, cleanDesc: '' };
 
-        const knownItems = {
-            'Quimera':               { esp: 2, atq: 2, def: 2 },
-            'Broche de Cristal':     { esp: 2, atq: 0, def: 2 },
-            'Lamina de Cristal':     { esp: 0, atq: 1, def: 0 },
-            'Dragast':               { esp: 2, atq: 2, def: 0 },
-            'Rapieira de Cristal':   { esp: 0, atq: 3, def: 0 },
-            'Garra espectral':       { esp: 0, atq: 2, def: 0 },
-            'Artefato Cortante':     { esp: 0, atq: 3, def: 1 },
-            'Sica':                  { esp: 2, atq: 2, def: 0 },
-            'Sino do Caçador':       { esp: 1, atq: 1, def: 0 },
-            'Arpão terrestre':       { esp: 0, atq: 3, def: 2 },
-            'Bomba de fumaça':       { esp: 0, atq: 2, def: 0 },
-            'Peitoral de brasas':    { esp: 2, atq: 0, def: 2 },
-            'Escudo ardente':        { esp: 2, atq: 0, def: 2 },
-            'Alma em Chamas':        { esp: 2, atq: 3, def: 0 }
-        };
-
-        const preset = knownItems[cardDto.cardName] || {};
         const rawDesc = cardDto.descricao || '';
+        const passiveLines = rawDesc
+            .split('\n')
+            .filter(line => !/^(In[íi]cio d[eo]|Final do|Fim do)|at[ée] o Final do Combate/i.test(line.trim()))
+            .join(' ');
 
         const matchStat = (regex) => {
-            const m = rawDesc.match(regex);
+            const m = passiveLines.match(regex);
             return m ? parseInt(m[1], 10) : 0;
         };
 
-        const esp = cardDto.bonusEspirito ?? cardDto.espirito ?? preset.esp ?? matchStat(/\+(\d+)\s*(?:de\s+)?Esp[íi]rito/i);
-        const atq = cardDto.bonusAtaque   ?? cardDto.ataque   ?? preset.atq ?? matchStat(/\+(\d+)\s*(?:de\s+)?Ataque/i);
-        const def = cardDto.bonusDefesa   ?? cardDto.defesa   ?? preset.def ?? matchStat(/\+(\d+)\s*(?:de\s+)?Defesa/i);
+        const esp = cardDto.bonusEspirito ?? cardDto.espirito ?? matchStat(/\+(\d+)\s*(?:de\s+)?Esp[íi]rito/i);
+        const atq = cardDto.bonusAtaque   ?? cardDto.ataque   ?? matchStat(/\+(\d+)\s*(?:de\s+)?Ataque/i);
+        const def = cardDto.bonusDefesa   ?? cardDto.defesa   ?? matchStat(/\+(\d+)\s*(?:de\s+)?Defesa/i);
         const emp = cardDto.empunhadura ?? 0;
 
         return { esp, atq, def, emp, cleanDesc: rawDesc };
@@ -239,6 +247,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         const isFaceUp = this.cardData && this.cardData.faceUp !== false;
         const dim = (mode === 'MEDIUM') ? BOARD_LAYOUT.MEDIUM_CARD : BOARD_LAYOUT.COMPACT_CARD;
         const isItem = this.isEquipmentLayout(this.cardData);
+        const shouldShowText = Boolean(this.showFullText);
 
         const pos = (svgX, svgY) => ({
             x: ((svgX / 280) - 0.5) * dim.width,
@@ -255,7 +264,6 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
 
         if (this.artSprite) {
             if (isItem) {
-                // Janela de arte estreita (x: 14..232 -> centro 123, largura 218) para não cobrir a trilha direita
                 const artCenter = pos(123, 117);
                 const artW = dim.width * (218 / 280);
                 const artH = dim.height * (150 / 380);
@@ -283,17 +291,18 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             const descPt = pos(14, 236);
             const textMaxW = dim.width * (192 / 280);
 
+            // Textos de subtipo e descrição ficam OCULTOS na mão, banco e fila de resolução
             this.typeBadge.setOrigin(0.5, 0.5).setPosition(typePt.x, typePt.y).setStyle({
                 fontSize: mode === 'MEDIUM' ? '8px' : '7px'
-            }).setVisible(true);
+            }).setVisible(shouldShowText);
 
             this.descText.setOrigin(0, 0).setPosition(descPt.x, descPt.y).setStyle({
                 fontSize: mode === 'MEDIUM' ? '8px' : '7px',
                 align: 'left',
                 wordWrap: { width: textMaxW }
-            }).setVisible(true);
+            }).setVisible(shouldShowText);
 
-            // Atributos na Coluna Direita (Y = 224, 267, 310, 353)
+            // Status laterais (+ESP, +ATQ, +DEF, EMP) e Trilha de Fases continuam visíveis nos Itens
             const espPt = pos(264, 224);
             const atqPt = pos(264, 267);
             const defPt = pos(264, 310);
@@ -305,7 +314,6 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             this.itemDefText.setPosition(defPt.x, defPt.y).setFontSize(statFont).setVisible(true);
             this.itemEmpText.setPosition(empPt.x, empPt.y).setFontSize(mode === 'MEDIUM' ? '10.5px' : '9px').setVisible(true);
 
-            // Trilha Vertical de 4 Etapas (X = 253 | Y = 62, 98, 134, 170)
             const phaseStates = PlayableCardPrefab.resolveActivePhaseNodes(this.cardData);
             const boxW = dim.width * (22 / 280);
             const boxH = dim.height * (18 / 380);
@@ -331,15 +339,16 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             const typePt = pos(138, 208);
             const descPt = pos(18, 232);
 
+            // Textos de subtipo e descrição ficam OCULTOS na mão e na fila de resolução
             this.typeBadge.setOrigin(0.5, 0.5).setPosition(typePt.x, typePt.y).setStyle({
                 fontSize: mode === 'MEDIUM' ? '8.5px' : '7.5px'
-            }).setVisible(true);
+            }).setVisible(shouldShowText);
 
             this.descText.setOrigin(0, 0).setPosition(descPt.x, descPt.y).setStyle({
                 fontSize: mode === 'MEDIUM' ? '8.5px' : '7.5px',
                 align: 'left',
                 wordWrap: { width: dim.width * (244 / 280) }
-            }).setVisible(true);
+            }).setVisible(shouldShowText);
 
             this.itemEspText.setVisible(false);
             this.itemAtqText.setVisible(false);
@@ -367,15 +376,15 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             if (this.isDraggableCard) {
                 this.applySizeLayout('MEDIUM');
                 const isAllocatedInResolve = this.scene.selectionManager.playedCardSlotMap.has(this.uuid);
-                const hoverY = isAllocatedInResolve ? this.y : (this.homePos.y - 58);
+                const hoverY = isAllocatedInResolve ? this.y : (this.homePos.y - 54);
 
                 this.scene.tweens.killTweensOf(this);
                 this.scene.tweens.add({
                     targets: this,
                     y: hoverY,
                     angle: 0,
-                    scaleX: 1.14,
-                    scaleY: 1.14,
+                    scaleX: 1.08,
+                    scaleY: 1.08,
                     duration: 140,
                     ease: 'Back.easeOut'
                 });
@@ -383,15 +392,15 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
                 this.scene.tweens.killTweensOf(this);
                 this.scene.tweens.add({
                     targets: this,
-                    scaleX: 1.12,
-                    scaleY: 1.12,
+                    scaleX: 1.08,
+                    scaleY: 1.08,
                     duration: 140,
                     ease: 'Back.easeOut'
                 });
             }
 
             this.clearLongHoverTimer();
-            this.longHoverTimer = this.scene.time.delayedCall(180, () => {
+            this.longHoverTimer = this.scene.time.delayedCall(160, () => {
                 if (!this.isDragging && this.isHovered) {
                     this.scene.showLargeCardPreview(this.cardData, false);
                 }
@@ -459,7 +468,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             this.scene.tweens.killTweensOf(this);
             this.applySizeLayout('MEDIUM');
             this.setAngle(0);
-            this.setScale(1.12);
+            this.setScale(1.08);
             this.setDepth(130);
             this.scene.highlightValidDropZonesForHandCard(true);
         });
@@ -511,9 +520,9 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             this.bg.setStrokeStyle(2.5, theme.border);
         }
 
-        const finalY = keepHandHover ? (targetY - 58) : targetY;
+        const finalY = keepHandHover ? (targetY - 54) : targetY;
         const finalAngle = keepHandHover ? 0 : targetAngle;
-        const finalScale = (this.isHovered && !this.isDragging) ? 1.14 : 1.0;
+        const finalScale = (this.isHovered && !this.isDragging) ? 1.08 : 1.0;
 
         this.scene.tweens.add({
             targets: this,

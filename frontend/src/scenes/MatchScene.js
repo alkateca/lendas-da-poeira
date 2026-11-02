@@ -1303,7 +1303,8 @@ export default class MatchScene extends Phaser.Scene {
                         'MEDIUM',
                         0
                     );
-                    // Desativa eventos de mouse na miniatura do preview para nunca roubar o hover do tabuleiro
+                    // No Hover, exibe a descrição completa da carta anexada!
+                    attView.setShowFullText(true);
                     attView.disableInteractive();
                     attView.setScale(attScale);
 

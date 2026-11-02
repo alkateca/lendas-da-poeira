@@ -141,6 +141,15 @@ public class MatchSnapshotDTO {
         private String targetBaseHeroName;
         private String evolvesIntoHeroName;
         private List<String> keywords = new ArrayList<>();
+        private boolean equipable;
+        private int bonusEspirito;
+        private int bonusAtaque;
+        private int bonusDefesa;
+        private List<String> activePhaseKeys = new ArrayList<>();
+    }
+
+    public static CardSnapshotDTO toCardDTO(com.alkateca.lendasdapoeira.entity.Card card) {
+        return SnapshotFactory.toCardDTO(card);
     }
 
     @Data

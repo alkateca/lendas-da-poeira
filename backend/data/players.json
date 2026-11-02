@@ -38,8 +38,8 @@
     "Contra Ataque" : 3
   },
   "permanentElo" : 984,
-  "weeklyElo" : 980,
-  "lastWeeklyResetWeek" : "2026-W44",
+  "weeklyElo" : 1000,
+  "lastWeeklyResetWeek" : "2026-W45",
   "balance" : {
     "gold" : 5000
   },
@@ -129,7 +129,7 @@
   },
   "permanentElo" : 1000,
   "weeklyElo" : 1000,
-  "lastWeeklyResetWeek" : "2026-W44",
+  "lastWeeklyResetWeek" : "2026-W45",
   "balance" : {
     "gold" : 350
   },
@@ -147,7 +147,7 @@
   },
   "permanentElo" : 1000,
   "weeklyElo" : 1000,
-  "lastWeeklyResetWeek" : "2026-W44",
+  "lastWeeklyResetWeek" : "2026-W45",
   "balance" : {
     "gold" : 350
   },
@@ -5708,8 +5708,8 @@
     "Girlhões pesados" : 4
   },
   "permanentElo" : 1016,
-  "weeklyElo" : 1020,
-  "lastWeeklyResetWeek" : "2026-W44",
+  "weeklyElo" : 1000,
+  "lastWeeklyResetWeek" : "2026-W45",
   "balance" : {
     "gold" : 4450
   },
@@ -5725,7 +5725,7 @@
   "ownedCards" : { },
   "permanentElo" : 1000,
   "weeklyElo" : 1000,
-  "lastWeeklyResetWeek" : "2026-W44",
+  "lastWeeklyResetWeek" : "2026-W45",
   "balance" : {
     "gold" : 500
   },
@@ -5773,7 +5773,7 @@
   },
   "permanentElo" : 1000,
   "weeklyElo" : 1000,
-  "lastWeeklyResetWeek" : "2026-W44",
+  "lastWeeklyResetWeek" : "2026-W45",
   "balance" : {
     "gold" : 5000
   },
@@ -5821,7 +5821,61 @@
   },
   "permanentElo" : 1000,
   "weeklyElo" : 1000,
-  "lastWeeklyResetWeek" : "2026-W44",
+  "lastWeeklyResetWeek" : "2026-W45",
+  "balance" : {
+    "gold" : 5000
+  },
+  "poeira" : 5000,
+  "ownedItems" : { },
+  "gold" : 5000
+}, {
+  "uuid" : "fd95e2a3-525c-49e4-bb85-5bc35a4842ae",
+  "name" : "teste",
+  "currentDeck" : {
+    "uuid" : null,
+    "deckName" : null,
+    "heroList" : [ ],
+    "cardList" : [ ],
+    "liberationList" : [ ]
+  },
+  "decks" : [ ],
+  "ownedHeroes" : {
+    "Isenora, Santa das Laminas" : 1,
+    "Cavaleiro Onear" : 1,
+    "Enamor,O Grande Cavaleiro" : 1
+  },
+  "ownedCards" : {
+    "Tristeza" : 2,
+    "Garra espectral" : 2,
+    "Lamina de Cristal" : 3,
+    "Determinação Cristalina" : 1,
+    "Broche de Cristal" : 3,
+    "Maestria com Chamas" : 2,
+    "Estatica" : 2,
+    "Para-raios" : 2,
+    "Mirar na cabeça" : 2,
+    "Quimera" : 3,
+    "Impulso de Poder" : 1,
+    "Risada Sarcástica" : 2,
+    "Dragast" : 3,
+    "Ponto Final" : 2,
+    "Ataque Mágico" : 3,
+    "Golpes Pesados" : 3,
+    "Banir!" : 2,
+    "Estrela do amanhã" : 2,
+    "Alma em Chamas" : 2,
+    "Convocação" : 2,
+    "Quebra!" : 2,
+    "Rapieira de Cristal" : 3,
+    "Bola de fogo" : 2,
+    "Ração de emergencia" : 2,
+    "Vendaval Arcano" : 2,
+    "Auto Defesa Magica" : 2,
+    "Contra Ataque" : 3
+  },
+  "permanentElo" : 1000,
+  "weeklyElo" : 1000,
+  "lastWeeklyResetWeek" : "2026-W45",
   "balance" : {
     "gold" : 5000
   },

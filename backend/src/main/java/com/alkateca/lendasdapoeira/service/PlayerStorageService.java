@@ -2,6 +2,7 @@ package com.alkateca.lendasdapoeira.service;
 
 import com.alkateca.lendasdapoeira.entity.Player;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +14,8 @@ import java.util.*;
 @Service
 public class PlayerStorageService {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private final File dbFile;
     private boolean diskPersistenceEnabled = false;
     private Map<UUID, Player> playerDatabase = new HashMap<>();
