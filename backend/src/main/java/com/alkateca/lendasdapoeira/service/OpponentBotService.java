@@ -103,15 +103,16 @@ public class OpponentBotService {
                 .orElse(null);
 
         int maxSlots = activeBotHero != null ? activeBotHero.getMaxWeaponSlots() : 2;
-        int currentUsedSlots = botPlayer.getCurrentDeck().getCardList().stream()
-                .filter(c -> c.getZoneId() == ZoneId.ATTACHED && c.getItemType() == ItemType.ARMA)
-                .mapToInt(Card::getEmpunhadura)
-                .sum();
+        int currentUsedSlots = activeBotHero != null ? engine.getUsedWeaponSlotsForHero(activeBotHero.getUuid()) : 0;
 
         List<UUID> chosenCards = new ArrayList<>();
 
         for (Card candidate : botHand) {
             if (chosenCards.size() >= 2) break; // Limite estrito de até 2 cartas na preparação
+
+            if (activeBotHero != null && !engine.canHeroPlayCard(activeBotHero, candidate)) {
+                continue;
+            }
 
             if (candidate.getItemType() == ItemType.ARMA) {
                 int emp = candidate.getEmpunhadura();

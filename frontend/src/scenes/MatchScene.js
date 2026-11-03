@@ -2465,7 +2465,14 @@ export default class MatchScene extends Phaser.Scene {
                     this.pollServerStateIfWaiting(true);
                 }
             } else {
-                this.showToast('Jogada recusada pelo servidor!');
+                let errMsg = 'Jogada recusada pelo servidor!';
+                try {
+                    const errBody = await response.json();
+                    if (errBody?.error) errMsg = `⚠️ ${errBody.error}`;
+                } catch (_) {
+                    // Ignora falha ao ler JSON de erro
+                }
+                this.showToast(errMsg);
                 this.updateMainButtonState();
             }
         } catch (err) {

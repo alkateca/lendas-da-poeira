@@ -281,4 +281,134 @@ class DeckBuilderFilterAndValidationTest {
         Deck excessDeck = new Deck("Excesso", List.of(c1, c1, c1), List.of(hA));
         assertThrows(IllegalArgumentException.class, () -> validatorService.validateDeckOwnership(player, excessDeck));
     }
+
+    @Test
+    @DisplayName("7. Restrições de Magia (SPELL) e Teurgia (THEURGY) no Deckbuilder e no Combate (GameEngine)")
+    void shouldEnforceSpellAndTheurgyRestrictionsInDeckbuildAndCombat() {
+        // Herói sem afinidade e sem classe Emissor/Transformador (apenas Criador / Combatente)
+        HeroCard pureFighter = new HeroCard();
+        pureFighter.setUuid(UUID.randomUUID());
+        pureFighter.setCardName("Guerreiro Puro");
+        pureFighter.setColor(Colors.RED);
+        pureFighter.setClasse(List.of(Classe.CRIADOR));
+        pureFighter.setOrdem(List.of(Ordem.CAVALEIRO));
+        pureFighter.setRacas(List.of(Raca.HUMANO));
+        pureFighter.setVidaMaxima(20);
+        pureFighter.setVidaAtual(20);
+        pureFighter.setEstaVivo(true);
+        pureFighter.setEstaAtivo(true);
+
+        // Herói Emissor sem afinidade elemental
+        HeroCard pureEmitter = new HeroCard();
+        pureEmitter.setUuid(UUID.randomUUID());
+        pureEmitter.setCardName("Mago Emissor");
+        pureEmitter.setColor(Colors.RED);
+        pureEmitter.setClasse(List.of(Classe.EMISSOR));
+        pureEmitter.setRacas(List.of(Raca.HUMANO));
+        pureEmitter.setVidaMaxima(20);
+        pureEmitter.setVidaAtual(20);
+        pureEmitter.setEstaVivo(true);
+        pureEmitter.setEstaAtivo(true);
+
+        // Herói Transformador
+        HeroCard transformerHero = new HeroCard();
+        transformerHero.setUuid(UUID.randomUUID());
+        transformerHero.setCardName("Paladino Transformador");
+        transformerHero.setColor(Colors.RED);
+        transformerHero.setClasse(List.of(Classe.TRANSFORMADOR));
+        transformerHero.setRacas(List.of(Raca.HUMANO));
+        transformerHero.setVidaMaxima(20);
+        transformerHero.setVidaAtual(20);
+        transformerHero.setEstaVivo(true);
+        transformerHero.setEstaAtivo(true);
+
+        Card neutralTheurgy = new Card();
+        neutralTheurgy.setUuid(UUID.randomUUID());
+        neutralTheurgy.setCardName("Risada Sarcástica");
+        neutralTheurgy.setCardType(CardType.THEURGY);
+        neutralTheurgy.setColor(Colors.NEUTRAL);
+
+        // A) Deckbuilder: Guerreiro Puro (sem Afinidade, sem Emissor, sem Transformador)
+        // NÃO pode incluir Magia (SPELL) nem Teurgia (THEURGY)
+        assertFalse(validatorService.isCardCompatibleWithHeroes(fireSpellCard, List.of(pureFighter)));
+        assertFalse(validatorService.isCardCompatibleWithHeroes(neutralTheurgy, List.of(pureFighter)));
+
+        // B) Deckbuilder: Emissor pode incluir Magia mesmo sem a Afinidade Fogo, mas NÃO pode incluir Teurgia
+        assertTrue(validatorService.isCardCompatibleWithHeroes(fireSpellCard, List.of(pureEmitter)));
+        assertFalse(validatorService.isCardCompatibleWithHeroes(neutralTheurgy, List.of(pureEmitter)));
+
+        // C) Deckbuilder: Transformador pode incluir Teurgia, mas NÃO pode incluir Magia de Fogo sem Afinidade/Emissor
+        assertTrue(validatorService.isCardCompatibleWithHeroes(neutralTheurgy, List.of(transformerHero)));
+        assertFalse(validatorService.isCardCompatibleWithHeroes(fireSpellCard, List.of(transformerHero)));
+
+        // D) Combate (GameEngine.submitPreparationCards):
+        // Equipe mista tem Emissor + Transformador + Combatente (logo o baralho pode ter Magia e Teurgia),
+        // mas na partida cada personagem deve respeitar sua própria classe/afinidade ao jogar!
+        Player p1 = new Player();
+        p1.setUuid(UUID.randomUUID());
+        p1.setName("P1");
+
+        Card spellInHand = new Card();
+        spellInHand.setUuid(UUID.randomUUID());
+        spellInHand.setCardName("Bola de Fogo");
+        spellInHand.setCardType(CardType.SPELL);
+        spellInHand.setColor(Colors.RED);
+        spellInHand.setAfinidades(List.of(Afinidade.FOGO));
+        spellInHand.setZoneId(ZoneId.DECK);
+        spellInHand.setOwnerId(p1.getUuid());
+
+        Card theurgyInHand = new Card();
+        theurgyInHand.setUuid(UUID.randomUUID());
+        theurgyInHand.setCardName("Risada Sarcástica");
+        theurgyInHand.setCardType(CardType.THEURGY);
+        theurgyInHand.setColor(Colors.NEUTRAL);
+        theurgyInHand.setZoneId(ZoneId.DECK);
+        theurgyInHand.setOwnerId(p1.getUuid());
+
+        Deck p1Deck = new Deck("Misto", new ArrayList<>(List.of(spellInHand, theurgyInHand)), new ArrayList<>(List.of(pureFighter, pureEmitter, transformerHero)));
+        p1.setCurrentDeck(p1Deck);
+
+        HeroCard dummyEnemy = new HeroCard();
+        dummyEnemy.setUuid(UUID.randomUUID());
+        dummyEnemy.setCardName("Alvo");
+        dummyEnemy.setVidaMaxima(30);
+        dummyEnemy.setVidaAtual(30);
+        dummyEnemy.setEstaVivo(true);
+        dummyEnemy.setEstaAtivo(true);
+
+        Player p2 = new Player();
+        p2.setUuid(UUID.randomUUID());
+        p2.setName("P2");
+        p2.setCurrentDeck(new Deck("Inimigo", new ArrayList<>(), new ArrayList<>(List.of(dummyEnemy))));
+
+        com.alkateca.lendasdapoeira.engine.GameEngine engine = new com.alkateca.lendasdapoeira.engine.GameEngine(p1, p2);
+        engine.startGame();
+
+        // Força iniciativa para P1 e coloca pureFighter (Cavaleiro/Criador sem afinidade e sem Emissor/Transformador) em BATTLE
+        engine.getGameState().setActiveTurnPlayerId(p1.getUuid());
+        engine.submitHeroChoice(p1.getUuid(), pureFighter.getUuid(), dummyEnemy.getUuid());
+
+        // Guerreiro Puro tenta jogar Magia -> bloqueado por falta de Afinidade/Emissor!
+        IllegalArgumentException spellEx = assertThrows(IllegalArgumentException.class, () ->
+                engine.submitPreparationCards(p1.getUuid(), List.of(spellInHand.getUuid()))
+        );
+        assertTrue(spellEx.getMessage().contains("Emissor"));
+
+        // Guerreiro Puro tenta jogar Teurgia -> bloqueado por falta de Transformador!
+        IllegalArgumentException theurgyEx = assertThrows(IllegalArgumentException.class, () ->
+                engine.submitPreparationCards(p1.getUuid(), List.of(theurgyInHand.getUuid()))
+        );
+        assertTrue(theurgyEx.getMessage().contains("Transformador"));
+
+        // Se o herói ativo for o Transformador, ele pode jogar a Teurgia, mas não a Magia!
+        engine.getGameState().setActiveHeroPlayer1Id(transformerHero.getUuid());
+        IllegalArgumentException transformerSpellEx = assertThrows(IllegalArgumentException.class, () ->
+                engine.submitPreparationCards(p1.getUuid(), List.of(spellInHand.getUuid()))
+        );
+        assertTrue(transformerSpellEx.getMessage().contains("Emissor"));
+
+        assertDoesNotThrow(() ->
+                engine.submitPreparationCards(p1.getUuid(), List.of(theurgyInHand.getUuid()))
+        );
+    }
 }

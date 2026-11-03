@@ -101,20 +101,18 @@ public class MatchController {
     }
 
     @PostMapping("/matches/{matchId}/confirm-action")
-    public ResponseEntity<MatchTimelineResponseDTO> confirmAction(
+    public ResponseEntity<?> confirmAction(
             @PathVariable UUID matchId,
             @RequestBody PlayerActionRequestDTO request) {
         try {
             if (request.getMatchId() != null && !matchId.equals(request.getMatchId())) {
-                return ResponseEntity.badRequest().build();
+                return ResponseEntity.badRequest().body(java.util.Map.of("error", "MatchId divergente na requisição."));
             }
             request.setMatchId(matchId);
             MatchTimelineResponseDTO timeline = matchmakingService.processPlayerAction(matchId, request);
             return ResponseEntity.ok(timeline);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().build();
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage() != null ? e.getMessage() : "Jogada inválida."));
         }
     }
 

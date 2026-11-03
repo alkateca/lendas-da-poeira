@@ -152,6 +152,91 @@ public class DeckValidatorService {
     }
 
     /**
+     * Avalia se um único Herói cumpre todos os pré-requisitos de Classe, Afinidade, Ordem e Raça
+     * para jogar uma carta em combate (ou habilitá-la individualmente no baralho).
+     * Retorna null se permitido, ou a mensagem de bloqueio caso contrário.
+     */
+    public static String getHeroPlayRestrictionReason(HeroCard hero, Card card) {
+        if (hero == null) return "Nenhum Herói ativo em combate.";
+        if (card == null) return "Carta inválida.";
+
+        if (card.isLiberationCard()) {
+            return null;
+        }
+
+        List<Raca> heroRaces = hero.getRacas() != null ? hero.getRacas() : List.of();
+        if (heroRaces.contains(Raca.GOBLIN)) {
+            return null;
+        }
+
+        List<Classe> heroClasses = hero.getClasse() != null ? hero.getClasse() : List.of();
+        boolean hasEmissor = heroClasses.contains(Classe.EMISSOR);
+        boolean hasTransformador = heroClasses.contains(Classe.TRANSFORMADOR);
+
+        // 1. Regra de Teurgias (THEURGY): apenas Transformadores podem jogar Teurgias
+        if (card.getCardType() == CardType.THEURGY && !hasTransformador) {
+            return hero.getCardName() + " não possui a classe Transformador para jogar a Teurgia '" + card.getCardName() + "'.";
+        }
+
+        // 2. Regra de Afinidade Elemental e Magias (SPELL): exige a Afinidade correspondente ou a classe Emissor
+        List<Afinidade> heroAffinities = hero.getAfinidades() != null ? hero.getAfinidades() : List.of();
+        List<Afinidade> reqAffinities = card.getAfinidades() != null ? card.getAfinidades() : List.of();
+        if (!reqAffinities.isEmpty()) {
+            boolean matchAff = reqAffinities.stream().anyMatch(heroAffinities::contains);
+            if (!matchAff && !hasEmissor) {
+                return hero.getCardName() + " não possui a afinidade exigida (" + reqAffinities + ") nem a classe Emissor para jogar '" + card.getCardName() + "'.";
+            }
+        } else if (card.getCardType() == CardType.SPELL && heroAffinities.isEmpty() && !hasEmissor) {
+            return hero.getCardName() + " não possui Afinidade nem a classe Emissor para jogar a Magia '" + card.getCardName() + "'.";
+        }
+
+        // 3. Regra de Classe explícita da carta
+        List<Classe> reqClasses = card.getClasse() != null ? card.getClasse() : List.of();
+        if (!reqClasses.isEmpty()) {
+            boolean matchClass = reqClasses.stream().anyMatch(heroClasses::contains);
+            if (!matchClass) {
+                return hero.getCardName() + " não possui a classe exigida (" + reqClasses + ") para jogar '" + card.getCardName() + "'.";
+            }
+        }
+
+        // 4. Regra de Ordem / Raça explícita da carta
+        List<String> reqOrdersAndRaces = new ArrayList<>();
+        if (card.getOrdem() != null) {
+            card.getOrdem().forEach(o -> reqOrdersAndRaces.add(normalize(o.name())));
+        }
+        if (card.getRacas() != null) {
+            card.getRacas().forEach(r -> reqOrdersAndRaces.add(normalize(r.name())));
+        }
+        if (!reqOrdersAndRaces.isEmpty()) {
+            Set<String> heroOrdersAndRaces = new HashSet<>();
+            if (hero.getOrdem() != null) {
+                for (Ordem o : hero.getOrdem()) {
+                    heroOrdersAndRaces.add(normalize(o.name()));
+                    if (o.name().contains("GUARDI")) heroOrdersAndRaces.add("GUARDIAO DO TRONO");
+                }
+            }
+            for (Raca r : heroRaces) {
+                heroOrdersAndRaces.add(normalize(r.name()));
+                if (r.name().contains("GUARDI")) heroOrdersAndRaces.add("GUARDIAO DO TRONO");
+            }
+            boolean matchOrderOrRace = reqOrdersAndRaces.stream().anyMatch(req ->
+                    heroOrdersAndRaces.contains(req)
+                            || (req.contains("GUARDI") && heroOrdersAndRaces.contains("GUARDIAO DO TRONO"))
+            );
+            if (!matchOrderOrRace) {
+                return hero.getCardName() + " não pertence à Ordem/Raça exigida para jogar '" + card.getCardName() + "'.";
+            }
+        }
+
+        return null;
+    }
+
+    public boolean canHeroPlayCard(HeroCard hero, Card card) {
+        if (hero == null || card == null) return false;
+        return getHeroPlayRestrictionReason(hero, card) == null;
+    }
+
+    /**
      * Avalia dinamicamente se uma carta é compatível com os Heróis atualmente selecionados (1 a 3 heróis).
      */
     public boolean isCardCompatibleWithHeroes(Card card, List<HeroCard> selectedHeroes) {
@@ -170,6 +255,7 @@ public class DeckValidatorService {
         Set<String> teamOrdersAndRaces = new HashSet<>();
         Set<Classe> teamClasses = new HashSet<>();
         boolean hasEmissor = false;
+        boolean hasTransformador = false;
         boolean hasGoblin = false;
 
         for (HeroCard h : selectedHeroes) {
@@ -190,6 +276,7 @@ public class DeckValidatorService {
             if (h.getClasse() != null) {
                 teamClasses.addAll(h.getClasse());
                 if (h.getClasse().contains(Classe.EMISSOR)) hasEmissor = true;
+                if (h.getClasse().contains(Classe.TRANSFORMADOR)) hasTransformador = true;
             }
         }
 
@@ -204,7 +291,12 @@ public class DeckValidatorService {
             }
         }
 
-        // 2. Validação de Afinidade Elemental e Magias (SPELL)
+        // 2. Validação de Teurgias (THEURGY): exige ao menos um Herói Transformador (ou Goblin)
+        if (card.getCardType() == CardType.THEURGY && !card.isLiberationCard() && !hasTransformador && !hasGoblin) {
+            return false;
+        }
+
+        // 3. Validação de Afinidade Elemental e Magias (SPELL)
         List<Afinidade> reqAffinities = card.getAfinidades() != null ? card.getAfinidades() : List.of();
         if (!reqAffinities.isEmpty()) {
             boolean matchAff = reqAffinities.stream().anyMatch(teamAffinities::contains);
@@ -213,7 +305,7 @@ public class DeckValidatorService {
             return false;
         }
 
-        // 3. Validação de Ordem / Raça
+        // 4. Validação de Ordem / Raça
         List<String> reqOrdersAndRaces = new ArrayList<>();
         if (card.getOrdem() != null) {
             card.getOrdem().forEach(o -> reqOrdersAndRaces.add(normalize(o.name())));
@@ -229,11 +321,17 @@ public class DeckValidatorService {
             if (!matchOrderOrRace) return false;
         }
 
-        // 4. Validação de Classe
+        // 5. Validação de Classe
         List<Classe> reqClasses = card.getClasse() != null ? card.getClasse() : List.of();
         if (!reqClasses.isEmpty() && !hasGoblin) {
             boolean matchClass = reqClasses.stream().anyMatch(teamClasses::contains);
             if (!matchClass) return false;
+        }
+
+        // 6. Garante que pelo menos um Herói da equipe consiga individualmente jogar a carta em combate
+        if (!card.isLiberationCard()) {
+            boolean anyHeroCanPlay = selectedHeroes.stream().anyMatch(h -> canHeroPlayCard(h, card));
+            if (!anyHeroCanPlay) return false;
         }
 
         return true;

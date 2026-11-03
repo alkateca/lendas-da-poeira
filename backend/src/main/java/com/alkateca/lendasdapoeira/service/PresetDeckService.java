@@ -124,7 +124,7 @@ public class PresetDeckService {
                 List.of(
                         "Bola de fogo", "Bola de fogo", "Bola de fogo",
                         "Maestria com Chamas", "Maestria com Chamas", "Maestria com Chamas",
-                        "Alma em Chamas", "Alma em Chamas", "Alma em Chamas",
+                        "Fogo Purificador", "Fogo Purificador", "Fogo Purificador",
                         "Muralha de Fogo", "Muralha de Fogo", "Muralha de Fogo",
                         "Cauterizar", "Cauterizar", "Cauterizar",
                         "Peitoral de brasas", "Peitoral de brasas", "Peitoral de brasas",

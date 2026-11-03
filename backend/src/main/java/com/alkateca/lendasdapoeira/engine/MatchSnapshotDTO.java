@@ -133,6 +133,10 @@ public class MatchSnapshotDTO {
         private int empunhadura;
         private String descricao;
         private String zoneId;
+        private List<String> racas = new ArrayList<>();
+        private List<String> afinidades = new ArrayList<>();
+        private List<String> ordem = new ArrayList<>();
+        private List<String> classe = new ArrayList<>();
         private boolean faceUp;
         private boolean liberationCard;
         private String missionType;

@@ -863,6 +863,9 @@ public class MatchmakingService {
                 List<UUID> cardsToPlay = new ArrayList<>();
                 for (Card c : botHand) {
                     if (cardsToPlay.size() >= 2) break;
+                    if (botActiveHero != null && !engine.canHeroPlayCard(botActiveHero, c)) {
+                        continue;
+                    }
                     if (c.getItemType() == ItemType.ARMA) {
                         int emp = Math.max(1, c.getEmpunhadura());
                         if (emp <= freeWeaponSlots) {

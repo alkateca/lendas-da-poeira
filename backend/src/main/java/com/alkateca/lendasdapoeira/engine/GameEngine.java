@@ -846,6 +846,15 @@ public class GameEngine {
         choice(); // Avança para TurnPhase.PREPARATION e tira a foto
     }
 
+    public String getHeroPlayRestrictionReason(HeroCard hero, Card card) {
+        return com.alkateca.lendasdapoeira.service.DeckValidatorService.getHeroPlayRestrictionReason(hero, card);
+    }
+
+    public boolean canHeroPlayCard(HeroCard hero, Card card) {
+        if (hero == null || card == null) return false;
+        return getHeroPlayRestrictionReason(hero, card) == null;
+    }
+
     /**
      * 2. Executado quando cada jogador clica no Botão Principal na TurnPhase.PREPARATION
      */
@@ -856,17 +865,51 @@ public class GameEngine {
 
         boolean isP1 = playerId.equals(player1.getUuid());
         Player player = isP1 ? player1 : player2;
+        UUID activeHeroId = isP1 ? gameState.getActiveHeroPlayer1Id() : gameState.getActiveHeroPlayer2Id();
+        HeroCard activeHero = getActiveHero(player, activeHeroId);
         List<Card> targetPlayedList = isP1 ? gameState.getPlayer1PlayedCards() : gameState.getPlayer2PlayedCards();
 
+        for (Card prevCard : targetPlayedList) {
+            if (prevCard != null && prevCard.getZoneId() == ZoneId.RESOLVE) {
+                prevCard.setZoneId(ZoneId.HAND);
+            }
+        }
         targetPlayedList.clear();
 
-        if (playedCardUuids != null) {
+        if (playedCardUuids != null && !playedCardUuids.isEmpty()) {
+            if (playedCardUuids.size() > 2) {
+                throw new IllegalArgumentException("Um jogador pode preparar no máximo 2 cartas por turno.");
+            }
+            int currentUsedWeaponSlots = activeHero != null ? getUsedWeaponSlotsForHero(activeHero.getUuid()) : 0;
+            int maxWeaponSlots = activeHero != null ? activeHero.getMaxWeaponSlots() : 2;
+            List<Card> validatedCards = new ArrayList<>();
+
             for (UUID cardId : playedCardUuids) {
                 Card cardInHand = player.getCurrentDeck().getCardList().stream()
                         .filter(c -> c.getUuid().equals(cardId) && c.getZoneId() == ZoneId.HAND)
                         .findFirst()
                         .orElseThrow(() -> new IllegalArgumentException("Carta não encontrada na mão: " + cardId));
 
+                if (activeHero != null) {
+                    String restrictionReason = getHeroPlayRestrictionReason(activeHero, cardInHand);
+                    if (restrictionReason != null) {
+                        throw new IllegalArgumentException(restrictionReason);
+                    }
+                    if (cardInHand.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMA) {
+                        int emp = Math.max(0, cardInHand.getEmpunhadura());
+                        if (currentUsedWeaponSlots + emp > maxWeaponSlots) {
+                            throw new IllegalArgumentException(
+                                    activeHero.getCardName() + " excedeu o limite de empunhadura (" + maxWeaponSlots + ") ao tentar equipar '" + cardInHand.getCardName() + "'."
+                            );
+                        }
+                        currentUsedWeaponSlots += emp;
+                    }
+                }
+                validatedCards.add(cardInHand);
+            }
+
+            targetPlayedList.clear();
+            for (Card cardInHand : validatedCards) {
                 cardInHand.setZoneId(ZoneId.RESOLVE);
                 targetPlayedList.add(cardInHand);
             }
@@ -874,6 +917,8 @@ public class GameEngine {
             for (Card playedCard : targetPlayedList) {
                 trackCardPlayedMissions(playerId, playedCard);
             }
+        } else {
+            targetPlayedList.clear();
         }
 
         if (isP1) {
