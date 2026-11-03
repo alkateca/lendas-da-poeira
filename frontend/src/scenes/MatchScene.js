@@ -1218,9 +1218,12 @@ export default class MatchScene extends Phaser.Scene {
                 .setText(formatCardDescriptionWithKeywords(cardOrHeroDto.descricao || ''));
         }
 
-        const artKey = cardOrHeroDto.imagem && this.textures.exists(cardOrHeroDto.imagem)
+        const camelKey = PlayableCardPrefab.prototype.toCamelCaseKey(cardOrHeroDto.cardName);
+        const artKey = (cardOrHeroDto.imagem && this.textures.exists(cardOrHeroDto.imagem))
             ? cardOrHeroDto.imagem
-            : (this.textures.exists(cardOrHeroDto.cardName) ? cardOrHeroDto.cardName : null);
+            : (this.textures.exists(cardOrHeroDto.cardName)
+                ? cardOrHeroDto.cardName
+                : (camelKey && this.textures.exists(camelKey) ? camelKey : null));
 
         if (artKey) {
             if (!this.lpArtSprite) {
@@ -2882,6 +2885,30 @@ export default class MatchScene extends Phaser.Scene {
                     })
                 });
             }
+            const stored = JSON.parse(localStorage.getItem('lendas_player')) || {};
+            if (!Array.isArray(stored.matchHistory)) stored.matchHistory = [];
+            const matchIdStr = String(this.matchId || Date.now());
+            if (!stored.matchHistory.some(m => String(m.matchId) === matchIdStr)) {
+                const snap = this.currentSnapshot || {};
+                const localHeroes = (snap.localPlayer?.heroes || []).map(h => h.cardName).filter(Boolean);
+                const oppHeroes = (snap.opponentPlayer?.heroes || []).map(h => h.cardName).filter(Boolean);
+                const oppName = snap.opponentPlayer?.name || 'Oponente';
+                const myName = snap.localPlayer?.name || stored.name || 'Você';
+                stored.matchHistory.unshift({
+                    matchId: matchIdStr,
+                    timestamp: Date.now(),
+                    mode: this.isCurrentMatchPvp() ? 'PVP' : 'PVE',
+                    playerName: myName,
+                    opponentName: oppName,
+                    winnerName: oppName,
+                    victory: false,
+                    playerScore: 0,
+                    opponentScore: 0,
+                    playerHeroes: localHeroes,
+                    opponentHeroes: oppHeroes
+                });
+                localStorage.setItem('lendas_player', JSON.stringify(stored));
+            }
         } catch (err) {
             console.warn('Aviso ao notificar saída da partida:', err);
         } finally {
@@ -3030,6 +3057,35 @@ export default class MatchScene extends Phaser.Scene {
             } catch (e) {
                 console.warn('Não foi possível atualizar Poeira local:', e);
             }
+        }
+
+        try {
+            const stored = JSON.parse(localStorage.getItem('lendas_player')) || {};
+            if (!Array.isArray(stored.matchHistory)) stored.matchHistory = [];
+            const matchIdStr = String(this.matchId || Date.now());
+            const alreadySaved = stored.matchHistory.some(m => String(m.matchId) === matchIdStr);
+            if (!alreadySaved) {
+                const localHeroes = (snapshot.localPlayer?.heroes || []).map(h => h.cardName).filter(Boolean);
+                const oppHeroes = (snapshot.opponentPlayer?.heroes || []).map(h => h.cardName).filter(Boolean);
+                const oppName = oppStats.playerName || snapshot.opponentPlayer?.name || 'Oponente';
+                const myName = myStats.playerName || snapshot.localPlayer?.name || stored.name || 'Você';
+                stored.matchHistory.unshift({
+                    matchId: matchIdStr,
+                    timestamp: Date.now(),
+                    mode: this.isCurrentMatchPvp() ? 'PVP' : 'PVE',
+                    playerName: myName,
+                    opponentName: oppName,
+                    winnerName: isLocalWinner ? myName : oppName,
+                    victory: Boolean(isLocalWinner),
+                    playerScore: myStats.matchScore ?? 0,
+                    opponentScore: oppStats.matchScore ?? 0,
+                    playerHeroes: localHeroes,
+                    opponentHeroes: oppHeroes
+                });
+                localStorage.setItem('lendas_player', JSON.stringify(stored));
+            }
+        } catch (e) {
+            console.warn('Não foi possível salvar partida no histórico local:', e);
         }
 
         this.goStatsCardsGroup.removeAll(true);

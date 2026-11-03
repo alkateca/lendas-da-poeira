@@ -177,11 +177,11 @@ class NewCardsBatch2IntegrationTest {
 
         // Adiciona 2 heróis Zumbis aliados vivos
         HeroCard zumbi1 = createHero(p1, "Zumbi Aliado 1", 1, 2, 1, 10, 8);
-        zumbi1.setRacas(new ArrayList<>(List.of(Raca.ZUMBI)));
+        zumbi1.setOrdem(new ArrayList<>(List.of(Ordem.ZUMBI)));
         p1.getCurrentDeck().getHeroList().add(zumbi1);
 
         HeroCard zumbi2 = createHero(p1, "Zumbi Aliado 2", 1, 2, 1, 10, 7);
-        zumbi2.setRacas(new ArrayList<>(List.of(Raca.ZUMBI)));
+        zumbi2.setOrdem(new ArrayList<>(List.of(Ordem.ZUMBI)));
         p1.getCurrentDeck().getHeroList().add(zumbi2);
 
         // 1. Equipar concede +2 ESP e +2 DEF

@@ -270,7 +270,10 @@ public class MatchController {
             }
         }
 
-        if (deck == null) {
+        if (deck == null && presetDeckService != null) {
+            deck = presetDeckService.createDefaultDeck();
+        }
+        if (deck == null || deck.getHeroList() == null || deck.getHeroList().isEmpty()) {
             deck = createDefaultDeckFromJsonOrFallback();
         }
 
@@ -401,6 +404,16 @@ public class MatchController {
             if (savedPlayer.getDecks() != null) {
                 matchPlayer.setDecks(new ArrayList<>(savedPlayer.getDecks()));
             }
+            if (savedPlayer.getPurchaseHistory() != null) {
+                matchPlayer.setPurchaseHistory(new ArrayList<>(savedPlayer.getPurchaseHistory()));
+            }
+            if (savedPlayer.getMatchHistory() != null) {
+                matchPlayer.setMatchHistory(new ArrayList<>(savedPlayer.getMatchHistory()));
+            }
+        } else if (playerStorageService != null
+                && !com.alkateca.lendasdapoeira.service.PresetDeckService.PLAYER_1_UUID.equals(finalPlayerId)
+                && !com.alkateca.lendasdapoeira.service.PresetDeckService.PLAYER_2_UUID.equals(finalPlayerId)) {
+            playerStorageService.saveOrUpdatePlayer(matchPlayer);
         }
         return matchPlayer;
     }

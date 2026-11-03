@@ -174,7 +174,7 @@ class NewItemsEffectsIntegrationTest {
         zombie1.setUuid(UUID.randomUUID());
         zombie1.setEstaVivo(true);
         zombie1.setVidaAtual(5);
-        zombie1.setRacas(new ArrayList<>(java.util.List.of(Raca.ZUMBI)));
+        zombie1.setOrdem(new ArrayList<>(java.util.List.of(Ordem.ZUMBI)));
         p1.getCurrentDeck().getHeroList().add(zombie1);
 
         HeroCard enemyHero = new HeroCard();

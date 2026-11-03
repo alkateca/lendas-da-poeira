@@ -1,6 +1,7 @@
 package com.alkateca.lendasdapoeira.controller;
 
 import com.alkateca.lendasdapoeira.engine.CardFactory;
+import com.alkateca.lendasdapoeira.entity.Card;
 import com.alkateca.lendasdapoeira.entity.Deck;
 import com.alkateca.lendasdapoeira.entity.Player;
 import com.alkateca.lendasdapoeira.service.DeckValidatorService;
@@ -69,6 +70,16 @@ public class PlayerController {
         UUID targetId = (playerId != null) ? playerId : uuid;
         Player player = playerStorageService.getPlayer(targetId);
         if (player == null) return ResponseEntity.notFound().build();
+
+        if (incomingDeck != null && incomingDeck.getCardList() != null && presetDeckService.getCatalogCards() != null) {
+            for (Card card : incomingDeck.getCardList()) {
+                if (card == null || card.getCardName() == null) continue;
+                presetDeckService.getCatalogCards().stream()
+                        .filter(cc -> cc.getCardName() != null && cc.getCardName().equalsIgnoreCase(card.getCardName()))
+                        .findFirst()
+                        .ifPresent(cc -> card.setUnica(card.isUnica() || cc.isUnica()));
+            }
+        }
 
         deckValidatorService.validateDeckOwnership(player, incomingDeck);
 

@@ -145,11 +145,12 @@
     "danoBonus": 0,
     "vulnerabilidade": 0,
     "racas": [
-      "Goblin",
-      "Zumbi"
+      "Goblin"
     ],
     "afinidades": [],
-    "ordem": [],
+    "ordem": [
+      "Zumbi"
+    ],
     "classe": [
       "Transformador"
     ],
@@ -178,11 +179,12 @@
     "danoBonus": 0,
     "vulnerabilidade": 0,
     "racas": [
-      "Zumbi",
       "Constructo"
     ],
     "afinidades": [],
-    "ordem": [],
+    "ordem": [
+      "Zumbi"
+    ],
     "classe": [
       "Transformador"
     ],
@@ -210,11 +212,11 @@
     "reducaoDano": 0,
     "danoBonus": 0,
     "vulnerabilidade": 0,
-    "racas": [
+    "racas": [],
+    "afinidades": [],
+    "ordem": [
       "Zumbi"
     ],
-    "afinidades": [],
-    "ordem": [],
     "classe": [
       "Emissor",
       "Transformador"
@@ -244,13 +246,13 @@
     "reducaoDano": 0,
     "danoBonus": 0,
     "vulnerabilidade": 0,
-    "racas": [
-      "Cristal"
-    ],
+    "racas": [],
     "afinidades": [
       "Cristal"
     ],
-    "ordem": [],
+    "ordem": [
+      "Cristal"
+    ],
     "classe": [
       "Criador"
     ],
@@ -280,13 +282,13 @@
     "reducaoDano": 0,
     "danoBonus": 0,
     "vulnerabilidade": 0,
-    "racas": [
-      "Cristal"
-    ],
+    "racas": [],
     "afinidades": [
       "Cristal"
     ],
-    "ordem": [],
+    "ordem": [
+      "Cristal"
+    ],
     "classe": [
       "Criador"
     ],
@@ -316,13 +318,13 @@
     "reducaoDano": 0,
     "danoBonus": 0,
     "vulnerabilidade": 0,
-    "racas": [
-      "Cristal"
-    ],
+    "racas": [],
     "afinidades": [
       "Cristal"
     ],
-    "ordem": [],
+    "ordem": [
+      "Cristal"
+    ],
     "classe": [
       "Criador"
     ],
@@ -522,13 +524,13 @@
     "reducaoDano": 0,
     "danoBonus": 0,
     "vulnerabilidade": 0,
-    "racas": [
-      "Cristal"
-    ],
+    "racas": [],
     "afinidades": [
       "Cristal"
     ],
-    "ordem": [],
+    "ordem": [
+      "Cristal"
+    ],
     "classe": [
       "Criador"
     ],
@@ -837,11 +839,11 @@
     "reducaoDano": 0,
     "danoBonus": 0,
     "vulnerabilidade": 0,
-    "racas": [
+    "racas": [],
+    "afinidades": [],
+    "ordem": [
       "Guardião do Trono"
     ],
-    "afinidades": [],
-    "ordem": [],
     "classe": [
       "Transformador"
     ],
@@ -871,11 +873,11 @@
     "reducaoDano": 0,
     "danoBonus": 0,
     "vulnerabilidade": 0,
-    "racas": [
+    "racas": [],
+    "afinidades": [],
+    "ordem": [
       "Guardião do Trono"
     ],
-    "afinidades": [],
-    "ordem": [],
     "classe": [
       "Transformador"
     ],
@@ -904,11 +906,12 @@
     "danoBonus": 0,
     "vulnerabilidade": 0,
     "racas": [
-      "Guardião do Trono",
       "Constructo"
     ],
     "afinidades": [],
-    "ordem": [],
+    "ordem": [
+      "Guardião do Trono"
+    ],
     "classe": [
       "Transformador"
     ],
@@ -937,9 +940,7 @@
     "reducaoDano": 0,
     "danoBonus": 0,
     "vulnerabilidade": 0,
-    "racas": [
-      "Humano"
-    ],
+    "racas": [],
     "afinidades": [],
     "ordem": [],
     "classe": [
@@ -969,9 +970,7 @@
     "reducaoDano": 0,
     "danoBonus": 0,
     "vulnerabilidade": 0,
-    "racas": [
-      "Humano"
-    ],
+    "racas": [],
     "afinidades": [],
     "ordem": [],
     "classe": [
@@ -1034,9 +1033,7 @@
     "reducaoDano": 0,
     "danoBonus": 0,
     "vulnerabilidade": 0,
-    "racas": [
-      "Humano"
-    ],
+    "racas": [],
     "afinidades": [
       "Fogo"
     ],
@@ -1072,9 +1069,7 @@
     "reducaoDano": 0,
     "danoBonus": 0,
     "vulnerabilidade": 0,
-    "racas": [
-      "Humano"
-    ],
+    "racas": [],
     "afinidades": [
       "Fogo"
     ],
@@ -1239,11 +1234,11 @@
     "reducaoDano": 0,
     "danoBonus": 0,
     "vulnerabilidade": 0,
-    "racas": [
+    "racas": [],
+    "afinidades": [],
+    "ordem": [
       "Guardião do Trono"
     ],
-    "afinidades": [],
-    "ordem": [],
     "classe": [
       "Transformador"
     ],
@@ -1276,11 +1271,11 @@
     "reducaoDano": 0,
     "danoBonus": 0,
     "vulnerabilidade": 0,
-    "racas": [
+    "racas": [],
+    "afinidades": [],
+    "ordem": [
       "Guardião do Trono"
     ],
-    "afinidades": [],
-    "ordem": [],
     "classe": [
       "Transformador"
     ],

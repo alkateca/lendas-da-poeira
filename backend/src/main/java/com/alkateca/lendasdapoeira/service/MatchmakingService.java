@@ -434,6 +434,11 @@ public class MatchmakingService {
             if (matchPlayer.getLastWeeklyResetWeek() != null) {
                 stored.setLastWeeklyResetWeek(matchPlayer.getLastWeeklyResetWeek());
             }
+            if (matchPlayer.getMatchHistory() != null) {
+                for (Player.MatchHistoryEntry entry : matchPlayer.getMatchHistory()) {
+                    stored.recordMatch(entry);
+                }
+            }
             playerStorageService.saveOrUpdatePlayer(stored);
         } else {
             playerStorageService.saveOrUpdatePlayer(matchPlayer);
@@ -445,17 +450,86 @@ public class MatchmakingService {
         GameEngine engine = match.getGameEngine();
         if (engine.getTurnPhase() == TurnPhase.GAME_OVER && engine.getWinnerPlayerId() != null) {
             match.setEloProcessed(true);
-            if (eloRatingService != null && !engine.getSnapshotHistory().isEmpty()) {
+            MatchSnapshotDTO.MatchResultSummaryDTO resultSummary = null;
+            if (!engine.getSnapshotHistory().isEmpty()) {
                 MatchSnapshotDTO lastSnap = engine.getSnapshotHistory().get(engine.getSnapshotHistory().size() - 1);
+                resultSummary = lastSnap.getMatchResult();
+            }
+            recordMatchHistoryForPlayers(match, resultSummary);
+            if (eloRatingService != null && resultSummary != null) {
                 eloRatingService.processMatchEloUpdate(
                         engine.getPlayer1(),
                         engine.getPlayer2(),
                         engine.getWinnerPlayerId(),
                         match.getMode(),
-                        lastSnap.getMatchResult()
+                        resultSummary
                 );
             }
+            syncMatchPlayerProgressToStorage(engine.getPlayer1(), match.getMode(), true);
+            syncMatchPlayerProgressToStorage(engine.getPlayer2(), match.getMode(), false);
         }
+    }
+
+    private void recordMatchHistoryForPlayers(Match match, MatchSnapshotDTO.MatchResultSummaryDTO resultSummary) {
+        GameEngine engine = match.getGameEngine();
+        Player p1 = engine.getPlayer1();
+        Player p2 = engine.getPlayer2();
+        UUID winnerId = engine.getWinnerPlayerId();
+        if (p1 == null || p2 == null || winnerId == null) return;
+
+        String winnerName = winnerId.equals(p1.getUuid()) ? p1.getName() : p2.getName();
+        int p1Score = (resultSummary != null && resultSummary.getPlayer1Stats() != null)
+                ? resultSummary.getPlayer1Stats().getMatchScore()
+                : 0;
+        int p2Score = (resultSummary != null && resultSummary.getPlayer2Stats() != null)
+                ? resultSummary.getPlayer2Stats().getMatchScore()
+                : 0;
+
+        List<String> p1Heroes = extractHeroNames(p1);
+        List<String> p2Heroes = extractHeroNames(p2);
+        long now = System.currentTimeMillis();
+        String modeStr = match.getMode() != null ? match.getMode().name() : "PVE";
+
+        p1.recordMatch(new Player.MatchHistoryEntry(
+                match.getMatchId(),
+                now,
+                modeStr,
+                p1.getName(),
+                p2.getName(),
+                winnerName,
+                winnerId.equals(p1.getUuid()),
+                p1Score,
+                p2Score,
+                p1Heroes,
+                p2Heroes
+        ));
+
+        if (match.getMode() == MatchMode.PVP) {
+            p2.recordMatch(new Player.MatchHistoryEntry(
+                    match.getMatchId(),
+                    now,
+                    modeStr,
+                    p2.getName(),
+                    p1.getName(),
+                    winnerName,
+                    winnerId.equals(p2.getUuid()),
+                    p2Score,
+                    p1Score,
+                    p2Heroes,
+                    p1Heroes
+            ));
+        }
+    }
+
+    private List<String> extractHeroNames(Player player) {
+        if (player == null || player.getCurrentDeck() == null || player.getCurrentDeck().getHeroList() == null) {
+            return List.of();
+        }
+        return player.getCurrentDeck().getHeroList().stream()
+                .filter(Objects::nonNull)
+                .map(HeroCard::getCardName)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     public MatchmakingStatusResponseDTO startPveMatch(Player humanPlayer, Player botPlayer) {
@@ -550,7 +624,17 @@ public class MatchmakingService {
 
         if (match.getMode() == MatchMode.PVE) {
             match.executeLocked(() -> {
-                match.getGameEngine().gameOver();
+                applyEloIfMatchFinished(match);
+                GameEngine engine = match.getGameEngine();
+                if (match.getStatus() != MatchStatus.FINISHED && engine.getTurnPhase() != TurnPhase.GAME_OVER) {
+                    UUID quitterId = (playerId != null) ? playerId : engine.getPlayer1().getUuid();
+                    engine.forfeitMatch(quitterId);
+                    match.syncStatusWithEngine();
+                }
+                applyEloIfMatchFinished(match);
+                if (engine.getWinnerPlayerId() != null) {
+                    syncMatchPlayerProgressToStorage(engine.getPlayer1(), match.getMode(), true);
+                }
                 match.setStatus(MatchStatus.FINISHED);
                 return null;
             });

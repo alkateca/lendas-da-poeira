@@ -1732,7 +1732,7 @@ public class GameEngine {
                 invokedCard.setCardType(com.alkateca.lendasdapoeira.enums.CardType.THEURGY);
                 if (invokedCard.getColor() == null) invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.YELLOW);
                 if (invokedCard.getOrdem() == null || invokedCard.getOrdem().isEmpty()) {
-                    invokedCard.setOrdem(new ArrayList<>(List.of(com.alkateca.lendasdapoeira.enums.Ordem.GUARDAO_DO_TRONO)));
+                    invokedCard.setOrdem(new ArrayList<>(List.of(com.alkateca.lendasdapoeira.enums.Ordem.GUARDIAO_DO_TRONO)));
                 }
                 if (invokedCard.getDescricao() == null) {
                     invokedCard.setDescricao("Guardião do Trono\nSeu Herói Recebe +2 de Ataque até o Final do Combate.\nSeus Transformadores Recebem +1 de Ataque até o Final da Partida.");

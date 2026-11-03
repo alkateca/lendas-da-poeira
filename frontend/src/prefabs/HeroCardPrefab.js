@@ -176,6 +176,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.setInteractive({ draggable: true, useHandCursor: true });
 
         this.setupDragAndHoverEvents();
+        this.on('destroy', () => this.clearLongHoverTimer());
         this.updateFromSnapshot(heroDto);
         scene.add.existing(this);
     }
@@ -184,6 +185,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         if (!heroDto) return null;
         if (heroDto.imagem && this.scene.textures.exists(heroDto.imagem)) return heroDto.imagem;
         if (heroDto.cardName && this.scene.textures.exists(heroDto.cardName)) return heroDto.cardName;
+        const camelKey = PlayableCardPrefab.prototype.toCamelCaseKey(heroDto.cardName);
+        if (camelKey && this.scene.textures.exists(camelKey)) return camelKey;
         if (heroDto.uuid && this.scene.textures.exists(heroDto.uuid)) return heroDto.uuid;
         return null;
     }
@@ -220,8 +223,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
 
     getTargetPosture() {
         const inBattle = this.heroData.zoneId === 'BATTLE' ||
-                         this.scene.selectionManager.selectedOwnHeroId === this.uuid ||
-                         this.scene.selectionManager.selectedEnemyHeroId === this.uuid;
+                         this.scene.selectionManager?.selectedOwnHeroId === this.uuid ||
+                         this.scene.selectionManager?.selectedEnemyHeroId === this.uuid;
 
         if (this.heroData.estaVivo === false) {
             return { angle: 0, scaleX: 1.0, scaleY: 1.0 };
@@ -358,6 +361,25 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
 
         const prev = this.heroData || newHeroDto;
         this.heroData = newHeroDto;
+
+        const artKey = this.resolveHeroArtKey(newHeroDto);
+        if (artKey) {
+            const artCenterX = ((123 / 280) - 0.5) * this.cardW;
+            const artCenterY = ((117 / 380) - 0.5) * this.cardH;
+            const artW = this.cardW * (218 / 280);
+            const artH = this.cardH * (150 / 380);
+            if (!this.artSprite) {
+                this.artSprite = this.scene.add.image(artCenterX, artCenterY, artKey).setDisplaySize(artW, artH);
+                this.artSprite.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+                const frameIdx = this.getIndex(this.frameImage);
+                this.addAt(this.artSprite, frameIdx);
+            } else {
+                this.artSprite.setTexture(artKey).setPosition(artCenterX, artCenterY).setDisplaySize(artW, artH);
+            }
+            this.artSprite.setVisible(true);
+        } else if (this.artSprite) {
+            this.artSprite.setVisible(false);
+        }
 
         this.nameText.setText(newHeroDto.cardName);
         this.traitsText.setVisible(false);

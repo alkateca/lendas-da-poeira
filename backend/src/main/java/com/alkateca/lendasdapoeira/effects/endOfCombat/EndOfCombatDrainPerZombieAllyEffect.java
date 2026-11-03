@@ -100,9 +100,7 @@ public class EndOfCombatDrainPerZombieAllyEffect implements Effect {
     }
 
     private boolean isZombieHero(HeroCard hero) {
-        boolean hasZombieRace = hero.getRacas() != null && hero.getRacas().contains(Raca.ZUMBI);
-        boolean hasZombieOrder = hero.getOrdem() != null && hero.getOrdem().stream()
+        return hero.getOrdem() != null && hero.getOrdem().stream()
                 .anyMatch(o -> o != null && o.name().equalsIgnoreCase("ZUMBI"));
-        return hasZombieRace || hasZombieOrder;
     }
 }

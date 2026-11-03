@@ -5,8 +5,9 @@
     </pattern>
   </defs>
 
-  <!-- Sombra Externa Dura Estilo Persona 5 -->
-  <polygon points="8,6 276,2 278,374 4,378" fill="#e60012" />
+  <!-- Sombra Externa Dura Estilo Persona 5 (com Janela de Arte Vazada) -->
+  <path fill-rule="evenodd" d="M 8,6 L 276,2 L 278,374 L 4,378 Z
+           M 14,42 L 232,42 L 232,192 L 14,192 Z" fill="#e60012" />
 
   <!-- Carcaça Principal Preta (#07090e) com Janela de Arte Vazada (x:14..232, y:42..192) -->
   <path fill-rule="evenodd" d="M 4,2 L 274,4 L 276,374 L 2,376 Z

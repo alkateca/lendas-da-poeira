@@ -47,7 +47,7 @@ public class StartOfCombatZombieBuffEffect implements Effect {
             long zombieCount = allyPlayer.getCurrentDeck().getHeroList().stream()
                     .filter(c -> c instanceof HeroCard)
                     .map(c -> (HeroCard) c)
-                    .filter(h -> Boolean.TRUE.equals(h.getEstaVivo()) && h.getRacas() != null && h.getRacas().contains(Raca.ZUMBI))
+                    .filter(h -> Boolean.TRUE.equals(h.getEstaVivo()) && isZombieHero(h))
                     .count();
 
             if (zombieCount > 0) {
@@ -68,5 +68,10 @@ public class StartOfCombatZombieBuffEffect implements Effect {
                 System.out.println("-> Nenhum aliado Zumbi encontrado.");
             }
         }
+    }
+
+    private boolean isZombieHero(HeroCard hero) {
+        return hero.getOrdem() != null && hero.getOrdem().stream()
+                .anyMatch(o -> o != null && o.name().equalsIgnoreCase("ZUMBI"));
     }
 }

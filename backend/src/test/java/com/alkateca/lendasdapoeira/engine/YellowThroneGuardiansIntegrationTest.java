@@ -62,7 +62,7 @@ class YellowThroneGuardiansIntegrationTest {
         oraculo.setVidaMaxima(18);
         oraculo.setVidaAtual(18);
         oraculo.setEstaVivo(true);
-        oraculo.setRacas(new ArrayList<>(Collections.singletonList(Raca.GUARDIOES_DO_TRONO)));
+        oraculo.setOrdem(new ArrayList<>(Collections.singletonList(Ordem.GUARDIAO_DO_TRONO)));
         oraculo.setClasse(new ArrayList<>(Collections.singletonList(Classe.TRANSFORMADOR)));
         CardFactory.buildCardLogic(oraculo);
         deck1.getHeroList().add(oraculo);
@@ -78,7 +78,7 @@ class YellowThroneGuardiansIntegrationTest {
         portadorBench.setVidaMaxima(16);
         portadorBench.setVidaAtual(16);
         portadorBench.setEstaVivo(true);
-        portadorBench.setRacas(new ArrayList<>(Collections.singletonList(Raca.GUARDIOES_DO_TRONO)));
+        portadorBench.setOrdem(new ArrayList<>(Collections.singletonList(Ordem.GUARDIAO_DO_TRONO)));
         portadorBench.setClasse(new ArrayList<>(Collections.singletonList(Classe.TRANSFORMADOR)));
         CardFactory.buildCardLogic(portadorBench);
         deck1.getHeroList().add(portadorBench);
@@ -153,7 +153,7 @@ class YellowThroneGuardiansIntegrationTest {
         portador.setVidaMaxima(16);
         portador.setVidaAtual(10); // ferido
         portador.setEstaVivo(true);
-        portador.setRacas(new ArrayList<>(Collections.singletonList(Raca.GUARDIOES_DO_TRONO)));
+        portador.setOrdem(new ArrayList<>(Collections.singletonList(Ordem.GUARDIAO_DO_TRONO)));
         portador.setClasse(new ArrayList<>(Collections.singletonList(Classe.TRANSFORMADOR)));
         CardFactory.buildCardLogic(portador);
         deck1.getHeroList().add(portador);
@@ -269,7 +269,8 @@ class YellowThroneGuardiansIntegrationTest {
         constructo.setVidaMaxima(17);
         constructo.setVidaAtual(13); // ferido
         constructo.setEstaVivo(true);
-        constructo.setRacas(new ArrayList<>(Arrays.asList(Raca.GUARDIOES_DO_TRONO, Raca.CONSTRUCTO)));
+        constructo.setRacas(new ArrayList<>(Collections.singletonList(Raca.CONSTRUCTO)));
+        constructo.setOrdem(new ArrayList<>(Collections.singletonList(Ordem.GUARDIAO_DO_TRONO)));
         constructo.setClasse(new ArrayList<>(Collections.singletonList(Classe.TRANSFORMADOR)));
         CardFactory.buildCardLogic(constructo);
         deck1.getHeroList().add(constructo);
@@ -307,7 +308,7 @@ class YellowThroneGuardiansIntegrationTest {
         artefato.setColor(Colors.YELLOW);
         artefato.setOwnerId(p1.getUuid());
         artefato.setZoneId(ZoneId.HAND);
-        artefato.setOrdem(new ArrayList<>(Collections.singletonList(Ordem.GUARDAO_DO_TRONO)));
+        artefato.setOrdem(new ArrayList<>(Collections.singletonList(Ordem.GUARDIAO_DO_TRONO)));
         CardFactory.buildCardLogic(artefato);
         deck1.getCardList().add(artefato);
 

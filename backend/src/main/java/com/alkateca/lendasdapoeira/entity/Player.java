@@ -48,6 +48,41 @@ public class Player {
     private int poeira = DEFAULT_INITIAL_POEIRA;
     private java.util.Map<String, Integer> ownedItems = new java.util.HashMap<>();
 
+    // Históricos do Perfil do Jogador (Issue #40)
+    private List<PurchaseHistoryEntry> purchaseHistory = new ArrayList<>();
+    private List<MatchHistoryEntry> matchHistory = new ArrayList<>();
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class PurchaseHistoryEntry {
+        private UUID id;
+        private long timestamp;
+        private String purchaseType; // "SINGLE_CARD", "BOOSTER", "DECK", "ITEM"
+        private String productName;
+        private int price;
+        private List<String> boosterCards = new ArrayList<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class MatchHistoryEntry {
+        private UUID matchId;
+        private long timestamp;
+        private String mode; // "PVE" ou "PVP"
+        private String playerName;
+        private String opponentName;
+        private String winnerName;
+        private boolean victory;
+        private int playerScore;
+        private int opponentScore;
+        private List<String> playerHeroes = new ArrayList<>();
+        private List<String> opponentHeroes = new ArrayList<>();
+    }
+
     // Construtor compatível com o restante do sistema
     public Player(UUID uuid, String name, Deck currentDeck) {
         this.uuid = uuid;
@@ -166,5 +201,26 @@ public class Player {
         if (itemId == null || quantity <= 0) return;
         if (this.ownedItems == null) this.ownedItems = new java.util.HashMap<>();
         this.ownedItems.put(itemId, this.ownedItems.getOrDefault(itemId, 0) + quantity);
+    }
+
+    public synchronized void recordPurchase(PurchaseHistoryEntry entry) {
+        if (entry == null) return;
+        if (this.purchaseHistory == null) {
+            this.purchaseHistory = new ArrayList<>();
+        }
+        this.purchaseHistory.add(0, entry);
+    }
+
+    public synchronized void recordMatch(MatchHistoryEntry entry) {
+        if (entry == null) return;
+        if (this.matchHistory == null) {
+            this.matchHistory = new ArrayList<>();
+        }
+        if (entry.getMatchId() != null) {
+            boolean alreadyRecorded = this.matchHistory.stream()
+                    .anyMatch(m -> entry.getMatchId().equals(m.getMatchId()));
+            if (alreadyRecorded) return;
+        }
+        this.matchHistory.add(0, entry);
     }
 }

@@ -23,21 +23,15 @@ export default class DeckRestrictionValidator {
                 ordersAndRaces.add(upper);
                 if (upper.includes('GUARDI')) {
                     ordersAndRaces.add('GUARDIÃO DO TRONO');
+                    ordersAndRaces.add('GUARDIAO DO TRONO');
                     ordersAndRaces.add('GUARDIOES DO TRONO');
-                    ordersAndRaces.add('GUARDAO_DO_TRONO');
+                    ordersAndRaces.add('GUARDIAO_DO_TRONO');
                     ordersAndRaces.add('GUARDIOES_DO_TRONO');
                 }
             });
             (h.racas || []).forEach(r => {
                 const upper = String(r).toUpperCase();
                 ordersAndRaces.add(upper);
-                // Normaliza "Guardiões do Trono" (plural em heros.json) com "Guardião do Trono" (singular em cards.json)
-                if (upper.includes('GUARDI')) {
-                    ordersAndRaces.add('GUARDIÃO DO TRONO');
-                    ordersAndRaces.add('GUARDIOES DO TRONO');
-                    ordersAndRaces.add('GUARDAO_DO_TRONO');
-                    ordersAndRaces.add('GUARDIOES_DO_TRONO');
-                }
                 if (upper === 'GOBLIN') hasGoblin = true;
             });
             (h.classe || []).forEach(c => {
@@ -282,7 +276,8 @@ export default class DeckRestrictionValidator {
         const hasCollectionData = Object.keys(ownedCards).length > 0;
         const ownedCount = hasCollectionData ? (ownedCards[card.cardName] || 0) : (card.unica ? 1 : 3);
 
-        const ruleMaxCopies = card.unica ? 1 : 3;
+        const isUnique = Boolean(card.unica);
+        const ruleMaxCopies = isUnique ? 1 : 3;
         const usedCopies = currentCardList.filter(c => c.cardName === card.cardName).length;
 
         if (ownedCount <= 0) {
@@ -319,7 +314,9 @@ export default class DeckRestrictionValidator {
                 compatibleWithTeam: true,
                 usedCopies,
                 ownedCount,
-                reason: `Limite da carta (${usedCopies}/${ruleMaxCopies})`
+                reason: isUnique
+                    ? `Carta Única (${usedCopies}/1 no baralho)`
+                    : `Limite da carta (${usedCopies}/${ruleMaxCopies})`
             };
         }
 
@@ -333,12 +330,15 @@ export default class DeckRestrictionValidator {
             };
         }
 
+        const effectiveMax = Math.min(ruleMaxCopies, ownedCount);
         return {
             allowed: true,
             compatibleWithTeam: true,
             usedCopies,
             ownedCount,
-            reason: `ADICIONAR (${usedCopies}/${ownedCount} possuídas)`
+            reason: isUnique
+                ? `ADICIONAR ÚNICA (${usedCopies}/1)`
+                : `ADICIONAR (${usedCopies}/${effectiveMax})`
         };
     }
 
@@ -396,10 +396,56 @@ export default class DeckRestrictionValidator {
     }
 
     /**
-     * Verifica se o baralho está pronto para iniciar uma partida (3 Heróis + 30 Cartas válidas)
+     * Valida os limites de cópias por carta no baralho:
+     * - Cartas com `unica: true` permitem apenas 1 cópia da mesma carta por baralho (sem limite para diferentes cartas únicas).
+     * - Demais cartas permitem até 3 cópias da mesma carta por baralho.
+     */
+    static validateDeckCopyLimits(cardList = []) {
+        const counts = new Map();
+        const uniqueMap = new Map();
+
+        for (const card of (cardList || [])) {
+            if (!card || !card.cardName) continue;
+            const name = card.cardName;
+            counts.set(name, (counts.get(name) || 0) + 1);
+            if (card.unica) {
+                uniqueMap.set(name, true);
+            } else if (!uniqueMap.has(name)) {
+                uniqueMap.set(name, false);
+            }
+        }
+
+        const violations = [];
+        counts.forEach((count, name) => {
+            const isUnique = uniqueMap.get(name) === true;
+            const maxCopies = isUnique ? 1 : 3;
+            if (count > maxCopies) {
+                violations.push({
+                    name,
+                    count,
+                    maxCopies,
+                    isUnique,
+                    reason: isUnique
+                        ? `Carta Única permite apenas 1 cópia por baralho (${count}/1)`
+                        : `Excede o limite de 3 cópias por baralho (${count}/3)`
+                });
+            }
+        });
+
+        return {
+            valid: violations.length === 0,
+            violations
+        };
+    }
+
+    /**
+     * Verifica se o baralho está pronto para iniciar uma partida (3 Heróis + 30 Cartas válidas e respeitando limite de cópias/únicas)
      */
     static isDeckReadyForMatch(deck) {
         if (!deck || !deck.heroList || !deck.cardList) return false;
-        return deck.heroList.length === 3 && deck.cardList.length === 30;
+        if (deck.heroList.length !== 3 || deck.cardList.length !== 30) return false;
+        const copyCheck = this.validateDeckCopyLimits(deck.cardList);
+        if (!copyCheck.valid) return false;
+        return deck.cardList.every(c => this.checkCardHeroRequirements(c, deck.heroList).compatible);
     }
 }

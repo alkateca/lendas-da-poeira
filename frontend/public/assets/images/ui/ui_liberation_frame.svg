@@ -1,6 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 380" width="280" height="380">
-  <!-- Sombra Dura Vermelha P5 -->
-  <polygon points="10,8 276,4 272,376 6,374" fill="#e60012" />
+  <!-- Sombra Dura Vermelha P5 (com Janela de Arte Vazada) -->
+  <path fill-rule="evenodd" d="M 10,8 L 276,4 L 272,376 L 6,374 Z
+           M 16,46 L 260,44 L 258,218 L 14,220 Z" fill="#e60012" />
 
   <!-- Moldura Externa Dourada / Creme com Janela Vazada (fill-rule="evenodd") -->
   <path fill-rule="evenodd" d="M 4,4 L 272,2 L 268,372 L 2,370 Z

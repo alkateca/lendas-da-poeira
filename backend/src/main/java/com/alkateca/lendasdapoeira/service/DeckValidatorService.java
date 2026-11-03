@@ -97,7 +97,11 @@ public class DeckValidatorService {
             }
             String name = c.getCardName();
             cardCounts.put(name, cardCounts.getOrDefault(name, 0) + 1);
-            cardIsUnique.put(name, c.isUnica());
+            if (c.isUnica()) {
+                cardIsUnique.put(name, true);
+            } else {
+                cardIsUnique.putIfAbsent(name, false);
+            }
         }
 
         for (Map.Entry<String, Integer> entry : cardCounts.entrySet()) {
@@ -106,10 +110,10 @@ public class DeckValidatorService {
             boolean isUnique = cardIsUnique.getOrDefault(name, false);
 
             if (isUnique && count > 1) {
-                return new ValidationResult(false, "A carta única '" + name + "' excede o limite de 1 cópia.");
+                return new ValidationResult(false, "A carta única '" + name + "' permite apenas 1 cópia por baralho.");
             }
             if (!isUnique && count > 3) {
-                return new ValidationResult(false, "A carta '" + name + "' excede o limite de 3 cópias.");
+                return new ValidationResult(false, "A carta '" + name + "' excede o limite de 3 cópias por baralho.");
             }
         }
 
@@ -212,12 +216,13 @@ public class DeckValidatorService {
             if (hero.getOrdem() != null) {
                 for (Ordem o : hero.getOrdem()) {
                     heroOrdersAndRaces.add(normalize(o.name()));
-                    if (o.name().contains("GUARDI")) heroOrdersAndRaces.add("GUARDIAO DO TRONO");
+                    if (o.name().contains("GUARDI")) {
+                        heroOrdersAndRaces.add("GUARDIAO DO TRONO");
+                    }
                 }
             }
             for (Raca r : heroRaces) {
                 heroOrdersAndRaces.add(normalize(r.name()));
-                if (r.name().contains("GUARDI")) heroOrdersAndRaces.add("GUARDIAO DO TRONO");
             }
             boolean matchOrderOrRace = reqOrdersAndRaces.stream().anyMatch(req ->
                     heroOrdersAndRaces.contains(req)
@@ -263,13 +268,14 @@ public class DeckValidatorService {
             if (h.getOrdem() != null) {
                 for (Ordem o : h.getOrdem()) {
                     teamOrdersAndRaces.add(normalize(o.name()));
-                    if (o.name().contains("GUARDI")) teamOrdersAndRaces.add("GUARDIAO DO TRONO");
+                    if (o.name().contains("GUARDI")) {
+                        teamOrdersAndRaces.add("GUARDIAO DO TRONO");
+                    }
                 }
             }
             if (h.getRacas() != null) {
                 for (Raca r : h.getRacas()) {
                     teamOrdersAndRaces.add(normalize(r.name()));
-                    if (r.name().contains("GUARDI")) teamOrdersAndRaces.add("GUARDIAO DO TRONO");
                     if (r == Raca.GOBLIN) hasGoblin = true;
                 }
             }
@@ -486,13 +492,39 @@ public class DeckValidatorService {
             }
         }
 
-        // 2. Contabiliza cópias usadas no baralho + zona de liberação e compara com ownedCards
+        // 2. Contabiliza cópias usadas no baralho + zona de liberação, valida regra de cartas únicas e compara com ownedCards
         Map<String, Integer> requestedCopies = new HashMap<>();
+        Map<String, Integer> mainDeckCopies = new HashMap<>();
+        Map<String, Boolean> cardIsUnique = new HashMap<>();
 
         if (deck.getCardList() != null) {
             for (Card card : deck.getCardList()) {
                 if (card == null) continue;
-                requestedCopies.merge(card.getCardName(), 1, Integer::sum);
+                String name = card.getCardName();
+                requestedCopies.merge(name, 1, Integer::sum);
+                mainDeckCopies.merge(name, 1, Integer::sum);
+                if (card.isUnica()) {
+                    cardIsUnique.put(name, true);
+                } else {
+                    cardIsUnique.putIfAbsent(name, false);
+                }
+            }
+        }
+
+        for (Map.Entry<String, Integer> entry : mainDeckCopies.entrySet()) {
+            String cardName = entry.getKey();
+            int countInDeck = entry.getValue();
+            boolean isUnique = cardIsUnique.getOrDefault(cardName, false);
+
+            if (isUnique && countInDeck > 1) {
+                throw new IllegalArgumentException(
+                        "A carta única '" + cardName + "' permite apenas 1 cópia por baralho."
+                );
+            }
+            if (!isUnique && countInDeck > 3) {
+                throw new IllegalArgumentException(
+                        "A carta '" + cardName + "' excede o limite máximo de 3 cópias por baralho."
+                );
             }
         }
 

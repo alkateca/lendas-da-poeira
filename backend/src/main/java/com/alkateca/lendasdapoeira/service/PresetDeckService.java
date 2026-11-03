@@ -70,106 +70,200 @@ public class PresetDeckService {
     }
 
     /**
-     * Inicializa a lista de baralhos de 30 cartas (máx. 3 cópias de cada) para a Máquina (Bot)
+     * Inicializa os 10 baralhos oficiais (2 para cada uma das 5 cores: Azul, Vermelho, Preto, Verde e Amarelo)
+     * seguindo fielmente todas as regras de construção de baralhos do jogador (3 Heróis da mesma cor,
+     * 30 cartas compatíveis com os Heróis, limite de 3 cópias para cartas normais e 1 para únicas).
      */
     private void initBotDeckPool() {
         botDeckPool.clear();
 
-        // 1. BOT AZUL: Cavaleiros de Cristal (30 cartas)
+        // 1. AZUL A: Cavaleiros de Cristal (30 cartas)
         botDeckPool.add(new BotDeckTemplate(
-                "🤖 Bot - Ordem de Cristal",
+                "🤖 Bot - Cavaleiros de Cristal",
                 "Cavaleiros de Cristal",
-                List.of("Isenora, Santa das Laminas", "Cavaleiro Onear", "Enamor,O Grande Cavaleiro"),
+                List.of("Enamor,O Grande Cavaleiro", "Cavaleiro Onear", "Ageus, Constructo Cristalino"),
                 List.of(
                         "Quimera", "Quimera", "Quimera",
+                        "Dragast", "Dragast", "Dragast",
+                        "Fragmento Afiado", "Fragmento Afiado", "Fragmento Afiado",
+                        "Baluarte de Espelhos do Dragão", "Baluarte de Espelhos do Dragão", "Baluarte de Espelhos do Dragão",
+                        "Placas de Cristal Draconiano", "Placas de Cristal Draconiano", "Placas de Cristal Draconiano",
+                        "Dragão de Cristal", "Dragão de Cristal", "Dragão de Cristal",
+                        "Contra Ataque", "Contra Ataque", "Contra Ataque",
+                        "Voto dos Cavaleiros Caídos", "Voto dos Cavaleiros Caídos", "Voto dos Cavaleiros Caídos",
+                        "Golpes Pesados", "Golpes Pesados", "Golpes Pesados",
+                        "Determinação Cristalina", "Determinação Cristalina", "Determinação Cristalina"
+                )
+        ));
+
+        // 2. AZUL B: Santas de Cristal (30 cartas)
+        botDeckPool.add(new BotDeckTemplate(
+                "🤖 Bot - Santas de Cristal",
+                "Santas das Lâminas",
+                List.of("Isenora, Santa das Laminas", "Moyra, Aprendiz da Santa", "Naelis, Grande Artesã de Cristais"),
+                List.of(
+                        "Coração de Cristal Puro", "Coração de Cristal Puro", "Coração de Cristal Puro",
                         "Broche de Cristal", "Broche de Cristal", "Broche de Cristal",
                         "Lamina de Cristal", "Lamina de Cristal", "Lamina de Cristal",
-                        "Dragast", "Dragast", "Dragast",
                         "Rapieira de Cristal", "Rapieira de Cristal", "Rapieira de Cristal",
-                        "Contra Ataque", "Contra Ataque", "Contra Ataque",
+                        "Dança das Mil Lâminas", "Dança das Mil Lâminas", "Dança das Mil Lâminas",
+                        "Massacre Cristalino", "Massacre Cristalino", "Massacre Cristalino",
                         "Ataque Mágico", "Ataque Mágico", "Ataque Mágico",
-                        "Golpes Pesados", "Golpes Pesados", "Golpes Pesados",
-                        "Ponto Final", "Ponto Final",
-                        "Auto Defesa Magica", "Auto Defesa Magica",
-                        "Determinação Cristalina", "Impulso de Poder"
+                        "Ponto Final", "Ponto Final", "Ponto Final",
+                        "Auto Defesa Magica", "Auto Defesa Magica", "Auto Defesa Magica",
+                        "Impulso de Poder", "Impulso de Poder", "Impulso de Poder"
                 )
         ));
 
-        // 2. BOT VERMELHO: Caçadores e Chamas (30 cartas)
+        // 3. VERMELHO A: Caçadores das Cinzas (30 cartas)
         botDeckPool.add(new BotDeckTemplate(
                 "🤖 Bot - Caçadores das Cinzas",
-                "Arsenal dos Caçadores",
-                List.of("Xia, Caçador de Bestas", "Xamã das cinzas", "Alix, Dragão Flamejante"),
+                "Caçadores das Cinzas",
+                List.of("Xia, Caçador de Bestas", "Asahum, Caçadora de Bestas", "Constructo de Combate, Arsenal Vivo"),
                 List.of(
                         "Sica", "Sica", "Sica",
-                        "Sino do Caçador", "Sino do Caçador", "Sino do Caçador",
                         "Arpão terrestre", "Arpão terrestre", "Arpão terrestre",
+                        "Sino do Caçador", "Sino do Caçador", "Sino do Caçador",
                         "Bomba de fumaça", "Bomba de fumaça", "Bomba de fumaça",
                         "Tesouro Cristalino dos Caçadores", "Tesouro Cristalino dos Caçadores", "Tesouro Cristalino dos Caçadores",
-                        "Afie suas Lâminas", "Afie suas Lâminas",
-                        "Estilo Secreto do Caçador", "Estilo Secreto do Caçador",
-                        "Corte seus Pescoços", "Corte seus Pescoços",
-                        "Peitoral de brasas", "Peitoral de brasas", "Peitoral de brasas",
-                        "Escudo ardente", "Escudo ardente",
-                        "Muralha de Fogo", "Muralha de Fogo",
-                        "Cauterizar", "Cauterizar"
+                        "Rede de Contenção de Feras", "Rede de Contenção de Feras", "Rede de Contenção de Feras",
+                        "Bolsa de Armadilhas do Mestre Caçador", "Bolsa de Armadilhas do Mestre Caçador", "Bolsa de Armadilhas do Mestre Caçador",
+                        "Afie suas Lâminas", "Afie suas Lâminas", "Afie suas Lâminas",
+                        "Estilo Secreto do Caçador", "Estilo Secreto do Caçador", "Estilo Secreto do Caçador",
+                        "Corte seus Pescoços", "Corte seus Pescoços", "Corte seus Pescoços"
                 )
         ));
 
-        // 2B. BOT VERMELHO: Magos de Fogo (30 cartas)
+        // 4. VERMELHO B: Círculo das Chamas (30 cartas)
         botDeckPool.add(new BotDeckTemplate(
                 "🤖 Bot - Círculo das Chamas",
-                "Magos de Fogo",
-                List.of("Xamã das cinzas", "Alix, Dragão Flamejante", "Constructo das Chamas, Sif"),
+                "Círculo das Chamas",
+                List.of("Alix, Dragão Flamejante", "Xamã das cinzas", "Constructo das Chamas, Sif"),
                 List.of(
-                        "Bola de fogo", "Bola de fogo", "Bola de fogo",
-                        "Maestria com Chamas", "Maestria com Chamas", "Maestria com Chamas",
-                        "Fogo Purificador", "Fogo Purificador", "Fogo Purificador",
-                        "Muralha de Fogo", "Muralha de Fogo", "Muralha de Fogo",
-                        "Cauterizar", "Cauterizar", "Cauterizar",
+                        "Escamas do Dragão Eterno", "Escamas do Dragão Eterno", "Escamas do Dragão Eterno",
                         "Peitoral de brasas", "Peitoral de brasas", "Peitoral de brasas",
                         "Escudo ardente", "Escudo ardente", "Escudo ardente",
-                        "Tesouro Cristalino dos Caçadores", "Tesouro Cristalino dos Caçadores", "Tesouro Cristalino dos Caçadores",
-                        "Sica", "Sica", "Sica",
-                        "Ração de emergencia", "Ração de emergencia", "Ração de emergencia"
+                        "Bastão do Monge Incandescente", "Bastão do Monge Incandescente", "Bastão do Monge Incandescente",
+                        "Incensário Purificador", "Incensário Purificador", "Incensário Purificador",
+                        "Muralha de Fogo", "Muralha de Fogo", "Muralha de Fogo",
+                        "Cauterizar", "Cauterizar", "Cauterizar",
+                        "Fogo Purificador", "Fogo Purificador", "Fogo Purificador",
+                        "Manto das Brasas Vivas", "Manto das Brasas Vivas", "Manto das Brasas Vivas",
+                        "Meditação das Cinzas", "Meditação das Cinzas", "Meditação das Cinzas"
                 )
         ));
 
-        // 3. BOT PRETO: Legião Necromante / Zumbis (30 cartas)
+        // 5. PRETO A: Legião Necromante (30 cartas)
         botDeckPool.add(new BotDeckTemplate(
                 "🤖 Bot - Legião Necromante",
-                "Horda das Areias",
-                List.of("Rainha Goblin", "Quimera Carniceira", "Necromante das Areias"),
+                "Legião Necromante",
+                List.of("Rainha Goblin", "Necromante das Areias", "Quimera Carniceira"),
                 List.of(
+                        "Filactéria das Areias Negras", "Filactéria das Areias Negras", "Filactéria das Areias Negras",
                         "Homunculo Carniceiro", "Homunculo Carniceiro", "Homunculo Carniceiro",
+                        "Amuleto de Ossos da Fábrica", "Amuleto de Ossos da Fábrica", "Amuleto de Ossos da Fábrica",
                         "Quimera Negra", "Quimera Negra", "Quimera Negra",
+                        "Manoplas do Necromante", "Manoplas do Necromante", "Manoplas do Necromante",
                         "Atmosfera Pesada", "Atmosfera Pesada", "Atmosfera Pesada",
+                        "Peste das Areias Negras", "Peste das Areias Negras", "Peste das Areias Negras",
                         "Ritos Fúnebres", "Ritos Fúnebres", "Ritos Fúnebres",
                         "Exumação", "Exumação", "Exumação",
-                        "Garra espectral", "Garra espectral", "Garra espectral",
-                        "Bola de fogo", "Bola de fogo", "Bola de fogo",
-                        "Ração de emergencia", "Ração de emergencia", "Ração de emergencia",
-                        "Mirar na cabeça", "Mirar na cabeça", "Mirar na cabeça",
-                        "Estrela do amanhã", "Convocação", "Banir!"
+                        "Pilhagem de Cadáveres", "Pilhagem de Cadáveres", "Pilhagem de Cadáveres"
                 )
         ));
 
-        // 4. BOT VERDE: Constructos Gélidos (30 cartas)
+        // 6. PRETO B: Ordem dos Carrascos (30 cartas)
         botDeckPool.add(new BotDeckTemplate(
-                "🤖 Bot - Constructos Gélidos",
-                "Fúria de Fenrir",
-                List.of("Kael, Cavaleiro Bestial", "Hati, Constructo Gélido", "Fenrir, o Grande Devorador"),
+                "🤖 Bot - Ordem dos Carrascos",
+                "Ordem dos Carrascos",
+                List.of("Chefe Carrasco", "Izeref, Executor da Ordem Necrótica", "Constructo Carniceiro"),
                 List.of(
+                        "Espada do Carrasco", "Espada do Carrasco", "Espada do Carrasco",
+                        "Cutelo do Suplício", "Cutelo do Suplício", "Cutelo do Suplício",
+                        "Manto de Ferro do Algoz", "Manto de Ferro do Algoz", "Manto de Ferro do Algoz",
+                        "Correntes do Cadafalso", "Correntes do Cadafalso", "Correntes do Cadafalso",
+                        "Seguindo Ordens", "Seguindo Ordens", "Seguindo Ordens",
+                        "Grilhões Pesados", "Grilhões Pesados", "Grilhões Pesados",
+                        "Cheiro de Sangue", "Cheiro de Sangue", "Cheiro de Sangue",
+                        "Arrastar para o Cadafalso", "Arrastar para o Cadafalso", "Arrastar para o Cadafalso",
+                        "Colheita dos Condenados", "Colheita dos Condenados", "Colheita dos Condenados",
+                        "Sentença da Guilhotina", "Sentença da Guilhotina", "Sentença da Guilhotina"
+                )
+        ));
+
+        // 7. VERDE A: Lobos da Tundra (30 cartas)
+        botDeckPool.add(new BotDeckTemplate(
+                "🤖 Bot - Lobos da Tundra",
+                "Lobos da Tundra",
+                List.of("Fenrir, o Grande Devorador", "Skoll, Espreitador Solar", "Hati, Constructo Gélido"),
+                List.of(
+                        "Baluarte da Tundra Ancestral", "Baluarte da Tundra Ancestral", "Baluarte da Tundra Ancestral",
+                        "Couraça da Tundra Profunda", "Couraça da Tundra Profunda", "Couraça da Tundra Profunda",
                         "Machado de Gelo", "Machado de Gelo", "Machado de Gelo",
                         "Grande Machado Sombrio", "Grande Machado Sombrio", "Grande Machado Sombrio",
+                        "Garras Congeladas", "Garras Congeladas", "Garras Congeladas",
                         "Barreira de Gelo", "Barreira de Gelo", "Barreira de Gelo",
                         "Mordida Glacial", "Mordida Glacial", "Mordida Glacial",
+                        "Uivo da Matilha Gélida", "Uivo da Matilha Gélida", "Uivo da Matilha Gélida",
                         "Luz da Lua", "Luz da Lua", "Luz da Lua",
-                        "Quebra!", "Quebra!", "Quebra!",
-                        "Vendaval Arcano", "Vendaval Arcano", "Vendaval Arcano",
-                        "Garra espectral", "Garra espectral", "Garra espectral",
-                        "Ração de emergencia", "Ração de emergencia", "Ração de emergencia",
-                        "Mirar na cabeça", "Mirar na cabeça", "Mirar na cabeça"
+                        "Chamado do Domador", "Chamado do Domador", "Chamado do Domador"
+                )
+        ));
+
+        // 8. VERDE B: Sociedade Goblin (30 cartas)
+        botDeckPool.add(new BotDeckTemplate(
+                "🤖 Bot - Sociedade Goblin",
+                "Sociedade Goblin",
+                List.of("Rei Goblin", "Esquadrão Goblin", "Traidor Goblin"),
+                List.of(
+                        "Núcleo de Invenções do Rei Goblin", "Núcleo de Invenções do Rei Goblin", "Núcleo de Invenções do Rei Goblin",
+                        "Bateria de Cristal de Poeira", "Bateria de Cristal de Poeira", "Bateria de Cristal de Poeira",
+                        "Chave Mecânica de Precisão", "Chave Mecânica de Precisão", "Chave Mecânica de Precisão",
+                        "Engrenagem de Ressonância", "Engrenagem de Ressonância", "Engrenagem de Ressonância",
+                        "Descarga de Poeira Elétrica", "Descarga de Poeira Elétrica", "Descarga de Poeira Elétrica",
+                        "Circuito de Sobrecarga", "Circuito de Sobrecarga", "Circuito de Sobrecarga",
+                        "Campo de Força de Cristal", "Campo de Força de Cristal", "Campo de Força de Cristal",
+                        "Engenharia Rápida", "Engenharia Rápida", "Engenharia Rápida",
+                        "Recalibração de Energia", "Recalibração de Energia", "Recalibração de Energia",
+                        "Conferência dos Sábios Goblins", "Conferência dos Sábios Goblins", "Conferência dos Sábios Goblins"
+                )
+        ));
+
+        // 9. AMARELO A: Inquisição do Trono (30 cartas)
+        botDeckPool.add(new BotDeckTemplate(
+                "🤖 Bot - Inquisição do Trono",
+                "Inquisição do Trono",
+                List.of("Grande Inquisidor Vael, Voz do Trono", "Justiçar Elyon, Balança Imutável", "Constructo Arquivista"),
+                List.of(
+                        "Cetro do Julgamento Perpétuo", "Cetro do Julgamento Perpétuo", "Cetro do Julgamento Perpétuo",
+                        "Selo da Confissão", "Selo da Confissão", "Selo da Confissão",
+                        "Tomo das Sentenças Antigas", "Tomo das Sentenças Antigas", "Tomo das Sentenças Antigas",
+                        "Édito contra a Ganância", "Édito contra a Ganância", "Édito contra a Ganância",
+                        "Retribuição Dogmática", "Retribuição Dogmática", "Retribuição Dogmática",
+                        "Interdito Sagrado", "Interdito Sagrado", "Interdito Sagrado",
+                        "Decreto de Excomunhão", "Decreto de Excomunhão", "Decreto de Excomunhão",
+                        "Liturgia da Balança", "Liturgia da Balança", "Liturgia da Balança",
+                        "Bênção do Rei Imóvel", "Bênção do Rei Imóvel", "Bênção do Rei Imóvel",
+                        "Veredito Inquisitorial", "Veredito Inquisitorial", "Veredito Inquisitorial"
+                )
+        ));
+
+        // 10. AMARELO B: Guarda Real do Trono (30 cartas)
+        botDeckPool.add(new BotDeckTemplate(
+                "🤖 Bot - Guarda Real do Trono",
+                "Guarda Real do Trono",
+                List.of("Oráculo Real", "Portador da Chama", "Constructo Fantasmagórico Guardião Perpétuo"),
+                List.of(
+                        "Artefato Cortante", "Artefato Cortante", "Artefato Cortante",
+                        "Alabarda Cerimonial do Trono", "Alabarda Cerimonial do Trono", "Alabarda Cerimonial do Trono",
+                        "Glaive da Guarda Eterna", "Glaive da Guarda Eterna", "Glaive da Guarda Eterna",
+                        "Manto Cerimonial do Trono", "Manto Cerimonial do Trono", "Manto Cerimonial do Trono",
+                        "Escudo da Devoção Cega", "Escudo da Devoção Cega", "Escudo da Devoção Cega",
+                        "Fortaleça sua Fé", "Fortaleça sua Fé", "Fortaleça sua Fé",
+                        "Saque Rápido", "Saque Rápido", "Saque Rápido",
+                        "Ordem Divina", "Ordem Divina", "Ordem Divina",
+                        "Disciplina", "Disciplina", "Disciplina",
+                        "Fervor Penitencial", "Fervor Penitencial", "Fervor Penitencial"
                 )
         ));
     }
@@ -304,20 +398,59 @@ public class PresetDeckService {
             heroList.add(instance);
         }
 
+        Map<String, Integer> copyCounts = new HashMap<>();
+        DeckValidatorService validator = new DeckValidatorService();
+
         for (String cName : cardNames) {
             Card template = catalogCards.stream()
                     .filter(c -> c.getCardName().equalsIgnoreCase(cName))
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Carta não encontrada no JSON: " + cName));
 
+            int currentCopies = copyCounts.getOrDefault(template.getCardName(), 0);
+            int maxAllowed = template.isUnica() ? 1 : 3;
+            if (currentCopies >= maxAllowed) {
+                continue;
+            }
+            copyCounts.put(template.getCardName(), currentCopies + 1);
+
             Card instance = cloneCard(template, ownerId);
             CardFactory.buildCardLogic(instance);
             cardList.add(instance);
         }
 
+        // Caso alguma carta seja marcada como única (máx. 1 cópia), completa até 30 com cartas compatíveis
+        if (cardList.size() < 30) {
+            for (Card candidate : catalogCards) {
+                if (cardList.size() >= 30) break;
+                if (candidate.isLiberationCard() || !validator.isCardCompatibleWithHeroes(candidate, heroList)) {
+                    continue;
+                }
+                int maxAllowed = candidate.isUnica() ? 1 : 3;
+                while (cardList.size() < 30 && copyCounts.getOrDefault(candidate.getCardName(), 0) < maxAllowed) {
+                    copyCounts.put(candidate.getCardName(), copyCounts.getOrDefault(candidate.getCardName(), 0) + 1);
+                    Card instance = cloneCard(candidate, ownerId);
+                    CardFactory.buildCardLogic(instance);
+                    cardList.add(instance);
+                }
+            }
+        }
+
         deck.setHeroList(heroList);
         deck.setCardList(cardList);
         return deck;
+    }
+
+    public List<Deck> getAllBotDecks(UUID ownerId) {
+        UUID targetOwner = ownerId != null ? ownerId : PLAYER_2_UUID;
+        List<Deck> decks = new ArrayList<>();
+        for (BotDeckTemplate t : botDeckPool) {
+            Deck d = buildDeckForPlayer(targetOwner, t.heroNames, t.cardNames);
+            d.setUuid(UUID.randomUUID());
+            d.setDeckName(t.deckName);
+            decks.add(d);
+        }
+        return decks;
     }
 
     private HeroCard cloneHero(HeroCard src, UUID ownerId) {

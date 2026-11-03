@@ -137,6 +137,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         this.setInteractive({ draggable: isDraggable, useHandCursor: true });
 
         this.setupHoverAndDragEvents();
+        this.on('destroy', () => this.clearLongHoverTimer());
         this.updateCardVisuals(cardDto);
         this.applySizeLayout(initialMode);
         scene.add.existing(this);
@@ -223,13 +224,18 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
 
     toCamelCaseKey(str) {
         if (!str || str === 'Carta Oculta') return null;
-        return str
+        const camel = str
             .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
             .replace(/[^a-zA-Z0-9 ]/g, '')
             .split(' ')
             .filter(Boolean)
             .map((w, i) => i === 0 ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
             .join('');
+        const aliases = {
+            brocheDeCristal: 'brocheCristal',
+            dragaoDeCristal: 'dragaoCristal'
+        };
+        return aliases[camel] || camel;
     }
 
     resolveArtTextureKey(cardDto) {

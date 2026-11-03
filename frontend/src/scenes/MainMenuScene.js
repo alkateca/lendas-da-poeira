@@ -54,6 +54,29 @@ export default class MainMenuScene extends Phaser.Scene {
             fontSize: '11px', color: '#64748b'
         });
 
+        // Botão de Perfil e Históricos logo ao lado dos dados do jogador
+        this.profileBtnBg = this.add.rectangle(645, 65, 245, 48, 0x1e293b)
+            .setStrokeStyle(2, 0x38bdf8)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerover', () => {
+                this.profileBtnBg.setFillStyle(0x283548);
+                this.profileBtnTxt.setColor('#ffe600');
+            })
+            .on('pointerout', () => {
+                this.profileBtnBg.setFillStyle(0x1e293b);
+                this.profileBtnTxt.setColor('#38bdf8');
+            })
+            .on('pointerdown', () => {
+                this.scene.start('ProfileScene', { player: this.player });
+            });
+
+        this.profileBtnTxt = this.add.text(645, 65, '📜 PERFIL & HISTÓRICOS', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '14px',
+            color: '#38bdf8',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
+
         const currentGold = this.player.balance?.gold ?? this.player.poeira ?? 0;
         this.add.rectangle(980, 65, 290, 48, 0xfaf8f5).setStrokeStyle(3, 0x090d16);
         this.goldHeaderText = this.add.text(980, 65, `🪙 GOLD: ${currentGold}`, {
@@ -305,6 +328,26 @@ export default class MainMenuScene extends Phaser.Scene {
                 if (fresh.ownedHeroes) this.player.ownedHeroes = fresh.ownedHeroes;
                 if (Array.isArray(fresh.decks)) this.player.decks = fresh.decks;
                 if (fresh.currentDeck) this.player.currentDeck = fresh.currentDeck;
+                if (Array.isArray(fresh.purchaseHistory) && fresh.purchaseHistory.length > 0) {
+                    const localPurchases = Array.isArray(this.player.purchaseHistory) ? this.player.purchaseHistory : [];
+                    const merged = [...fresh.purchaseHistory];
+                    for (const lp of localPurchases) {
+                        if (lp && !merged.some(sp => (sp.id && lp.id && String(sp.id) === String(lp.id)) || (Math.abs((sp.timestamp || 0) - (lp.timestamp || 0)) < 2000 && sp.productName === lp.productName))) {
+                            merged.push(lp);
+                        }
+                    }
+                    this.player.purchaseHistory = merged.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                }
+                if (Array.isArray(fresh.matchHistory) && fresh.matchHistory.length > 0) {
+                    const localMatches = Array.isArray(this.player.matchHistory) ? this.player.matchHistory : [];
+                    const merged = [...fresh.matchHistory];
+                    for (const lm of localMatches) {
+                        if (lm && !merged.some(sm => sm.matchId && lm.matchId && String(sm.matchId) === String(lm.matchId))) {
+                            merged.push(lm);
+                        }
+                    }
+                    this.player.matchHistory = merged.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                }
                 this.refreshSelectedDeckLabel();
 
                 localStorage.setItem('lendas_player', JSON.stringify(this.player));

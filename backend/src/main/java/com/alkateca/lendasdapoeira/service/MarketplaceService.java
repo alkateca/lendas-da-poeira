@@ -180,6 +180,15 @@ public class MarketplaceService {
                 buyer.addCardToCollection(listing.getCardName(), 1);
             }
 
+            buyer.recordPurchase(new Player.PurchaseHistoryEntry(
+                    UUID.randomUUID(),
+                    System.currentTimeMillis(),
+                    "SINGLE_CARD",
+                    listing.getCardName(),
+                    listing.getPrice(),
+                    List.of()
+            ));
+
             listing.setStatus(MarketListing.ListingStatus.SOLD);
             listing.setBuyerId(buyer.getUuid());
 

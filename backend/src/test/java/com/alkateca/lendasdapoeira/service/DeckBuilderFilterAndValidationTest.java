@@ -43,7 +43,7 @@ class DeckBuilderFilterAndValidationTest {
         redFireHero.setColor(Colors.RED);
         redFireHero.setAfinidades(List.of(Afinidade.FOGO));
         redFireHero.setClasse(List.of(Classe.CRIADOR));
-        redFireHero.setRacas(List.of(Raca.HUMANO));
+        redFireHero.setRacas(List.of());
 
         whiteWildcardHero = new HeroCard();
         whiteWildcardHero.setUuid(UUID.randomUUID());
@@ -292,7 +292,7 @@ class DeckBuilderFilterAndValidationTest {
         pureFighter.setColor(Colors.RED);
         pureFighter.setClasse(List.of(Classe.CRIADOR));
         pureFighter.setOrdem(List.of(Ordem.CAVALEIRO));
-        pureFighter.setRacas(List.of(Raca.HUMANO));
+        pureFighter.setRacas(List.of());
         pureFighter.setVidaMaxima(20);
         pureFighter.setVidaAtual(20);
         pureFighter.setEstaVivo(true);
@@ -304,7 +304,7 @@ class DeckBuilderFilterAndValidationTest {
         pureEmitter.setCardName("Mago Emissor");
         pureEmitter.setColor(Colors.RED);
         pureEmitter.setClasse(List.of(Classe.EMISSOR));
-        pureEmitter.setRacas(List.of(Raca.HUMANO));
+        pureEmitter.setRacas(List.of());
         pureEmitter.setVidaMaxima(20);
         pureEmitter.setVidaAtual(20);
         pureEmitter.setEstaVivo(true);
@@ -316,7 +316,7 @@ class DeckBuilderFilterAndValidationTest {
         transformerHero.setCardName("Paladino Transformador");
         transformerHero.setColor(Colors.RED);
         transformerHero.setClasse(List.of(Classe.TRANSFORMADOR));
-        transformerHero.setRacas(List.of(Raca.HUMANO));
+        transformerHero.setRacas(List.of());
         transformerHero.setVidaMaxima(20);
         transformerHero.setVidaAtual(20);
         transformerHero.setEstaVivo(true);
@@ -410,5 +410,102 @@ class DeckBuilderFilterAndValidationTest {
         assertDoesNotThrow(() ->
                 engine.submitPreparationCards(p1.getUuid(), List.of(theurgyInHand.getUuid()))
         );
+    }
+
+    @Test
+    @DisplayName("8. Regra de Cartas Únicas: permite múltiplas cartas únicas diferentes (1 cópia cada), mas bloqueia 2+ cópias da mesma carta única")
+    void shouldAllowMultipleDifferentUniqueCardsButRejectDuplicateUniqueCard() {
+        HeroCard h1 = whiteWildcardHero;
+        HeroCard h2 = new HeroCard();
+        h2.setCardName("Isenora, Santa das Laminas");
+        h2.setColor(Colors.WHITE);
+        HeroCard h3 = new HeroCard();
+        h3.setCardName("Naelis, Grande Artesã de Cristais");
+        h3.setColor(Colors.WHITE);
+
+        Player player = new Player();
+        player.setName("Colecionador de Únicas");
+        player.addHeroToCollection(h1.getCardName(), 1);
+        player.addHeroToCollection(h2.getCardName(), 1);
+        player.addHeroToCollection(h3.getCardName(), 1);
+
+        // Cria 5 cartas únicas diferentes (1 cópia de cada) + 25 cartas normais (até 3 cópias de cada) = 30 cartas
+        List<Card> validMixWithMultipleUniques = new ArrayList<>();
+        for (int i = 1; i <= 5; i++) {
+            Card uniqueCard = new Card();
+            uniqueCard.setCardName("Relíquia Única " + i);
+            uniqueCard.setCardType(CardType.ITEM);
+            uniqueCard.setColor(Colors.NEUTRAL);
+            uniqueCard.setUnica(true);
+            validMixWithMultipleUniques.add(uniqueCard);
+            player.addCardToCollection(uniqueCard.getCardName(), 2); // Jogador possui até 2 na coleção
+        }
+
+        for (int i = 0; i < 25; i++) {
+            Card normalCard = new Card();
+            normalCard.setCardName("Carta Comum " + (i / 3));
+            normalCard.setCardType(CardType.ITEM);
+            normalCard.setColor(Colors.NEUTRAL);
+            normalCard.setUnica(false);
+            validMixWithMultipleUniques.add(normalCard);
+            player.addCardToCollection(normalCard.getCardName(), 3);
+        }
+
+        Deck deckWithMultipleDistinctUniques = new Deck(
+                "Deck com Várias Únicas Diferentes",
+                validMixWithMultipleUniques,
+                List.of(h1, h2, h3)
+        );
+
+        // Deve ser válido: 5 cartas únicas diferentes com 1 cópia cada são permitidas
+        DeckValidatorService.ValidationResult validResult = validatorService.validateDeck(deckWithMultipleDistinctUniques);
+        assertTrue(validResult.isValidForPlay, validResult.message);
+        assertDoesNotThrow(() -> validatorService.validateDeckOwnership(player, deckWithMultipleDistinctUniques));
+
+        // Agora substitui a última carta comum por uma 2ª cópia de "Relíquia Única 1"
+        List<Card> duplicateUniqueCards = new ArrayList<>(validMixWithMultipleUniques);
+        Card duplicateUnique = new Card();
+        duplicateUnique.setCardName("Relíquia Única 1");
+        duplicateUnique.setCardType(CardType.ITEM);
+        duplicateUnique.setColor(Colors.NEUTRAL);
+        duplicateUnique.setUnica(true);
+        duplicateUniqueCards.set(29, duplicateUnique);
+
+        Deck invalidDuplicateUniqueDeck = new Deck(
+                "Deck com Cópia Duplicada de Única",
+                duplicateUniqueCards,
+                List.of(h1, h2, h3)
+        );
+
+        // Deve ser rejeitado tanto no validateDeck quanto no validateDeckOwnership (mesmo possuindo 2 na coleção)
+        DeckValidatorService.ValidationResult invalidResult = validatorService.validateDeck(invalidDuplicateUniqueDeck);
+        assertFalse(invalidResult.isValidForPlay);
+        assertTrue(invalidResult.message.contains("Relíquia Única 1"));
+
+        IllegalArgumentException ownershipEx = assertThrows(
+                IllegalArgumentException.class,
+                () -> validatorService.validateDeckOwnership(player, invalidDuplicateUniqueDeck)
+        );
+        assertTrue(ownershipEx.getMessage().contains("Relíquia Única 1"));
+    }
+
+    @Test
+    @DisplayName("9. Todos os 10 baralhos da Máquina (2 de cada cor) seguem fielmente as regras de construção do jogador")
+    void allTenBotDecksShouldPassPlayerDeckValidationRules() {
+        PresetDeckService presetDeckService = new PresetDeckService();
+        presetDeckService.loadJsonCatalogs();
+
+        List<Deck> botDecks = presetDeckService.getAllBotDecks(PresetDeckService.PLAYER_2_UUID);
+        assertEquals(10, botDecks.size(), "Devem existir exatamente 10 baralhos para a máquina (2 para cada uma das 5 cores).");
+
+        for (Deck botDeck : botDecks) {
+            DeckValidatorService.ValidationResult result = validatorService.validateDeck(botDeck);
+            assertTrue(
+                    result.isValidForPlay,
+                    "O baralho da máquina '" + botDeck.getDeckName() + "' falhou na validação: " + result.message
+            );
+            assertEquals(3, botDeck.getHeroList().size(), "O baralho '" + botDeck.getDeckName() + "' deve ter 3 Heróis.");
+            assertEquals(30, botDeck.getCardList().size(), "O baralho '" + botDeck.getDeckName() + "' deve ter 30 Cartas.");
+        }
     }
 }

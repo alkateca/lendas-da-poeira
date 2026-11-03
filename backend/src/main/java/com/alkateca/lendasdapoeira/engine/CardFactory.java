@@ -162,7 +162,7 @@ public class CardFactory {
                 effects.add(new StartOfCombatDoubleAttackByVulnerabilityEffect(5));
                 break;
             case "Oráculo Real":
-                effects.add(new AuraRaceBuffEffect(Raca.GUARDIOES_DO_TRONO, 0, 2, 1));
+                effects.add(new AuraRaceBuffEffect(Ordem.GUARDIAO_DO_TRONO, 0, 2, 1));
                 effects.add(new StartOfCombatInvokeCardEffect("Fortaleça sua Fé"));
                 break;
             case "Portador da Chama":

@@ -397,7 +397,26 @@ export default class ShopScene extends Phaser.Scene {
                 return;
             }
 
+            const prevPurchases = Array.isArray(this.player?.purchaseHistory) ? this.player.purchaseHistory : [];
+            const prevMatches = Array.isArray(this.player?.matchHistory) ? this.player.matchHistory : [];
             this.player = data.updatedPlayer;
+            if (!Array.isArray(this.player.purchaseHistory) || this.player.purchaseHistory.length === 0) {
+                const pulledNames = (data.openedBoosterCards || []).map(c => c.cardName).filter(Boolean);
+                this.player.purchaseHistory = [
+                    {
+                        id: `${Date.now()}`,
+                        timestamp: Date.now(),
+                        productType: data.productType || product.type,
+                        productName: product.name,
+                        price: product.price,
+                        cardsReceived: pulledNames
+                    },
+                    ...prevPurchases
+                ];
+            }
+            if (!Array.isArray(this.player.matchHistory) && prevMatches.length > 0) {
+                this.player.matchHistory = prevMatches;
+            }
             localStorage.setItem('lendas_player', JSON.stringify(this.player));
             this.balanceText.setText(`🪙 GOLD: ${this.getGoldBalance()}`);
             this.renderProductsGrid();
@@ -434,7 +453,25 @@ export default class ShopScene extends Phaser.Scene {
                 return;
             }
 
+            const prevPurchases = Array.isArray(this.player?.purchaseHistory) ? this.player.purchaseHistory : [];
+            const prevMatches = Array.isArray(this.player?.matchHistory) ? this.player.matchHistory : [];
             this.player = data.player;
+            if (!Array.isArray(this.player.purchaseHistory) || this.player.purchaseHistory.length === 0) {
+                this.player.purchaseHistory = [
+                    {
+                        id: `${Date.now()}`,
+                        timestamp: Date.now(),
+                        productType: 'SINGLE_CARD',
+                        productName: listing.cardName,
+                        price: listing.price,
+                        cardsReceived: []
+                    },
+                    ...prevPurchases
+                ];
+            }
+            if (!Array.isArray(this.player.matchHistory) && prevMatches.length > 0) {
+                this.player.matchHistory = prevMatches;
+            }
             localStorage.setItem('lendas_player', JSON.stringify(this.player));
             this.balanceText.setText(`🪙 GOLD: ${this.getGoldBalance()}`);
 
@@ -468,7 +505,15 @@ export default class ShopScene extends Phaser.Scene {
                 return;
             }
 
+            const prevPurchases = Array.isArray(this.player?.purchaseHistory) ? this.player.purchaseHistory : [];
+            const prevMatches = Array.isArray(this.player?.matchHistory) ? this.player.matchHistory : [];
             this.player = data.player;
+            if (!Array.isArray(this.player.purchaseHistory) && prevPurchases.length > 0) {
+                this.player.purchaseHistory = prevPurchases;
+            }
+            if (!Array.isArray(this.player.matchHistory) && prevMatches.length > 0) {
+                this.player.matchHistory = prevMatches;
+            }
             localStorage.setItem('lendas_player', JSON.stringify(this.player));
             await this.fetchMarketListingsFromServer();
             this.renderProductsGrid();

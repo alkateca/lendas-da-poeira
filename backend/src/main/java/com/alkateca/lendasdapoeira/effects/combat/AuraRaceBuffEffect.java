@@ -12,6 +12,7 @@ import com.alkateca.lendasdapoeira.enums.TurnPhase;
 public class AuraRaceBuffEffect implements Effect {
 
     private final Raca targetRaca;
+    private final Ordem targetOrdem;
     private final int bonusEspirito;
     private final int bonusAtaque;
     private final int bonusDefesa;
@@ -19,6 +20,15 @@ public class AuraRaceBuffEffect implements Effect {
 
     public AuraRaceBuffEffect(Raca targetRaca, int bonusEspirito, int bonusAtaque, int bonusDefesa) {
         this.targetRaca = targetRaca;
+        this.targetOrdem = null;
+        this.bonusEspirito = bonusEspirito;
+        this.bonusAtaque = bonusAtaque;
+        this.bonusDefesa = bonusDefesa;
+    }
+
+    public AuraRaceBuffEffect(Ordem targetOrdem, int bonusEspirito, int bonusAtaque, int bonusDefesa) {
+        this.targetRaca = null;
+        this.targetOrdem = targetOrdem;
         this.bonusEspirito = bonusEspirito;
         this.bonusAtaque = bonusAtaque;
         this.bonusDefesa = bonusDefesa;
@@ -64,10 +74,8 @@ public class AuraRaceBuffEffect implements Effect {
     }
 
     private boolean matchesTargetRaca(HeroCard hero) {
-        boolean hasRaca = hero.getRacas() != null && hero.getRacas().contains(targetRaca);
-        boolean hasThroneOrder = targetRaca == Raca.GUARDIOES_DO_TRONO
-                && hero.getOrdem() != null
-                && hero.getOrdem().contains(Ordem.GUARDAO_DO_TRONO);
-        return hasRaca || hasThroneOrder;
+        boolean hasRaca = targetRaca != null && hero.getRacas() != null && hero.getRacas().contains(targetRaca);
+        boolean hasOrdem = targetOrdem != null && hero.getOrdem() != null && hero.getOrdem().contains(targetOrdem);
+        return hasRaca || hasOrdem;
     }
 }
