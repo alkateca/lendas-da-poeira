@@ -8,6 +8,7 @@ import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 import PhantomUIKit from '../ui/PhantomUIKit.js';
 import MatchRecapSidebar from '../ui/MatchRecapSidebar.js';
 import { formatCardDescriptionWithKeywords } from '../config/keywordsConfig.js';
+import { API_BASE_URL } from '../config/apiConfig.js';
 
 export default class MatchScene extends Phaser.Scene {
     constructor() {
@@ -738,7 +739,7 @@ export default class MatchScene extends Phaser.Scene {
 
         const sinceSeq = this.snapshotPlayer.lastPlayedSequence || this.currentSnapshot.snapshotSequence || 0;
         try {
-            const response = await fetch(`http://localhost:8080/api/matches/${this.matchId}/timeout`, {
+            const response = await fetch(`${API_BASE_URL}/api/matches/${this.matchId}/timeout`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -2449,7 +2450,7 @@ export default class MatchScene extends Phaser.Scene {
         this.mainButtonLabel.setText('ENVIANDO...');
 
         try {
-            const response = await fetch(`http://localhost:8080/api/matches/${this.matchId}/confirm-action`, {
+            const response = await fetch(`${API_BASE_URL}/api/matches/${this.matchId}/confirm-action`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -2616,7 +2617,7 @@ export default class MatchScene extends Phaser.Scene {
         try {
             const sinceSeq = this.snapshotPlayer.lastPlayedSequence || this.currentSnapshot.snapshotSequence || 0;
             const res = await fetch(
-                `http://localhost:8080/api/matches/${this.matchId}/state?viewerId=${this.localPlayerId}&sinceSequence=${sinceSeq}`
+                `${API_BASE_URL}/api/matches/${this.matchId}/state?viewerId=${this.localPlayerId}&sinceSequence=${sinceSeq}`
             );
             this.isPolling = false;
             if (!res.ok) return;
@@ -2645,7 +2646,7 @@ export default class MatchScene extends Phaser.Scene {
         this.updateMainButtonState();
 
         try {
-            const response = await fetch(`http://localhost:8080/api/matches/${this.matchId}/confirm-action`, {
+            const response = await fetch(`${API_BASE_URL}/api/matches/${this.matchId}/confirm-action`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -2876,7 +2877,7 @@ export default class MatchScene extends Phaser.Scene {
 
         try {
             if (this.matchId) {
-                await fetch(`http://localhost:8080/api/matches/${this.matchId}/forfeit`, {
+                await fetch(`${API_BASE_URL}/api/matches/${this.matchId}/forfeit`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -3179,7 +3180,7 @@ export default class MatchScene extends Phaser.Scene {
 
         try {
             if (isBotMatch) {
-                const res = await fetch(`http://localhost:8080/api/matches/start-pve?playerId=${this.localPlayerId}`, {
+                const res = await fetch(`${API_BASE_URL}/api/matches/start-pve?playerId=${this.localPlayerId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -3200,7 +3201,7 @@ export default class MatchScene extends Phaser.Scene {
                 }
             } else {
                 // Reingressa na fila de matchmaking PvP
-                const res = await fetch(`http://localhost:8080/api/matchmaking/join`, {
+                const res = await fetch(`${API_BASE_URL}/api/matchmaking/join`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

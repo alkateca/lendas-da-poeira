@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BOARD_LAYOUT } from '../config/BoardCoordinates.js';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
+import { API_BASE_URL } from '../config/apiConfig.js';
 
 export default class ShopScene extends Phaser.Scene {
     constructor() {
@@ -156,7 +157,7 @@ export default class ShopScene extends Phaser.Scene {
 
     async fetchProductsFromServer() {
         try {
-            const res = await fetch('http://localhost:8080/api/shop/products');
+            const res = await fetch(`${API_BASE_URL}/api/shop/products`);
             if (!res.ok) throw new Error('Falha ao buscar produtos');
             this.products = await res.json();
         } catch (e) {
@@ -198,7 +199,7 @@ export default class ShopScene extends Phaser.Scene {
 
     async fetchMarketListingsFromServer() {
         try {
-            const res = await fetch('http://localhost:8080/api/shop/listings');
+            const res = await fetch(`${API_BASE_URL}/api/shop/listings`);
             if (res.ok) {
                 this.marketListings = await res.json();
             }
@@ -379,7 +380,7 @@ export default class ShopScene extends Phaser.Scene {
 
         try {
             const idempotencyKey = `BUY_PROD_${this.player.uuid}_${product.id}_${Date.now()}`;
-            const res = await fetch('http://localhost:8080/api/shop/buy', {
+            const res = await fetch(`${API_BASE_URL}/api/shop/buy`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -438,7 +439,7 @@ export default class ShopScene extends Phaser.Scene {
         this.isProcessingTransaction = true;
 
         try {
-            const res = await fetch(`http://localhost:8080/api/shop/listings/${listing.id}/buy`, {
+            const res = await fetch(`${API_BASE_URL}/api/shop/listings/${listing.id}/buy`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -490,7 +491,7 @@ export default class ShopScene extends Phaser.Scene {
         this.isProcessingTransaction = true;
 
         try {
-            const res = await fetch(`http://localhost:8080/api/shop/listings/${listing.id}/cancel`, {
+            const res = await fetch(`${API_BASE_URL}/api/shop/listings/${listing.id}/cancel`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

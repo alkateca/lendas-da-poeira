@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import DeckRestrictionValidator from '../managers/DeckRestrictionValidator.js';
 import { DEMO_MATCH_UUID, INITIAL_MATCH_SNAPSHOT } from '../config/mockSnapshots.js';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
+import { API_BASE_URL } from '../config/apiConfig.js';
 
 export default class MainMenuScene extends Phaser.Scene {
     constructor() {
@@ -172,7 +173,7 @@ export default class MainMenuScene extends Phaser.Scene {
 
         if (DeckRestrictionValidator.isDeckReadyForMatch(nextDeck)) {
             try {
-                await fetch(`http://localhost:8080/api/players/${this.player.uuid}/active-deck/${nextDeck.uuid}`, {
+                await fetch(`${API_BASE_URL}/api/players/${this.player.uuid}/active-deck/${nextDeck.uuid}`, {
                     method: 'PUT'
                 });
             } catch (e) {
@@ -194,7 +195,7 @@ export default class MainMenuScene extends Phaser.Scene {
         this.statusText.setText('A sortear baralho da máquina e a preparar a arena...').setColor('#ffd700');
 
         try {
-            const res = await fetch('http://localhost:8080/api/matches/start-pve', {
+            const res = await fetch(`${API_BASE_URL}/api/matches/start-pve`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -282,7 +283,7 @@ export default class MainMenuScene extends Phaser.Scene {
 
     async checkQueueStatus() {
         try {
-            const res = await fetch(`http://localhost:8080/api/matchmaking/status?playerId=${this.player.uuid}`);
+            const res = await fetch(`${API_BASE_URL}/api/matchmaking/status?playerId=${this.player.uuid}`);
             if (!res.ok) return;
 
             const data = await res.json();
@@ -316,7 +317,7 @@ export default class MainMenuScene extends Phaser.Scene {
     async syncPlayerProfileFromServer() {
         if (!this.player?.uuid) return;
         try {
-            const res = await fetch(`http://localhost:8080/api/players/${this.player.uuid}`);
+            const res = await fetch(`${API_BASE_URL}/api/players/${this.player.uuid}`);
             if (res.ok) {
                 const fresh = await res.json();
                 this.player.permanentElo = fresh.permanentElo ?? 1000;

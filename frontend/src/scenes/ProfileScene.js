@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
+import { API_BASE_URL } from '../config/apiConfig.js';
 
 export default class ProfileScene extends Phaser.Scene {
     constructor() {
@@ -45,7 +46,7 @@ export default class ProfileScene extends Phaser.Scene {
     async syncPlayerFromServer() {
         if (!this.player?.uuid) return;
         try {
-            const res = await fetch(`http://localhost:8080/api/players/${this.player.uuid}`);
+            const res = await fetch(`${API_BASE_URL}/api/players/${this.player.uuid}`);
             if (res.ok) {
                 const updated = await res.json();
                 const localPurchases = Array.isArray(this.player?.purchaseHistory) ? this.player.purchaseHistory : [];

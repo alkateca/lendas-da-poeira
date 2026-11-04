@@ -6,6 +6,7 @@ import PhantomUIKit from '../ui/PhantomUIKit.js';
 import HeroCardPrefab from '../prefabs/HeroCardPrefab.js';
 import PlayableCardPrefab from '../prefabs/PlayableCardPrefab.js';
 import { formatCardDescriptionWithKeywords } from '../config/keywordsConfig.js';
+import { API_BASE_URL } from '../config/apiConfig.js';
 
 export default class DeckBuilderScene extends Phaser.Scene {
     constructor() {
@@ -597,7 +598,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
 
     async loadCatalogFromServer() {
         try {
-            const res = await fetch('http://localhost:8080/api/players/catalog');
+            const res = await fetch(`${API_BASE_URL}/api/players/catalog`);
             if (!res.ok) throw new Error('Falha ao buscar catálogo');
             const data = await res.json();
             this.catalogHeroes = data.heroes || [];
@@ -1082,7 +1083,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
         const isPlayable = DeckRestrictionValidator.isDeckReadyForMatch(this.currentDeck);
 
         try {
-            const res = await fetch(`http://localhost:8080/api/players/${this.player.uuid}/decks`, {
+            const res = await fetch(`${API_BASE_URL}/api/players/${this.player.uuid}/decks`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(this.currentDeck)
@@ -1129,7 +1130,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
         localStorage.setItem('lendas_player', JSON.stringify(this.player));
 
         try {
-            await fetch(`http://localhost:8080/api/players/${this.player.uuid}/active-deck/${this.currentDeck.uuid}`, {
+            await fetch(`${API_BASE_URL}/api/players/${this.player.uuid}/active-deck/${this.currentDeck.uuid}`, {
                 method: 'PUT'
             });
         } catch (e) {

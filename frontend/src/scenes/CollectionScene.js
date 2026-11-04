@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 import PhantomUIKit from '../ui/PhantomUIKit.js';
+import { API_BASE_URL } from '../config/apiConfig.js';
 
 export default class CollectionScene extends Phaser.Scene {
     constructor() {
@@ -383,7 +384,7 @@ export default class CollectionScene extends Phaser.Scene {
         const idempotencyKey = `LIST_${this.player.uuid}_${this.selectedItemForSale.cardName}_${Date.now()}`;
 
         try {
-            const res = await fetch('http://localhost:8080/api/shop/listings', {
+            const res = await fetch(`${API_BASE_URL}/api/shop/listings`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
