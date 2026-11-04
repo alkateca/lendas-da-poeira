@@ -944,10 +944,11 @@ public class MatchmakingService {
                         .filter(c -> c.getZoneId() == ZoneId.HAND)
                         .collect(Collectors.toList());
 
+                int maxCardsForBot = engine.getMaxPreparationCardsForPlayer(botId);
                 List<UUID> cardsToPlay = new ArrayList<>();
                 for (Card c : botHand) {
-                    if (cardsToPlay.size() >= 2) break;
-                    if (botActiveHero != null && !engine.canHeroPlayCard(botActiveHero, c)) {
+                    if (cardsToPlay.size() >= maxCardsForBot) break;
+                    if (botActiveHero != null && (!engine.canHeroPlayCard(botActiveHero, c) || !engine.isCardCompatibleForPlay(botPlayer, botActiveHero, c))) {
                         continue;
                     }
                     if (c.getItemType() == ItemType.ARMA) {

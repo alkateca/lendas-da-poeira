@@ -105,17 +105,21 @@ public class OpponentBotService {
         int maxSlots = activeBotHero != null ? activeBotHero.getMaxWeaponSlots() : 2;
         int currentUsedSlots = activeBotHero != null ? engine.getUsedWeaponSlotsForHero(activeBotHero.getUuid()) : 0;
 
+        int maxCardsForBot = engine.getMaxPreparationCardsForPlayer(botPlayer.getUuid());
         List<UUID> chosenCards = new ArrayList<>();
 
         for (Card candidate : botHand) {
-            if (chosenCards.size() >= 2) break; // Limite estrito de até 2 cartas na preparação
+            if (chosenCards.size() >= maxCardsForBot) break; // Respeita o limite dinâmico de cartas na preparação
+            if (activeBotHero != null && !engine.isCardCompatibleForPlay(botPlayer, activeBotHero, candidate)) {
+                continue;
+            }
 
             if (activeBotHero != null && !engine.canHeroPlayCard(activeBotHero, candidate)) {
                 continue;
             }
 
             if (candidate.getItemType() == ItemType.ARMA) {
-                int emp = candidate.getEmpunhadura();
+                int emp = Math.max(1, candidate.getEmpunhadura());
                 if (currentUsedSlots + emp <= maxSlots) {
                     chosenCards.add(candidate.getUuid());
                     currentUsedSlots += emp;

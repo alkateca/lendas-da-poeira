@@ -20,7 +20,7 @@ public class HeroCard extends Card{
     private int reducaoDano;
     private int danoBonus;
     private int vulnerabilidade;
-    private int maxWeaponSlots;
+    private int maxWeaponSlots = 2;
 
     private Boolean estaAtivo;
     private Boolean estaVivo;
