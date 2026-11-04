@@ -53,41 +53,51 @@ A sala conterá 5 alas memoriais:
 
 ## 5. Especificação Técnica — Backend
 
-### 5.1 Catálogo de Missões (`missions.json`)
-Criar `backend/src/main/resources/missions.json` com a estrutura:
-```json
-[
-  {
-    "id": "mission_red_01",
-    "titulo": "O Primeiro Clarão da Forja",
-    "cor": "RED",
-    "capitulo": 1,
-    "prologo": "Nos ermos do leste, as fornalhas nunca se apagam...",
-    "epilogo": "Com o constructo silenciado, a Poeira de fogo assentou...",
-    "playerDeckPresetId": "DECK_RED_TUTORIAL",
-    "aiDeck": {
-      "heros": ["10000000-0000-0000-0000-000000000003", "..."],
-      "cards": ["..."]
-    },
-    "scriptedEvents": [
-      {
-        "trigger": "ON_HERO_DEATH",
-        "targetHeroName": "Alka, Lutador do Grupo dos Heróis",
-        "speaker": "Eco de Alka",
-        "dialogue": "A chama... ainda arde mais forte que a minha guarda..."
-      },
-      {
-        "trigger": "ON_CARD_PLAYED",
-        "targetCardName": "Bola de Fogo",
-        "speaker": "Narrador dos Arquivos",
-        "dialogue": "A canalização elemental de Fogo exige precisão e pureza de Espírito."
-      }
-    ]
-  }
-]
+### 5.1 Estrutura Modular em YAML (`resources/missions/`)
+As missões serão armazenadas em arquivos `.yaml` individuais separados por pasta de cor para facilitar a escrita da narrativa e manutenção:
+```text
+backend/src/main/resources/missions/
+  ├── RED/
+  │   └── mission_red_01.yaml
+  ├── BLUE/
+  └── ...
 ```
 
-### 5.2 Disparo de Eventos no `GameEngine`
+Exemplo (`mission_red_01.yaml`):
+```yaml
+id: "mission_red_01"
+titulo: "O Primeiro Clarão da Forja"
+cor: "RED"
+capitulo: 1
+prologo: |
+  Nos ermos do leste, as fornalhas nunca se apagam.
+  Os caçadores aprendem a moldar a poeira antes mesmo de empunhar uma lâmina.
+epilogo: |
+  Com o constructo silenciado, a Poeira de fogo assentou revelando o segredo da forja.
+playerDeckPresetId: "DECK_RED_TUTORIAL"
+aiDeck:
+  heros:
+    - "10000000-0000-0000-0000-000000000003"
+  cards:
+    - "card_uuid_1"
+scriptedEvents:
+  - trigger: "ON_HERO_DEATH"
+    targetHeroName: "Alka, Lutador do Grupo dos Heróis"
+    speaker: "Eco de Alka"
+    dialogue: "A chama... ainda arde mais forte que a minha guarda..."
+  - trigger: "ON_CARD_PLAYED"
+    targetCardName: "Bola de Fogo"
+    speaker: "Narrador dos Arquivos"
+    dialogue: "A canalização elemental de Fogo exige precisão e pureza de Espírito."
+```
+
+### 5.2 Carregador de Missões (`StoryMissionLoaderService`)
+* Classe de serviço responsável por escanear o diretório `resources/missions/`, deserializar os arquivos `.yaml` (via Jackson Dataformat YAML / SnakeYAML) e manter o catálogo em memória.
+* Fornecer endpoints REST/WebSocket para:
+  * Enviar a lista resumida de missões/capítulos para o Frontend montar a tela de seleção.
+  * Carregar os detalhes completos da missão ao iniciar a partida.
+
+### 5.3 Disparo de Eventos no `GameEngine`
 * Adicionar campo `List<ScriptedDialogueDTO> pendingDialogues` ao `GameStateDTO` ou dentro de `TurnTimelineResponseDTO`.
 * O `GameEngine` ou um `StoryMissionManagerService` monitora a fila de resolução e a morte de heróis. Ao encontrar correspondência com os `scriptedEvents` da missão ativa, empacota o diálogo para o snapshot do cliente.
 
@@ -95,21 +105,25 @@ Criar `backend/src/main/resources/missions.json` com a estrutura:
 
 ## 6. Especificação Técnica — Frontend (Phaser 3)
 
-### 6.1 Nova Cena: `StoryArchiveScene` ("Grandes Arquivos da Poeira")
-* Interface visual de seleção de capítulos agrupados por cor.
-* Indicador de progresso (Concluída / Bloqueada).
-* Botão para abrir o Modal de Prólogo antes de transicionar para a `BattleScene`.
+### 6.1 Tela de Seleção: `StoryArchiveScene` ("Grandes Arquivos da Poeira")
+* Consulta o backend para obter os capítulos e missões agrupados por cor.
+* Interface visual de seleção de capítulos e missões com indicador de status (Bloqueada / Disponível / Concluída).
+* Modal de Prólogo com botão para confirmar e iniciar a partida PvE.
 
-### 6.2 Componente de Diálogo: `StoryDialogueOverlay`
-* **Modo Prólogo/Epílogo:** Painel visual narrativo com retrato do interlocutor e texto paginado com botão "Continuar".
-* **Modo In-Combat (Toast/Banner Narrativo):** Balão de diálogo não-bloqueante ou pause momentâneo na batalha ao disparar o trigger scriptado (exibindo retrato do herói que falou e a frase).
+### 6.2 Tela de Partida: `BattleScene` com Suporte a Eventos Narrativos
+* Suporte ao consumo de `pendingDialogues` emitidos pelo backend a cada turno ou resolução de efeito.
+* Componente `StoryDialogueOverlay`:
+  * **Modo Prólogo/Epílogo:** Painel com retrato do interlocutor e texto paginado.
+  * **Modo In-Combat (Toast/Banner Narrativo):** Balão de diálogo ou banner que surge ao disparar o trigger scriptado sem quebrar a física do combate.
 
 ---
 
 ## 7. Critérios de Aceite (DoD)
 
-- [ ] Arquivo `missions.json` estruturado com ao menos 1 missão piloto para a cor RED contra o time WHITE.
+- [ ] Arquivos `.yaml` individuais estruturados em pastas por cor (`resources/missions/<COR>/`).
+- [ ] Classe `StoryMissionLoaderService` implementada para leitura e cache dos arquivos `.yaml`.
+- [ ] Endpoint para fornecimento da lista de missões ao Frontend.
+- [ ] Tela de seleção (`StoryArchiveScene`) consumindo a lista de missões do backend.
+- [ ] Tela de partida (`BattleScene`) recebendo e exibindo os diálogos scriptados disparados pelo backend.
 - [ ] Backend capaz de instanciar uma partida PvE associada a uma `missionId`.
-- [ ] Backend emite diálogos scriptados no snapshot quando a carta-alvo for jogada ou herói da máquina morrer.
-- [ ] Frontend possui tela acessível "Grandes Arquivos da Poeira" com fluxo: Seleção -> Prólogo -> Partida -> Diálogo In-Game -> Vitória -> Epílogo.
-- [ ] Testes de integração no backend cobrindo o ciclo de disparo do `scriptedEvent`.
+- [ ] Testes de integração cobrindo a leitura dos arquivos `.yaml` e o disparo dos `scriptedEvents`.
