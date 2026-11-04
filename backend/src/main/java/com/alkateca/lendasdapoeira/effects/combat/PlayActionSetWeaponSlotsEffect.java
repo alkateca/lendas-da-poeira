@@ -10,6 +10,10 @@ public class PlayActionSetWeaponSlotsEffect implements Effect {
 
     private final int newSlots;
 
+    public int getNewSlots() {
+        return newSlots;
+    }
+
     public PlayActionSetWeaponSlotsEffect(int newSlots) {
         this.newSlots = newSlots;
     }

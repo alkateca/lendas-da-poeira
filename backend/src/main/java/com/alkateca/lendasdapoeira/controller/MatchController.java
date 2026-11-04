@@ -108,12 +108,13 @@ public class MatchController {
             if (request.getMatchId() != null && !matchId.equals(request.getMatchId())) {
                 return ResponseEntity.badRequest().build();
             }
+            if (matchmakingService.findMatch(matchId).isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
             request.setMatchId(matchId);
             MatchTimelineResponseDTO timeline = matchmakingService.processPlayerAction(matchId, request);
             return ResponseEntity.ok(timeline);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().build();
         }
     }
@@ -284,7 +285,12 @@ public class MatchController {
             HeroCard template = catalogHeroes.stream()
                     .filter(ch -> ch.getCardName() != null && ch.getCardName().equalsIgnoreCase(hero.getCardName()))
                     .findFirst()
-                    .orElse(hero);
+                    .orElseGet(() -> {
+                        if (!catalogHeroes.isEmpty()) {
+                            throw new IllegalArgumentException("Herói inexistente no catálogo oficial do servidor: " + hero.getCardName());
+                        }
+                        return hero;
+                    });
 
             HeroCard copy = new HeroCard();
             copy.setUuid(UUID.randomUUID());
@@ -320,7 +326,12 @@ public class MatchController {
             Card template = catalogCards.stream()
                     .filter(cc -> cc.getCardName() != null && cc.getCardName().equalsIgnoreCase(card.getCardName()))
                     .findFirst()
-                    .orElse(card);
+                    .orElseGet(() -> {
+                        if (!catalogCards.isEmpty()) {
+                            throw new IllegalArgumentException("Carta inexistente no catálogo oficial do servidor: " + card.getCardName());
+                        }
+                        return card;
+                    });
 
             Card copy = new Card();
             copy.setUuid(UUID.randomUUID());

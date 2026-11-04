@@ -57,8 +57,32 @@ public class GameEngine {
     private final Set<UUID> doubleAttackHeroIdsInCurrentCombat = new HashSet<>();
     private final Map<UUID, Set<UUID>> playedCardIdsInCurrentTurn = new HashMap<>();
     private final Map<UUID, Set<UUID>> invokedCardIdsByPlayerInCurrentTurn = new HashMap<>();
+    public static final int DEFAULT_MAX_PREPARATION_CARDS = 2;
+
     private final Map<UUID, Integer> extraCardsDrawnInCurrentTurn = new HashMap<>();
     private final Set<UUID> heroesWhoDealtPhysicalOrMagicDamageInCurrentCombat = new HashSet<>();
+    private final Map<UUID, Integer> turnPreparationCardLimitModifiers = new HashMap<>();
+
+    public int getMaxPreparationCardsForPlayer(UUID playerId) {
+        if (playerId == null) return DEFAULT_MAX_PREPARATION_CARDS;
+        int modifier = this.turnPreparationCardLimitModifiers.getOrDefault(playerId, 0);
+        return Math.max(0, DEFAULT_MAX_PREPARATION_CARDS + modifier);
+    }
+
+    public void setTurnPreparationCardLimitModifier(UUID playerId, int modifier) {
+        if (playerId != null) {
+            this.turnPreparationCardLimitModifiers.put(playerId, modifier);
+        }
+    }
+
+    public void addTurnPreparationCardLimitModifier(UUID playerId, int delta) {
+        if (playerId != null) {
+            this.turnPreparationCardLimitModifiers.put(
+                    playerId,
+                    this.turnPreparationCardLimitModifiers.getOrDefault(playerId, 0) + delta
+            );
+        }
+    }
 
     public void recordExtraCardDraw(UUID playerId, int count) {
         if (playerId == null || count <= 0) return;
@@ -223,6 +247,7 @@ public class GameEngine {
         this.invokedCardIdsByPlayerInCurrentTurn.clear();
         this.extraCardsDrawnInCurrentTurn.clear();
         this.heroesWhoDealtPhysicalOrMagicDamageInCurrentCombat.clear();
+        this.turnPreparationCardLimitModifiers.clear();
     }
 
     // =========================================================================
@@ -777,8 +802,267 @@ public class GameEngine {
                 .filter(c -> c.getZoneId() == ZoneId.ATTACHED
                         && heroId.equals(c.getAttachedToCardId())
                         && c.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMA)
-                .mapToInt(Card::getEmpunhadura)
+                .mapToInt(c -> Math.max(1, c.getEmpunhadura()))
                 .sum();
+    }
+
+    public int getUsedItemTypeCountForHero(UUID heroId, com.alkateca.lendasdapoeira.enums.ItemType itemType) {
+        if (heroId == null || itemType == null) return 0;
+        List<Card> allCards = new ArrayList<>();
+        if (player1 != null && player1.getCurrentDeck() != null && player1.getCurrentDeck().getCardList() != null) {
+            allCards.addAll(player1.getCurrentDeck().getCardList());
+        }
+        if (player2 != null && player2.getCurrentDeck() != null && player2.getCurrentDeck().getCardList() != null) {
+            allCards.addAll(player2.getCurrentDeck().getCardList());
+        }
+
+        return (int) allCards.stream()
+                .filter(c -> c != null
+                        && c.getZoneId() == ZoneId.ATTACHED
+                        && heroId.equals(c.getAttachedToCardId())
+                        && c.getItemType() == itemType)
+                .count();
+    }
+
+    private Player getValidatedParticipant(UUID playerId) {
+        if (playerId == null || player1 == null || player2 == null) {
+            System.out.println("🚨 [ANTI-CHEAT] Tentativa de ação com playerId nulo ou partida não inicializada.");
+            throw new IllegalArgumentException("Jogador inválido ou não pertence a esta partida.");
+        }
+        if (playerId.equals(player1.getUuid())) {
+            return player1;
+        }
+        if (playerId.equals(player2.getUuid())) {
+            return player2;
+        }
+        System.out.println("🚨 [ANTI-CHEAT] Jogador não autorizado tentou agir na partida: " + playerId);
+        throw new IllegalArgumentException("Jogador não pertence a esta partida: " + playerId);
+    }
+
+    /**
+     * Valida se uma carta atende aos pré-requisitos de Cor, Afinidade, Ordem, Raça, Classe e Liberação
+     * em relação ao Herói ativo e à equipe de Heróis do jogador.
+     */
+    public boolean isCardCompatibleForPlay(Player player, HeroCard activeHero, Card card) {
+        if (card == null || player == null) return false;
+
+        List<HeroCard> playerHeroes = (player.getCurrentDeck() != null && player.getCurrentDeck().getHeroList() != null && !player.getCurrentDeck().getHeroList().isEmpty())
+                ? player.getCurrentDeck().getHeroList()
+                : (activeHero != null ? List.of(activeHero) : Collections.emptyList());
+
+        if (playerHeroes.isEmpty()) return true;
+
+        if (card.isLiberationCard() && card.getTargetBaseHeroName() != null && !card.getTargetBaseHeroName().isBlank()) {
+            boolean hasTargetHero = playerHeroes.stream()
+                    .filter(Objects::nonNull)
+                    .anyMatch(h -> h.getCardName() != null
+                            && (h.getCardName().equalsIgnoreCase(card.getTargetBaseHeroName())
+                                || (card.getEvolvesIntoHeroName() != null && h.getCardName().equalsIgnoreCase(card.getEvolvesIntoHeroName()))));
+            if (!hasTargetHero) {
+                return false;
+            }
+        }
+
+        Set<com.alkateca.lendasdapoeira.enums.Colors> teamColors = new HashSet<>();
+        Set<com.alkateca.lendasdapoeira.enums.Afinidade> teamAffinities = new HashSet<>();
+        Set<String> teamOrdersAndRaces = new HashSet<>();
+        Set<com.alkateca.lendasdapoeira.enums.Classe> teamClasses = new HashSet<>();
+        boolean hasEmissor = false;
+        boolean hasGoblin = false;
+        boolean heroesHaveConfiguredTraits = false;
+
+        for (HeroCard h : playerHeroes) {
+            if (h == null) continue;
+            if (h.getColor() != null) {
+                teamColors.add(h.getColor());
+            }
+            if (h.getAfinidades() != null && !h.getAfinidades().isEmpty()) {
+                teamAffinities.addAll(h.getAfinidades());
+                heroesHaveConfiguredTraits = true;
+            }
+            if (h.getOrdem() != null && !h.getOrdem().isEmpty()) {
+                heroesHaveConfiguredTraits = true;
+                for (com.alkateca.lendasdapoeira.enums.Ordem o : h.getOrdem()) {
+                    if (o == null) continue;
+                    String norm = normalizeTraitToken(o.name());
+                    teamOrdersAndRaces.add(norm);
+                    if (norm.contains("GUARDI")) teamOrdersAndRaces.add("GUARDIAO DO TRONO");
+                }
+            }
+            if (h.getRacas() != null && !h.getRacas().isEmpty()) {
+                heroesHaveConfiguredTraits = true;
+                for (com.alkateca.lendasdapoeira.enums.Raca r : h.getRacas()) {
+                    if (r == null) continue;
+                    String norm = normalizeTraitToken(r.name());
+                    teamOrdersAndRaces.add(norm);
+                    if (norm.contains("GUARDI")) teamOrdersAndRaces.add("GUARDIAO DO TRONO");
+                    if (r == com.alkateca.lendasdapoeira.enums.Raca.GOBLIN) hasGoblin = true;
+                }
+            }
+            if (h.getClasse() != null && !h.getClasse().isEmpty()) {
+                heroesHaveConfiguredTraits = true;
+                teamClasses.addAll(h.getClasse());
+                if (h.getClasse().contains(com.alkateca.lendasdapoeira.enums.Classe.EMISSOR)) {
+                    hasEmissor = true;
+                }
+            }
+        }
+
+        // 1. Validação de Cor (se a carta possui cor específica diferente de NEUTRAL e a equipe possui cores definidas)
+        com.alkateca.lendasdapoeira.enums.Colors cardColor = card.getColor();
+        if (cardColor != null && cardColor != com.alkateca.lendasdapoeira.enums.Colors.NEUTRAL && !teamColors.isEmpty() && !hasGoblin) {
+            if (!teamColors.contains(cardColor)) {
+                return false;
+            }
+        }
+
+        // 2. Validação de Afinidade Elemental e Magias (SPELL)
+        List<com.alkateca.lendasdapoeira.enums.Afinidade> reqAffinities = card.getAfinidades() != null
+                ? card.getAfinidades()
+                : Collections.emptyList();
+        if (!reqAffinities.isEmpty()) {
+            boolean matchAff = reqAffinities.stream().anyMatch(teamAffinities::contains);
+            if (!matchAff && !hasEmissor && !hasGoblin) {
+                return false;
+            }
+        } else if (card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.SPELL
+                && !card.isLiberationCard()
+                && heroesHaveConfiguredTraits
+                && teamAffinities.isEmpty()
+                && !hasEmissor
+                && !hasGoblin) {
+            return false;
+        }
+
+        // 3. Validação de Ordem / Raça
+        List<String> reqOrdersAndRaces = new ArrayList<>();
+        if (card.getOrdem() != null) {
+            card.getOrdem().stream().filter(Objects::nonNull).forEach(o -> reqOrdersAndRaces.add(normalizeTraitToken(o.name())));
+        }
+        if (card.getRacas() != null) {
+            card.getRacas().stream().filter(Objects::nonNull).forEach(r -> reqOrdersAndRaces.add(normalizeTraitToken(r.name())));
+        }
+        if (!reqOrdersAndRaces.isEmpty() && !hasGoblin) {
+            boolean matchOrderOrRace = reqOrdersAndRaces.stream().anyMatch(req ->
+                    teamOrdersAndRaces.contains(req)
+                            || (req.contains("GUARDI") && teamOrdersAndRaces.contains("GUARDIAO DO TRONO"))
+            );
+            if (!matchOrderOrRace) {
+                return false;
+            }
+        }
+
+        // 4. Validação de Classe
+        List<com.alkateca.lendasdapoeira.enums.Classe> reqClasses = card.getClasse() != null
+                ? card.getClasse()
+                : Collections.emptyList();
+        if (!reqClasses.isEmpty() && !hasGoblin) {
+            boolean matchClass = reqClasses.stream().anyMatch(teamClasses::contains);
+            if (!matchClass) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Verifica se uma única carta é jogável pelo Herói ativo considerando compatibilidade e slots de equipamento atuais.
+     */
+    public boolean canPlayCardInPreparation(Player player, HeroCard activeHero, Card card) {
+        if (player == null || activeHero == null || card == null) return false;
+        if (!isCardCompatibleForPlay(player, activeHero, card)) return false;
+
+        if (card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM) {
+            if (card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMA) {
+                int maxSlots = activeHero.getMaxWeaponSlots() > 0 ? activeHero.getMaxWeaponSlots() : 2;
+                int usedSlots = getUsedWeaponSlotsForHero(activeHero.getUuid());
+                int requiredSlots = Math.max(1, card.getEmpunhadura());
+                if (usedSlots + requiredSlots > maxSlots) {
+                    return false;
+                }
+            } else if (card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMADURA) {
+                if (getUsedItemTypeCountForHero(activeHero.getUuid(), com.alkateca.lendasdapoeira.enums.ItemType.ARMADURA) >= 1) {
+                    return false;
+                }
+            } else if (card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ESCUDO) {
+                if (getUsedItemTypeCountForHero(activeHero.getUuid(), com.alkateca.lendasdapoeira.enums.ItemType.ESCUDO) >= 1) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private void validateCardsPlayableInPreparation(Player player, HeroCard activeHero, List<Card> cardsToPlay) {
+        if (cardsToPlay == null || cardsToPlay.isEmpty()) return;
+
+        int effectiveMaxWeaponSlots = activeHero.getMaxWeaponSlots() > 0 ? activeHero.getMaxWeaponSlots() : 2;
+        for (Card c : cardsToPlay) {
+            if (c.getEffects() != null) {
+                for (com.alkateca.lendasdapoeira.effects.Effect eff : c.getEffects()) {
+                    if (eff instanceof com.alkateca.lendasdapoeira.effects.combat.PlayActionSetWeaponSlotsEffect slotEff) {
+                        effectiveMaxWeaponSlots = Math.max(effectiveMaxWeaponSlots, slotEff.getNewSlots());
+                    }
+                }
+            }
+        }
+
+        int usedWeaponSlots = getUsedWeaponSlotsForHero(activeHero.getUuid());
+        int usedArmorSlots = getUsedItemTypeCountForHero(activeHero.getUuid(), com.alkateca.lendasdapoeira.enums.ItemType.ARMADURA);
+        int usedShieldSlots = getUsedItemTypeCountForHero(activeHero.getUuid(), com.alkateca.lendasdapoeira.enums.ItemType.ESCUDO);
+
+        for (Card card : cardsToPlay) {
+            if (!isCardCompatibleForPlay(player, activeHero, card)) {
+                System.out.println("🚨 [ANTI-CHEAT] Jogador " + player.getUuid() + " tentou jogar carta incompatível ("
+                        + card.getCardName() + ") com o Herói/Equipe (" + activeHero.getCardName() + ").");
+                throw new IllegalArgumentException("A carta '" + card.getCardName()
+                        + "' é incompatível com os pré-requisitos do Herói/Equipe.");
+            }
+
+            if (card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM
+                    || card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMA
+                    || card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMADURA
+                    || card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ESCUDO) {
+
+                if (card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMA) {
+                    int requiredSlots = Math.max(1, card.getEmpunhadura());
+                    if (usedWeaponSlots + requiredSlots > effectiveMaxWeaponSlots) {
+                        System.out.println("🚨 [ANTI-CHEAT] Jogador " + player.getUuid()
+                                + " excedeu limite de empunhadura em " + activeHero.getCardName()
+                                + " ao tentar jogar " + card.getCardName()
+                                + " (usado=" + usedWeaponSlots + ", requerido=" + requiredSlots + ", máx=" + effectiveMaxWeaponSlots + ").");
+                        throw new IllegalArgumentException("Limite de empunhadura excedido para " + activeHero.getCardName()
+                                + " ao jogar '" + card.getCardName() + "' (ocupado: " + usedWeaponSlots
+                                + "/" + effectiveMaxWeaponSlots + ", requerido: " + requiredSlots + ").");
+                    }
+                    usedWeaponSlots += requiredSlots;
+                } else if (card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMADURA) {
+                    if (usedArmorSlots + 1 > 1) {
+                        System.out.println("🚨 [ANTI-CHEAT] Jogador " + player.getUuid()
+                                + " tentou equipar múltiplas Armaduras em " + activeHero.getCardName() + ".");
+                        throw new IllegalArgumentException("O Herói ativo já possui uma Armadura equipada.");
+                    }
+                    usedArmorSlots++;
+                } else if (card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ESCUDO) {
+                    if (usedShieldSlots + 1 > 1) {
+                        System.out.println("🚨 [ANTI-CHEAT] Jogador " + player.getUuid()
+                                + " tentou equipar múltiplos Escudos em " + activeHero.getCardName() + ".");
+                        throw new IllegalArgumentException("O Herói ativo já possui um Escudo equipado.");
+                    }
+                    usedShieldSlots++;
+                }
+            }
+        }
+    }
+
+    private static String normalizeTraitToken(String input) {
+        if (input == null) return "";
+        String decomposed = java.text.Normalizer.normalize(input, java.text.Normalizer.Form.NFD);
+        return decomposed.replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .replace('_', ' ')
+                .toUpperCase(Locale.ROOT)
+                .trim();
     }
 
     private HeroCard getActiveHero(Player player, UUID heroId) {
@@ -806,12 +1090,12 @@ public class GameEngine {
         if (this.turnPhase != TurnPhase.CHOICE) {
             throw new IllegalStateException("Ação inválida fora da fase CHOICE.");
         }
+        Player activePlayer = getValidatedParticipant(playerId);
         if (!playerId.equals(this.gameState.getActiveTurnPlayerId())) {
             throw new IllegalStateException("Apenas o jogador ativo do turno pode escolher os Heróis.");
         }
 
         boolean isP1 = playerId.equals(player1.getUuid());
-        Player activePlayer = isP1 ? player1 : player2;
         Player opponentPlayer = isP1 ? player2 : player1;
 
         HeroCard ownHero = getActiveHero(activePlayer, ownHeroId);
@@ -849,25 +1133,91 @@ public class GameEngine {
         if (this.turnPhase != TurnPhase.PREPARATION) {
             throw new IllegalStateException("Ação inválida fora da fase PREPARATION.");
         }
+        if (isWaitingForPlayerChoice()) {
+            throw new IllegalStateException("Não é possível confirmar a preparação enquanto há uma escolha pendente.");
+        }
 
+        Player player = getValidatedParticipant(playerId);
         boolean isP1 = playerId.equals(player1.getUuid());
-        Player player = isP1 ? player1 : player2;
-        List<Card> targetPlayedList = isP1 ? gameState.getPlayer1PlayedCards() : gameState.getPlayer2PlayedCards();
 
-        targetPlayedList.clear();
+        if ((isP1 && this.isPlayer1Ready) || (!isP1 && this.isPlayer2Ready)) {
+            throw new IllegalStateException("Jogador já confirmou a preparação neste turno.");
+        }
 
-        if (playedCardUuids != null) {
-            for (UUID cardId : playedCardUuids) {
-                Card cardInHand = player.getCurrentDeck().getCardList().stream()
-                        .filter(c -> c.getUuid().equals(cardId) && c.getZoneId() == ZoneId.HAND)
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalArgumentException("Carta não encontrada na mão: " + cardId));
+        UUID activeHeroId = isP1 ? gameState.getActiveHeroPlayer1Id() : gameState.getActiveHeroPlayer2Id();
+        HeroCard activeHero = getActiveHero(player, activeHeroId);
+        if (activeHero == null || !Boolean.TRUE.equals(activeHero.getEstaVivo()) || activeHero.getZoneId() != ZoneId.BATTLE) {
+            throw new IllegalStateException("Herói ativo em combate inválido ou não encontrado para o jogador.");
+        }
 
-                cardInHand.setZoneId(ZoneId.RESOLVE);
-                targetPlayedList.add(cardInHand);
+        List<Card> validatedCardsToPlay = new ArrayList<>();
+
+        if (playedCardUuids != null && !playedCardUuids.isEmpty()) {
+            int maxAllowedCards = getMaxPreparationCardsForPlayer(playerId);
+            if (playedCardUuids.size() > maxAllowedCards) {
+                System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " tentou jogar "
+                        + playedCardUuids.size() + " cartas na preparação (limite do turno: " + maxAllowedCards + ").");
+                throw new IllegalArgumentException("Limite de cartas por turno excedido: máximo permitido é "
+                        + maxAllowedCards + ", enviado: " + playedCardUuids.size());
             }
-            incrementCardsPlayed(playerId, targetPlayedList.size());
-            for (Card playedCard : targetPlayedList) {
+
+            List<Card> deckCards = (player.getCurrentDeck() != null && player.getCurrentDeck().getCardList() != null)
+                    ? player.getCurrentDeck().getCardList()
+                    : Collections.emptyList();
+
+            Set<UUID> seenCardIds = new HashSet<>();
+
+            for (UUID cardId : playedCardUuids) {
+                if (cardId == null) {
+                    System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " enviou UUID de carta nulo na preparação.");
+                    throw new IllegalArgumentException("UUID de carta nulo não é permitido.");
+                }
+                if (!seenCardIds.add(cardId)) {
+                    System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " enviou UUID de carta duplicado na preparação: " + cardId);
+                    throw new IllegalArgumentException("Carta duplicada no mesmo envio de preparação: " + cardId);
+                }
+                if (invokedCardIdsInCurrentCombat.contains(cardId)) {
+                    System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " tentou reenviar carta já invocada: " + cardId);
+                    throw new IllegalArgumentException("Carta já foi invocada automaticamente neste combate: " + cardId);
+                }
+
+                Card cardInHand = deckCards.stream()
+                        .filter(c -> c != null && cardId.equals(c.getUuid()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (cardInHand == null) {
+                    System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " tentou jogar carta inexistente ou de outro jogador: " + cardId);
+                    throw new IllegalArgumentException("Carta não encontrada na mão: " + cardId);
+                }
+                if (cardInHand.getOwnerId() != null && !playerId.equals(cardInHand.getOwnerId())) {
+                    System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " tentou jogar carta pertencente a outro jogador: " + cardId);
+                    throw new IllegalArgumentException("Carta não pertence ao jogador: " + cardId);
+                }
+                if (cardInHand.getZoneId() != ZoneId.HAND) {
+                    System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " tentou jogar carta fora da mão (Zona atual: "
+                            + cardInHand.getZoneId() + "): " + cardId);
+                    throw new IllegalArgumentException("Carta não encontrada na mão (Zona atual: " + cardInHand.getZoneId() + "): " + cardId);
+                }
+
+                validatedCardsToPlay.add(cardInHand);
+            }
+
+            validateCardsPlayableInPreparation(player, activeHero, validatedCardsToPlay);
+        }
+
+        List<Card> targetPlayedList = isP1 ? gameState.getPlayer1PlayedCards() : gameState.getPlayer2PlayedCards();
+        // Preserva na pilha apenas cartas que tenham sido inseridas por INVOCAR nesta fase, removendo seleções manuais anteriores se houver
+        targetPlayedList.removeIf(c -> c == null || c.getUuid() == null || !invokedCardIdsInCurrentCombat.contains(c.getUuid()));
+
+        for (Card cardToPlay : validatedCardsToPlay) {
+            cardToPlay.setZoneId(ZoneId.RESOLVE);
+            targetPlayedList.add(cardToPlay);
+        }
+
+        if (!validatedCardsToPlay.isEmpty()) {
+            incrementCardsPlayed(playerId, validatedCardsToPlay.size());
+            for (Card playedCard : validatedCardsToPlay) {
                 trackCardPlayedMissions(playerId, playedCard);
             }
         }
@@ -1489,6 +1839,7 @@ public class GameEngine {
             throw new IllegalStateException("Ação inválida fora da fase DISCARD.");
         }
 
+        Player player = getValidatedParticipant(playerId);
         boolean isP1 = playerId.equals(player1.getUuid());
 
         // Evita duplo envio do mesmo jogador
@@ -1496,14 +1847,40 @@ public class GameEngine {
             return;
         }
 
-        Player player = isP1 ? player1 : player2;
+        List<Card> validatedCardsToDiscard = new ArrayList<>();
+        if (discardCardUuids != null && !discardCardUuids.isEmpty()) {
+            List<Card> deckCards = (player.getCurrentDeck() != null && player.getCurrentDeck().getCardList() != null)
+                    ? player.getCurrentDeck().getCardList()
+                    : Collections.emptyList();
+            Set<UUID> seenDiscardIds = new HashSet<>();
+
+            for (UUID cardId : discardCardUuids) {
+                if (cardId == null) {
+                    System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " enviou UUID de carta nulo no descarte.");
+                    throw new IllegalArgumentException("UUID de carta nulo não é permitido no descarte.");
+                }
+                if (!seenDiscardIds.add(cardId)) {
+                    System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " enviou UUID de carta duplicado no descarte: " + cardId);
+                    throw new IllegalArgumentException("Carta duplicada na lista de descarte: " + cardId);
+                }
+
+                Card cardInHand = deckCards.stream()
+                        .filter(c -> c != null && cardId.equals(c.getUuid()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (cardInHand == null || cardInHand.getZoneId() != ZoneId.HAND) {
+                    System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " tentou descartar carta que não está na mão: " + cardId);
+                    throw new IllegalArgumentException("Carta inválida ou não está na mão para descarte: " + cardId);
+                }
+
+                validatedCardsToDiscard.add(cardInHand);
+            }
+        }
 
         if (discardCardUuids != null) {
-            for (UUID cardId : discardCardUuids) {
-                player.getCurrentDeck().getCardList().stream()
-                        .filter(c -> c.getUuid().equals(cardId) && c.getZoneId() == ZoneId.HAND)
-                        .findFirst()
-                        .ifPresent(card -> card.setZoneId(ZoneId.DISCARD));
+            for (Card card : validatedCardsToDiscard) {
+                card.setZoneId(ZoneId.DISCARD);
             }
             triggerDiscardPhaseEffects();
             resolutionQueue.resolveAll(this);
@@ -1943,9 +2320,15 @@ public class GameEngine {
             throw new IllegalStateException("Não há nenhuma escolha pendente neste momento.");
         }
 
+        getValidatedParticipant(playerId);
+
         MatchSnapshotDTO.PendingChoiceDTO choice = this.gameState.getPendingChoice();
         if (!playerId.equals(choice.getChoosingPlayerId())) {
             throw new IllegalStateException("Apenas o jogador dono do efeito pode realizar esta escolha.");
+        }
+
+        if (selectedTargetUuid == null && !choice.isCanSkip()) {
+            throw new IllegalArgumentException("Esta escolha é obrigatória e não pode ser pulada.");
         }
 
         if (selectedTargetUuid != null && !choice.getValidTargetUuids().contains(selectedTargetUuid)) {
