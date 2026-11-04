@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
+import { API_BASE_URL } from '../config/apiConfig.js';
 
 export default class LoginScene extends Phaser.Scene {
     constructor() {
@@ -61,7 +62,7 @@ export default class LoginScene extends Phaser.Scene {
         }
 
         try {
-            const response = await fetch('http://localhost:8080/api/players/login', {
+            const response = await fetch(`${API_BASE_URL}/api/players/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nick })

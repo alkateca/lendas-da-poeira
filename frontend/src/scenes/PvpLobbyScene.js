@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import DeckRestrictionValidator from '../managers/DeckRestrictionValidator.js';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
+import { API_BASE_URL } from '../config/apiConfig.js';
 
 export default class PvpLobbyScene extends Phaser.Scene {
     constructor() {
@@ -138,7 +139,7 @@ export default class PvpLobbyScene extends Phaser.Scene {
 
     async enterLobbyOnServer() {
         try {
-            const res = await fetch('http://localhost:8080/api/lobby/join', {
+            const res = await fetch(`${API_BASE_URL}/api/lobby/join`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -160,7 +161,7 @@ export default class PvpLobbyScene extends Phaser.Scene {
     async pollLobbyState() {
         if (this.isTransitioning) return;
         try {
-            const res = await fetch(`http://localhost:8080/api/lobby/state?playerId=${this.player.uuid}`);
+            const res = await fetch(`${API_BASE_URL}/api/lobby/state?playerId=${this.player.uuid}`);
             if (!res.ok) return;
             const state = await res.json();
             this.applyLobbyState(state);
@@ -323,7 +324,7 @@ export default class PvpLobbyScene extends Phaser.Scene {
     async onSendChallengeClicked(targetPlayerId, targetPlayerName) {
         try {
             this.statusText.setText(`📨 Enviando convite de duelo para ${targetPlayerName}...`).setColor('#38bdf8');
-            const res = await fetch('http://localhost:8080/api/lobby/challenge', {
+            const res = await fetch(`${API_BASE_URL}/api/lobby/challenge`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -346,7 +347,7 @@ export default class PvpLobbyScene extends Phaser.Scene {
         if (this.isTransitioning) return;
         try {
             this.statusText.setText('⚔️ Aceitando desafio e preparando a arena...').setColor('#ffd700');
-            const res = await fetch(`http://localhost:8080/api/lobby/challenge/${challengeId}/accept`, {
+            const res = await fetch(`${API_BASE_URL}/api/lobby/challenge/${challengeId}/accept`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -372,7 +373,7 @@ export default class PvpLobbyScene extends Phaser.Scene {
     async onCancelChallengeClicked(challengeId) {
         if (!challengeId) return;
         try {
-            await fetch(`http://localhost:8080/api/lobby/challenge/${challengeId}/cancel?playerId=${this.player.uuid}`, {
+            await fetch(`${API_BASE_URL}/api/lobby/challenge/${challengeId}/cancel?playerId=${this.player.uuid}`, {
                 method: 'POST'
             });
             await this.pollLobbyState();
@@ -387,7 +388,7 @@ export default class PvpLobbyScene extends Phaser.Scene {
         if (!this.isInQueue) {
             this.statusText.setText('🔍 Buscando oponente na fila de pareamento automático...').setColor('#fbbf24');
             try {
-                const res = await fetch('http://localhost:8080/api/matchmaking/join', {
+                const res = await fetch(`${API_BASE_URL}/api/matchmaking/join`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -412,7 +413,7 @@ export default class PvpLobbyScene extends Phaser.Scene {
             }
         } else {
             try {
-                await fetch(`http://localhost:8080/api/matchmaking/leave?playerId=${this.player.uuid}`, {
+                await fetch(`${API_BASE_URL}/api/matchmaking/leave?playerId=${this.player.uuid}`, {
                     method: 'POST'
                 });
                 this.isInQueue = false;
@@ -439,7 +440,7 @@ export default class PvpLobbyScene extends Phaser.Scene {
         this.isTransitioning = true;
         this.cleanupTimers();
         try {
-            await fetch(`http://localhost:8080/api/lobby/leave?playerId=${this.player.uuid}`, {
+            await fetch(`${API_BASE_URL}/api/lobby/leave?playerId=${this.player.uuid}`, {
                 method: 'POST'
             });
         } catch (e) {

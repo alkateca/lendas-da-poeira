@@ -16,7 +16,7 @@ import java.util.*;
 @Setter
 public class GameEngine {
 
-    private GameState gameState;
+    private GameState gameState = new GameState();
     private Player player1;
     private Player player2;
     private List<Card> cardsOnBoard;
@@ -795,8 +795,12 @@ public class GameEngine {
     public int getUsedWeaponSlotsForHero(UUID heroId) {
         if (heroId == null) return 0;
         List<Card> allCards = new ArrayList<>();
-        allCards.addAll(player1.getCurrentDeck().getCardList());
-        allCards.addAll(player2.getCurrentDeck().getCardList());
+        if (player1 != null && player1.getCurrentDeck() != null && player1.getCurrentDeck().getCardList() != null) {
+            allCards.addAll(player1.getCurrentDeck().getCardList());
+        }
+        if (player2 != null && player2.getCurrentDeck() != null && player2.getCurrentDeck().getCardList() != null) {
+            allCards.addAll(player2.getCurrentDeck().getCardList());
+        }
 
         return allCards.stream()
                 .filter(c -> c.getZoneId() == ZoneId.ATTACHED
@@ -1126,6 +1130,15 @@ public class GameEngine {
         choice(); // Avança para TurnPhase.PREPARATION e tira a foto
     }
 
+    public String getHeroPlayRestrictionReason(HeroCard hero, Card card) {
+        return com.alkateca.lendasdapoeira.service.DeckValidatorService.getHeroPlayRestrictionReason(hero, card);
+    }
+
+    public boolean canHeroPlayCard(HeroCard hero, Card card) {
+        if (hero == null || card == null) return false;
+        return getHeroPlayRestrictionReason(hero, card) == null;
+    }
+
     /**
      * 2. Executado quando cada jogador clica no Botão Principal na TurnPhase.PREPARATION
      */
@@ -1200,6 +1213,13 @@ public class GameEngine {
                     throw new IllegalArgumentException("Carta não encontrada na mão (Zona atual: " + cardInHand.getZoneId() + "): " + cardId);
                 }
 
+                if (activeHero != null) {
+                    String restrictionReason = getHeroPlayRestrictionReason(activeHero, cardInHand);
+                    if (restrictionReason != null) {
+                        throw new IllegalArgumentException(restrictionReason);
+                    }
+                }
+
                 validatedCardsToPlay.add(cardInHand);
             }
 
@@ -1220,6 +1240,8 @@ public class GameEngine {
             for (Card playedCard : validatedCardsToPlay) {
                 trackCardPlayedMissions(playerId, playedCard);
             }
+        } else {
+            targetPlayedList.clear();
         }
 
         if (isP1) {
@@ -2060,7 +2082,7 @@ public class GameEngine {
                 invokedCard.setCardType(com.alkateca.lendasdapoeira.enums.CardType.THEURGY);
                 if (invokedCard.getColor() == null) invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.YELLOW);
                 if (invokedCard.getOrdem() == null || invokedCard.getOrdem().isEmpty()) {
-                    invokedCard.setOrdem(new ArrayList<>(List.of(com.alkateca.lendasdapoeira.enums.Ordem.GUARDAO_DO_TRONO)));
+                    invokedCard.setOrdem(new ArrayList<>(List.of(com.alkateca.lendasdapoeira.enums.Ordem.GUARDIAO_DO_TRONO)));
                 }
                 if (invokedCard.getDescricao() == null) {
                     invokedCard.setDescricao("Guardião do Trono\nSeu Herói Recebe +2 de Ataque até o Final do Combate.\nSeus Transformadores Recebem +1 de Ataque até o Final da Partida.");

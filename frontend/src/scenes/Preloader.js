@@ -39,6 +39,7 @@ export class Preloader extends Scene
         // Sobrescreve também as chaves de molduras de carta caso queira que os prefabs usem o SVG direto:
         this.load.svg('card_frame_hero', 'images/ui/card_frame_hero.svg', { width: 280, height: 380 });
         this.load.svg('card_frame_playable', 'images/ui/card_frame_playable.svg', { width: 280, height: 380 });
+        this.load.svg('card_frame_item', 'images/ui/card_frame_item.svg', { width: 280, height: 380 });
 
         if (!this.textures.exists('vga_chains_overlay')) {
             this.load.svg('vga_chains_overlay', 'images/ui/vga_chains_overlay.svg', { width: 280, height: 380 });
@@ -46,6 +47,63 @@ export class Preloader extends Scene
         if (!this.textures.exists('vga_chain_link_shard')) {
             this.load.svg('vga_chain_link_shard', 'images/ui/vga_chain_link_shard.svg', { width: 48, height: 48 });
         }
+
+        const cardKeys = [
+            'ataqueMagico', 'atmosferaPesada', 'autoDefesaMagica', 'banir', 'barreiraDeGelo',
+            'bolaDeFogo', 'brocheCristal', 'convocacao', 'determinacaoCristalina', 'dragaoCristal',
+            'dragast', 'estatica', 'exumacao', 'fragmentoAfiado', 'garraEspectral',
+            'golpesPesados', 'grandeMachadoSombrio', 'homunculoCarniceiro', 'laminaDeCristal',
+            'maestriaComChamas', 'massacreCristalino', 'mirarNaCabeca', 'paraRaios', 'pontoFinal',
+            'quebra', 'quimera', 'quimeraNegra', 'racaoDeEmergencia', 'rapieiraDeCristal',
+            'risadaSarcastica', 'ritosFunebres', 'tristeza', 'vendavalArcano'
+        ];
+        cardKeys.forEach(key => {
+            if (!this.textures.exists(key)) {
+                this.load.image(key, `images/cartas/${key}.png`);
+            }
+        });
+
+        const cardArtFiles = {
+            'Ataque Mágico': 'ataqueMagico.png',
+            'Atmosfera Pesada': 'atmosferaPesada.png',
+            'Auto Defesa Magica': 'autoDefesaMagica.png',
+            'Banir!': 'banir.png',
+            'Barreira de Gelo': 'barreiraDeGelo.png',
+            'Bola de fogo': 'bolaDeFogo.png',
+            'Bola de Fogo': 'bolaDeFogo.png',
+            'Broche de Cristal': 'brocheCristal.png',
+            'Convocação': 'convocacao.png',
+            'Determinação Cristalina': 'determinacaoCristalina.png',
+            'Dragão de Cristal': 'dragaoCristal.png',
+            'Dragast': 'dragast.png',
+            'Estatica': 'estatica.png',
+            'Exumação': 'exumacao.png',
+            'Fragmento Afiado': 'fragmentoAfiado.png',
+            'Garra espectral': 'garraEspectral.png',
+            'Golpes Pesados': 'golpesPesados.png',
+            'Grande Machado Sombrio': 'grandeMachadoSombrio.png',
+            'Homunculo Carniceiro': 'homunculoCarniceiro.png',
+            'Lamina de Cristal': 'laminaDeCristal.png',
+            'Maestria com Chamas': 'maestriaComChamas.png',
+            'Massacre Cristalino': 'massacreCristalino.png',
+            'Mirar na cabeça': 'mirarNaCabeca.png',
+            'Para-raios': 'paraRaios.png',
+            'Ponto Final': 'pontoFinal.png',
+            'Quebra!': 'quebra.png',
+            'Quimera': 'quimera.png',
+            'Quimera Negra': 'quimeraNegra.png',
+            'Ração de emergencia': 'racaoDeEmergencia.png',
+            'Rapieira de Cristal': 'rapieiraDeCristal.png',
+            'Risada Sarcástica': 'risadaSarcastica.png',
+            'Ritos Fúnebres': 'ritosFunebres.png',
+            'Tristeza': 'tristeza.png',
+            'Vendaval Arcano': 'vendavalArcano.png'
+        };
+        Object.entries(cardArtFiles).forEach(([cardName, fileName]) => {
+            if (!this.textures.exists(cardName)) {
+                this.load.image(cardName, `images/cartas/${fileName}`);
+            }
+        });
     }
 
     create ()

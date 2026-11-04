@@ -38,12 +38,12 @@ class AuthoritativeServerAntiCheatTest {
         heroP1.setOrdem(new ArrayList<>(List.of(Ordem.CAVALEIRO)));
         heroP1.setAfinidades(new ArrayList<>(List.of(Afinidade.CRISTAL)));
         heroP1.setClasse(new ArrayList<>(List.of(Classe.TRANSFORMADOR)));
-        heroP1.setRacas(new ArrayList<>(List.of(Raca.HUMANO)));
+        heroP1.setRacas(new ArrayList<>());
 
         heroP2 = createHero(player2.getUuid(), "Xamã das cinzas", Colors.RED, 3, 2, 2, 20, 2);
         heroP2.setAfinidades(new ArrayList<>(List.of(Afinidade.FOGO)));
         heroP2.setClasse(new ArrayList<>(List.of(Classe.EMISSOR)));
-        heroP2.setRacas(new ArrayList<>(List.of(Raca.HUMANO)));
+        heroP2.setRacas(new ArrayList<>());
 
         List<Card> p1Cards = new ArrayList<>();
         List<Card> p2Cards = new ArrayList<>();
@@ -306,7 +306,7 @@ class AuthoritativeServerAntiCheatTest {
         illegalClassCard.setZoneId(ZoneId.HAND);
 
         Card illegalOrderCard = createActionCard(player1.getUuid(), "Decreto do Trono", Colors.BLUE);
-        illegalOrderCard.setOrdem(new ArrayList<>(List.of(Ordem.GUARDAO_DO_TRONO)));
+        illegalOrderCard.setOrdem(new ArrayList<>(List.of(Ordem.GUARDIAO_DO_TRONO)));
         illegalOrderCard.setZoneId(ZoneId.HAND);
 
         player1.getCurrentDeck().getCardList().addAll(List.of(illegalRedFireCard, illegalClassCard, illegalOrderCard));

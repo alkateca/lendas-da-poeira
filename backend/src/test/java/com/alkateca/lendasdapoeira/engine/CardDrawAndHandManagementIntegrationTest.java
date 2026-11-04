@@ -5,6 +5,7 @@ import com.alkateca.lendasdapoeira.entity.Deck;
 import com.alkateca.lendasdapoeira.entity.HeroCard;
 import com.alkateca.lendasdapoeira.entity.Player;
 import com.alkateca.lendasdapoeira.enums.CardType;
+import com.alkateca.lendasdapoeira.enums.Classe;
 import com.alkateca.lendasdapoeira.enums.ItemType;
 import com.alkateca.lendasdapoeira.enums.TurnPhase;
 import com.alkateca.lendasdapoeira.enums.ZoneId;
@@ -39,6 +40,7 @@ class CardDrawAndHandManagementIntegrationTest {
             hero.setAtaque(5);
             hero.setDefesa(2);
             hero.setEspirito(2);
+            hero.setClasse(List.of(Classe.EMISSOR));
             hero.setEstaVivo(true);
             hero.setEstaAtivo(true);
             deck.getHeroList().add(hero);

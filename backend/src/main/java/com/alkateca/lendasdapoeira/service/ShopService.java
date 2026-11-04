@@ -124,14 +124,41 @@ public class ShopService {
         switch (product.getType()) {
             case BOOSTER -> {
                 openedCards = openBoosterService.openBoosterForPlayer(player, product);
+                List<String> cardNames = openedCards.stream()
+                        .map(RevealedCardDTO::getCardName)
+                        .toList();
+                player.recordPurchase(new Player.PurchaseHistoryEntry(
+                        UUID.randomUUID(),
+                        System.currentTimeMillis(),
+                        "BOOSTER",
+                        product.getName(),
+                        product.getPrice(),
+                        cardNames
+                ));
                 message = "Booster aberto com sucesso! " + openedCards.size() + " cartas adicionadas à sua coleção.";
             }
             case DECK -> {
                 unlockedDeck = grantStructuredDeckToPlayer(player, product);
+                player.recordPurchase(new Player.PurchaseHistoryEntry(
+                        UUID.randomUUID(),
+                        System.currentTimeMillis(),
+                        "DECK",
+                        unlockedDeck.getDeckName(),
+                        product.getPrice(),
+                        List.of()
+                ));
                 message = "Deck Estruturado '" + unlockedDeck.getDeckName() + "' e todas as suas cartas foram adicionados à sua coleção!";
             }
             case ITEM -> {
                 player.addItemToCollection(product.getId(), 1);
+                player.recordPurchase(new Player.PurchaseHistoryEntry(
+                        UUID.randomUUID(),
+                        System.currentTimeMillis(),
+                        "ITEM",
+                        product.getName(),
+                        product.getPrice(),
+                        List.of()
+                ));
                 message = "Item '" + product.getName() + "' adquirido com sucesso!";
             }
             default -> throw new IllegalStateException("Tipo de produto não suportado: " + product.getType());

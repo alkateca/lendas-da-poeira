@@ -101,12 +101,12 @@ public class MatchController {
     }
 
     @PostMapping("/matches/{matchId}/confirm-action")
-    public ResponseEntity<MatchTimelineResponseDTO> confirmAction(
+    public ResponseEntity<?> confirmAction(
             @PathVariable UUID matchId,
             @RequestBody PlayerActionRequestDTO request) {
         try {
             if (request.getMatchId() != null && !matchId.equals(request.getMatchId())) {
-                return ResponseEntity.badRequest().build();
+                return ResponseEntity.badRequest().body(java.util.Map.of("error", "MatchId divergente na requisição."));
             }
             if (matchmakingService.findMatch(matchId).isEmpty()) {
                 return ResponseEntity.notFound().build();
@@ -115,7 +115,7 @@ public class MatchController {
             MatchTimelineResponseDTO timeline = matchmakingService.processPlayerAction(matchId, request);
             return ResponseEntity.ok(timeline);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage() != null ? e.getMessage() : "Jogada inválida."));
         }
     }
 
@@ -273,7 +273,10 @@ public class MatchController {
             }
         }
 
-        if (deck == null) {
+        if (deck == null && presetDeckService != null) {
+            deck = presetDeckService.createDefaultDeck();
+        }
+        if (deck == null || deck.getHeroList() == null || deck.getHeroList().isEmpty()) {
             deck = createDefaultDeckFromJsonOrFallback();
         }
 
@@ -414,6 +417,16 @@ public class MatchController {
             if (savedPlayer.getDecks() != null) {
                 matchPlayer.setDecks(new ArrayList<>(savedPlayer.getDecks()));
             }
+            if (savedPlayer.getPurchaseHistory() != null) {
+                matchPlayer.setPurchaseHistory(new ArrayList<>(savedPlayer.getPurchaseHistory()));
+            }
+            if (savedPlayer.getMatchHistory() != null) {
+                matchPlayer.setMatchHistory(new ArrayList<>(savedPlayer.getMatchHistory()));
+            }
+        } else if (playerStorageService != null
+                && !com.alkateca.lendasdapoeira.service.PresetDeckService.PLAYER_1_UUID.equals(finalPlayerId)
+                && !com.alkateca.lendasdapoeira.service.PresetDeckService.PLAYER_2_UUID.equals(finalPlayerId)) {
+            playerStorageService.saveOrUpdatePlayer(matchPlayer);
         }
         return matchPlayer;
     }

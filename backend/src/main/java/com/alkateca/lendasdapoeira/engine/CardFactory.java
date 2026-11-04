@@ -15,6 +15,7 @@ import com.alkateca.lendasdapoeira.effects.startOfCombat.*;
 import com.alkateca.lendasdapoeira.effects.gameStart.*;
 import java.util.Arrays;
 
+import com.alkateca.lendasdapoeira.enums.CardType;
 import com.alkateca.lendasdapoeira.enums.Classe;
 import com.alkateca.lendasdapoeira.enums.ItemType;
 import com.alkateca.lendasdapoeira.entity.Card;
@@ -161,7 +162,7 @@ public class CardFactory {
                 effects.add(new StartOfCombatDoubleAttackByVulnerabilityEffect(5));
                 break;
             case "Oráculo Real":
-                effects.add(new AuraRaceBuffEffect(Raca.GUARDIOES_DO_TRONO, 0, 2, 1));
+                effects.add(new AuraRaceBuffEffect(Ordem.GUARDIAO_DO_TRONO, 0, 2, 1));
                 effects.add(new StartOfCombatInvokeCardEffect("Fortaleça sua Fé"));
                 break;
             case "Portador da Chama":
@@ -318,6 +319,111 @@ public class CardFactory {
                 effects.add(new StartOfCombatBuffIfEnemyHigherMaxHpEffect(2, 2));
                 break;
 
+            case "Bolsa de Armadilhas do Mestre Caçador":
+                effects.add(new EquipBuffEffect(0, 2, 2, 0));
+                effects.add(new StartOfCombatPlayNextCardByTypeEffect(ItemType.FERRAMENTA));
+                effects.add(new PlayNextCardByTypeEffect(ItemType.FERRAMENTA));
+                effects.add(new EndOfCombatAttachToAnotherActiveAllyHeroEffect());
+                break;
+            case "Rede de Contenção de Feras":
+                effects.add(new StartOfCombatDebuffEnemyStatsEffect(0, 2, 0, 0));
+                effects.add(new OnPlayItemTypeBuffEffect(ItemType.FERRAMENTA, 0, 1, 1, true));
+                break;
+            case "Escamas do Dragão Eterno":
+                effects.add(new EquipBuffEffect(2, 0, 3, 0));
+                effects.add(new StartOfCombatInvokeCardEffect("Bola de fogo"));
+                effects.add(new EndOfCombatHealIfEnemyTookMagicDamageEffect(3));
+                break;
+            case "Bastão do Monge Incandescente":
+                effects.add(new EquipBonusDamageEffect(2));
+                break;
+            case "Incensário Purificador":
+                effects.add(new EquipBuffEffect(1, 0, 1, 0));
+                effects.add(new OnPlaySpellHealHeroEffect(2));
+                break;
+            case "Baluarte de Espelhos do Dragão":
+                effects.add(new EquipBuffEffect(0, 0, 1, 0));
+                effects.add(new PlayInvokeSpellFromDiscardByAffinityEffect("Cristal"));
+                effects.add(new EndOfCombatReturnSpellFromDiscardToDeckByAffinityEffect(1, "Cristal"));
+                break;
+            case "Placas de Cristal Draconiano":
+                effects.add(new EquipBuffEffect(0, 0, 2, 0));
+                effects.add(new StartOfCombatBuffPerDeadAllyHeroEffect(1, 2, 0));
+                break;
+            case "Coração de Cristal Puro":
+                effects.add(new AuraAlliesBonusDamageEffect(2));
+                effects.add(new AuraAlliesBuffEffect(0, 0, 2));
+                break;
+            case "Filactéria das Areias Negras":
+                effects.add(new EquipBuffEffect(2, 0, 2, 0));
+                effects.add(new EndOfCombatDrainPerZombieAllyEffect(1, 1));
+                break;
+            case "Amuleto de Ossos da Fábrica":
+                effects.add(new EquipBuffEffect(1, 1, 0, 0));
+                effects.add(new StartOfCombatZombieBuffEffect(0, 1, 0));
+                break;
+            case "Manto de Ferro do Algoz":
+                effects.add(new EquipBuffEffect(0, 0, 1, 0));
+                effects.add(new StartOfCombatBuffDefenseIfEnemyWoundedEffect(2));
+                effects.add(new EndOfCombatHealIfEnemyDefeatedEffect(4));
+                break;
+            case "Correntes do Cadafalso":
+                effects.add(new StartOfCombatBuffAttackIfEnemyWoundedEffect(2));
+                effects.add(new EndOfCombatDirectDamageIfEnemyWoundedEffect(2));
+                break;
+            case "Tomo das Sentenças Antigas":
+                effects.add(new EquipBuffEffect(1, 0, 1, 0));
+                effects.add(new StartOfCombatAddCardToEnemyDeckEffect("Tristeza"));
+                break;
+            case "Alabarda Cerimonial do Trono":
+                effects.add(new EquipBuffEffect(1, 1, 0, 0));
+                effects.add(new EndOfCombatHealEffect(2));
+                break;
+            case "Glaive da Guarda Eterna":
+                effects.add(new EquipBuffEffect(0, 2, 0, 0));
+                effects.add(new PlayWeaponFromHandEffect(1));
+                break;
+            case "Manto Cerimonial do Trono":
+                effects.add(new EquipBuffEffect(0, 0, 1, 0));
+                effects.add(new StartOfCombatHealHeroEffect(3));
+                effects.add(new EndOfCombatTutorTheurgyFromDiscardToHandEffect());
+                break;
+            case "Escudo da Devoção Cega":
+                effects.add(new EquipBuffEffect(0, 0, 1, 0));
+                effects.add(new StartOfCombatHealPerEquippedWeaponEffect(2));
+                break;
+            case "Baluarte da Tundra Ancestral":
+                effects.add(new EquipBuffEffect(0, 0, 3, 0));
+                effects.add(new EquipDamageReductionEffect(1));
+                effects.add(new StartOfCombatEnemyVulnerabilityEffect(1));
+                break;
+            case "Couraça da Tundra Profunda":
+                effects.add(new EquipBuffEffect(0, 0, 2, 0));
+                effects.add(new StartOfCombatBuffDefensePerEnemyVulnerabilityEffect(2, 1));
+                effects.add(new EndOfCombatHealEffect(2));
+                break;
+            case "Garras Congeladas":
+                effects.add(new EquipBuffEffect(0, 2, 1, 0));
+                effects.add(new StartOfCombatBuffAttackIfEnemyHasVulnerabilityEffect(2));
+                break;
+            case "Núcleo de Invenções do Rei Goblin":
+                effects.add(new EquipBuffEffect(1, 1, 0, 0));
+                effects.add(new EndOfCombatHealEffect(2));
+                effects.add(new AuraOnPlayCardBuffAlliesTemporaryEffect(0, 1, 1));
+                break;
+            case "Bateria de Cristal de Poeira":
+                effects.add(new EquipBuffEffect(1, 0, 1, 0));
+                effects.add(new OnPlaySpellPlayActionFromHandEffect());
+                break;
+            case "Chave Mecânica de Precisão":
+                effects.add(new EquipBuffEffect(0, 2, 1, 0));
+                effects.add(new EndOfCombatHealIfPlayedCardTypeEffect(CardType.ACTION, 2));
+                break;
+            case "Engrenagem de Ressonância":
+                effects.add(new EquipBuffEffect(1, 1, 0, 0));
+                effects.add(new OnPlayItemBuffAttachedHeroPermanentEffect(0, 1, 0));
+                break;
+
             // ==========================================
             // FEITIÇOS (Spells)
             // ==========================================
@@ -381,6 +487,43 @@ public class CardFactory {
                 break;
             case "Cauterizar":
                 effects.add(new PlaySpellHealBySpiritEffect());
+                break;
+
+            case "Fogo Purificador":
+                effects.add(new PlaySpellMagicDamagePlusSpiritEffect(4));
+                effects.add(new PlaySpellConditionalDebuffByEnemyRaceEffect(Raca.CONSTRUCTO, 2, 2));
+                break;
+            case "Manto das Brasas Vivas":
+                effects.add(new AuraAlliesBuffEffect(1, 0, 1));
+                break;
+            case "Voto dos Cavaleiros Caídos":
+                effects.add(new PlaySpellBuffEffect(0, 2, 0));
+                effects.add(new PlaySpellBuffAndHealIfDeadAllyHeroEffect(3, 3));
+                break;
+            case "Dança das Mil Lâminas":
+                effects.add(new PlaySpellSetEnemySpiritExactEffect(1));
+                effects.add(new MagicDamageEffect(4));
+                effects.add(new EndOfCombatMagicDamageEffect(3));
+                break;
+            case "Peste das Areias Negras":
+                effects.add(new PlaySpellMagicDamagePlusSpiritEffect(2));
+                effects.add(new PlaySpellDirectDamagePerLivingZombieAllyEffect(2));
+                break;
+            case "Uivo da Matilha Gélida":
+                effects.add(new PlaySpellMagicDamagePlusSpiritEffect(1));
+                effects.add(new PlaySpellEnemyVulnerabilityEffect(1));
+                break;
+            case "Descarga de Poeira Elétrica":
+                effects.add(new PlaySpellMagicDamagePlusSpiritEffect(4));
+                effects.add(new PlaySpellPlayItemFromHandIfRaceEffect(Raca.GOBLIN));
+                break;
+            case "Circuito de Sobrecarga":
+                effects.add(new PlaySpellMagicDamagePlusSpiritEffect(4));
+                effects.add(new EndOfCombatDirectDamageIfPlayedCardsThresholdEffect(3, 2));
+                break;
+            case "Campo de Força de Cristal":
+                effects.add(new EquipGlobalBuffEffect(1, 0, 2));
+                effects.add(new StartOfCombatAlliesBuffAttackEffect(1));
                 break;
 
             // ==========================================
@@ -457,6 +600,38 @@ public class CardFactory {
                 effects.add(new PlayActionEnemyVulnerabilityIfWoundedEffect(2));
                 break;
 
+            case "Meditação das Cinzas":
+                effects.add(new PlaySpellBuffEffect(1, 0, 1));
+                effects.add(new PlaySpellInvokeCardEffect("Bola de fogo"));
+                break;
+            case "Pilhagem de Cadáveres":
+                effects.add(new PlayActionBuffPerDeadHeroInMatchEffect(1, 1));
+                effects.add(new PlayFromDiscardEffect());
+                break;
+            case "Veredito Inquisitorial":
+                effects.add(new PlayActionDirectDamageAndVulnerabilityIfEnemyHigherCurrentHpEffect(3, 1));
+                break;
+            case "Fervor Penitencial":
+                effects.add(new PlayActionSelfDirectDamageEffect(3));
+                effects.add(new PlaySpellBuffEffect(0, 5, 0));
+                break;
+            case "Chamado do Domador":
+                effects.add(new PlayActionRaceBuffTemporaryEffect(Raca.CONSTRUCTO, 0, 2, 1));
+                effects.add(new PlayActionHealAlliesEffect(2));
+                break;
+            case "Engenharia Rápida":
+                effects.add(new PlaySpellBuffEffect(0, 0, 2));
+                effects.add(new PlayActionPlayItemFromHandEffect());
+                break;
+            case "Recalibração de Energia":
+                effects.add(new PlaySpellBuffEffect(1, 1, 0));
+                effects.add(new PlayActionPlaySpellFromHandEffect());
+                break;
+            case "Conferência dos Sábios Goblins":
+                effects.add(new PlayActionAlliesBuffTemporaryEffect(1, 1, 1));
+                effects.add(new PlayActionHealAlliesIfHeroActiveEffect("Rei Goblin", 3));
+                break;
+
             // ==========================================
             // TEURGIAS (Theurgies)
             // ==========================================
@@ -489,6 +664,19 @@ public class CardFactory {
             case "Interdito Sagrado":
                 effects.add(new PlayZeroEnemyBonusDamageEffect());
                 effects.add(new PlayDebuffEnemyAttackIfWeaponEquippedEffect(2));
+                break;
+
+            case "Decreto de Excomunhão":
+                effects.add(new PlaySpellMagicDamagePlusSpiritEffect(3));
+                effects.add(new PlaySpellChooseAndDiscardEnemyItemEffect());
+                break;
+            case "Liturgia da Balança":
+                effects.add(new PlayTheurgyHealHeroEffect(4));
+                effects.add(new PlayTheurgyEqualizeEnemyAttackIfHigherEffect());
+                break;
+            case "Bênção do Rei Imóvel":
+                effects.add(new PlayTheurgyHealHeroEffect(3));
+                effects.add(new AuraEnemyDirectDamageOnOpponentPlayCardEffect(1));
                 break;
 
             // ==========================================

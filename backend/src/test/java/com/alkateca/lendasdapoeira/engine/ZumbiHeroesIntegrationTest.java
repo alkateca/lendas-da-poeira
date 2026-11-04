@@ -5,7 +5,7 @@ import com.alkateca.lendasdapoeira.entity.HeroCard;
 import com.alkateca.lendasdapoeira.entity.Player;
 import com.alkateca.lendasdapoeira.entity.Deck;
 import com.alkateca.lendasdapoeira.enums.TurnPhase;
-import com.alkateca.lendasdapoeira.enums.Raca;
+import com.alkateca.lendasdapoeira.enums.Ordem;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -88,7 +88,7 @@ class ZumbiHeroesIntegrationTest {
         p1Hero.setVidaMaxima(14);
         p1Hero.setVidaAtual(10);
         p1Hero.setEstaVivo(true);
-        p1Hero.setRacas(Arrays.asList(Raca.ZUMBI));
+        p1Hero.setOrdem(Arrays.asList(Ordem.ZUMBI));
         p1Hero.setCardName("Heroi Zumbi Ativo");
         deck1.getHeroList().add(p1Hero);
         gameState.setActiveHeroPlayer1Id(p1Hero.getUuid());
@@ -96,7 +96,7 @@ class ZumbiHeroesIntegrationTest {
         HeroCard p1Ally = new HeroCard();
         p1Ally.setUuid(UUID.randomUUID());
         p1Ally.setEstaVivo(true);
-        p1Ally.setRacas(Arrays.asList(Raca.ZUMBI));
+        p1Ally.setOrdem(Arrays.asList(Ordem.ZUMBI));
         p1Ally.setCardName("Aliado Zumbi Banco");
         deck1.getHeroList().add(p1Ally);
 

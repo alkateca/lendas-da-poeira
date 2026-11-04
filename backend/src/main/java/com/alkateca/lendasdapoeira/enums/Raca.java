@@ -3,14 +3,8 @@ package com.alkateca.lendasdapoeira.enums;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum Raca {
-    HUMANO("Humano"),
     GOBLIN("Goblin"),
-    CONSTRUCTO("Constructo"),
-    QUIMERA("Quimera"),
-    ZUMBI("Zumbi"),
-    CRISTAL("Cristal"),
-    CAVALEIRO("Cavaleiro"),
-    GUARDIOES_DO_TRONO("Guardiões do Trono");
+    CONSTRUCTO("Constructo");
 
     private final String nomeFormatado;
 
@@ -30,9 +24,6 @@ public enum Raca {
             if (r.nomeFormatado.equalsIgnoreCase(value) || r.name().equalsIgnoreCase(value)) {
                 return r;
             }
-        }
-        if ("Guardião do Trono".equalsIgnoreCase(value)) {
-            return GUARDIOES_DO_TRONO;
         }
         throw new IllegalArgumentException("Raça desconhecida: " + value);
     }

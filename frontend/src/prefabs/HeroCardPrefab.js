@@ -14,6 +14,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.dragStartPos = { x, y };
         this.prevDragX = x;
         this.isDragging = false;
+        this.isHovered = false;
         this.longHoverTimer = null;
 
         const { width, height } = BOARD_LAYOUT.MEDIUM_CARD; // 140 x 190
@@ -35,8 +36,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             .setStrokeStyle(3, teamColor);
 
         // 1. Arte do Herói na janela (x: 12..261, y: 41..192 -> centro 136.5, 116.5)
-        const artCenter = pos(137, 117);
-        const artW = width * (248 / 280);
+        const artCenter = pos(123, 117);
+        const artW = width * (218 / 280);
         const artH = height * (150 / 380);
 
         this.artSprite = null;
@@ -111,6 +112,12 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             wordWrap: { width: textMaxW }
         }).setOrigin(0, 0).setResolution(2);
 
+        this.modBonusText.setVisible(false);
+        this.modReducaoText.setVisible(false);
+        this.modVulnText.setVisible(false);
+        this.traitsText.setVisible(false);
+        this.descText.setVisible(false);
+
         // 6. Camadas de Cartas Anexadas (Traseira em repouso / Frontal em Hover)
         this.attachedBackLayer = scene.add.container(0, 0);
         this.attachedFrontLayer = scene.add.container(0, 0);
@@ -127,6 +134,21 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.atqBadge = this.createStatNumber(atqPt.x, atqPt.y, '12px', '#090d16');
         this.defBadge = this.createStatNumber(defPt.x, defPt.y, '12px', '#090d16');
         this.hpBadge  = this.createStatNumber(hpPt.x, hpPt.y, '13px', '#b91c1c');
+
+        this.phaseNodes = [0, 1, 2, 3].map(() => {
+            const nodeBg = scene.add.rectangle(0, 0, width * (22 / 280), height * (18 / 380), 0x111827, 1)
+                .setStrokeStyle(1.2, 0x475569);
+            const nodeTxt = scene.add.text(0, 0, '', {
+                fontFamily: 'IoskeleyMono, monospace',
+                fontSize: '7.5px',
+                color: '#475569',
+                fontStyle: 'bold'
+            }).setOrigin(0.5).setResolution(2);
+            return { bg: nodeBg, txt: nodeTxt };
+        });
+
+        const phaseElements = [];
+        this.phaseNodes.forEach(n => phaseElements.push(n.bg, n.txt));
 
         // 8. Ícones de Status (💤 e 💀)
         this.sleepStatusIcon = scene.add.text(0, -height * 0.12, '💤', { fontSize: '24px' }).setOrigin(0.5).setVisible(false);
@@ -145,6 +167,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             this.traitsText, this.descText,
             ...this.espBadge.elements, ...this.atqBadge.elements,
             ...this.defBadge.elements, ...this.hpBadge.elements,
+            ...phaseElements,
             this.sleepStatusIcon, this.deadOverlayBg, this.deadOverlayText,
             this.attachedFrontLayer // Fica NA FRENTE do Herói quando um anexo recebe hover
         ]);
@@ -153,6 +176,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.setInteractive({ draggable: true, useHandCursor: true });
 
         this.setupDragAndHoverEvents();
+        this.on('destroy', () => this.clearLongHoverTimer());
         this.updateFromSnapshot(heroDto);
         scene.add.existing(this);
     }
@@ -161,6 +185,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         if (!heroDto) return null;
         if (heroDto.imagem && this.scene.textures.exists(heroDto.imagem)) return heroDto.imagem;
         if (heroDto.cardName && this.scene.textures.exists(heroDto.cardName)) return heroDto.cardName;
+        const camelKey = PlayableCardPrefab.prototype.toCamelCaseKey(heroDto.cardName);
+        if (camelKey && this.scene.textures.exists(camelKey)) return camelKey;
         if (heroDto.uuid && this.scene.textures.exists(heroDto.uuid)) return heroDto.uuid;
         return null;
     }
@@ -197,8 +223,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
 
     getTargetPosture() {
         const inBattle = this.heroData.zoneId === 'BATTLE' ||
-                         this.scene.selectionManager.selectedOwnHeroId === this.uuid ||
-                         this.scene.selectionManager.selectedEnemyHeroId === this.uuid;
+                         this.scene.selectionManager?.selectedOwnHeroId === this.uuid ||
+                         this.scene.selectionManager?.selectedEnemyHeroId === this.uuid;
 
         if (this.heroData.estaVivo === false) {
             return { angle: 0, scaleX: 1.0, scaleY: 1.0 };
@@ -212,27 +238,31 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
     setupDragAndHoverEvents() {
         this.on('pointerover', () => {
             if (this.isDragging) return;
-            this.setDepth(45);
+            this.isHovered = true;
+            this.setDepth(95);
 
             if (this.heroData.estaVivo !== false) {
                 this.scene.tweens.killTweensOf(this);
                 this.scene.tweens.add({
                     targets: this,
-                    scaleX: 1.06,
-                    scaleY: 1.06,
-                    duration: 120
+                    angle: 0,
+                    scaleX: 1.14,
+                    scaleY: 1.14,
+                    duration: 140,
+                    ease: 'Back.easeOut'
                 });
             }
 
             this.clearLongHoverTimer();
-            this.longHoverTimer = this.scene.time.delayedCall(350, () => {
-                if (!this.isDragging) {
+            this.longHoverTimer = this.scene.time.delayedCall(180, () => {
+                if (!this.isDragging && this.isHovered) {
                     this.scene.showLargeCardPreview(this.heroData, true);
                 }
             });
         });
 
         this.on('pointerout', () => {
+            this.isHovered = false;
             this.clearLongHoverTimer();
             this.scene.hideLargeCardPreview();
             if (!this.isDragging) {
@@ -249,14 +279,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             }
         });
 
-        this.on('pointerup', () => {
-            if (this.isDragging) return;
-            if (!this.scene.canDragHero(this) && this.heroData?.attachedCards?.length > 0) {
-                this.scene.openAttachedCardsModal(this.heroData);
-            }
-        });
-
         this.on('dragstart', () => {
+            this.isHovered = false;
             this.clearLongHoverTimer();
             this.scene.hideLargeCardPreview();
             if (!this.scene.canDragHero(this)) return;
@@ -265,7 +289,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             this.prevDragX = this.x;
             this.scene.tweens.killTweensOf(this);
             this.setAngle(0);
-            this.setScale(1.08);
+            this.setScale(1.14);
             this.setDepth(100);
             this.scene.highlightTargetBattleSlot(this.isOpponent, true);
         });
@@ -311,13 +335,17 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         }
 
         const posture = this.getTargetPosture();
+        const targetScaleX = (this.isHovered && !this.isDragging) ? 1.14 : posture.scaleX;
+        const targetScaleY = (this.isHovered && !this.isDragging) ? 1.14 : posture.scaleY;
+        const targetAngle  = (this.isHovered && !this.isDragging) ? 0 : posture.angle;
+
         this.scene.tweens.add({
             targets: this,
             x: targetX,
             y: targetY,
-            angle: posture.angle,
-            scaleX: posture.scaleX,
-            scaleY: posture.scaleY,
+            angle: targetAngle,
+            scaleX: targetScaleX,
+            scaleY: targetScaleY,
             duration: 280,
             ease: 'Back.easeOut'
         });
@@ -334,18 +362,54 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         const prev = this.heroData || newHeroDto;
         this.heroData = newHeroDto;
 
-        this.nameText.setText(newHeroDto.cardName);
-        this.traitsText.setText(this.formatHeroTraits(newHeroDto));
+        const artKey = this.resolveHeroArtKey(newHeroDto);
+        if (artKey) {
+            const artCenterX = ((123 / 280) - 0.5) * this.cardW;
+            const artCenterY = ((117 / 380) - 0.5) * this.cardH;
+            const artW = this.cardW * (218 / 280);
+            const artH = this.cardH * (150 / 380);
+            if (!this.artSprite) {
+                this.artSprite = this.scene.add.image(artCenterX, artCenterY, artKey).setDisplaySize(artW, artH);
+                this.artSprite.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+                const frameIdx = this.getIndex(this.frameImage);
+                this.addAt(this.artSprite, frameIdx);
+            } else {
+                this.artSprite.setTexture(artKey).setPosition(artCenterX, artCenterY).setDisplaySize(artW, artH);
+            }
+            this.artSprite.setVisible(true);
+        } else if (this.artSprite) {
+            this.artSprite.setVisible(false);
+        }
 
-        const rawDesc = formatCardDescriptionWithKeywords(newHeroDto.descricao || '');
-        this.descText.setFontSize(rawDesc.length > 95 ? '7.2px' : '8px');
-        this.descText.setText(rawDesc);
+        this.nameText.setText(newHeroDto.cardName);
+        this.traitsText.setVisible(false);
+        this.descText.setVisible(false);
+        this.modBonusText.setVisible(false);
+        this.modReducaoText.setVisible(false);
+        this.modVulnText.setVisible(false);
         this.heroData.keywords = resolveCardKeywords(newHeroDto).map(k => k.id);
 
         this.espBadge.valueText.setText(`${newHeroDto.espirito}`);
         this.atqBadge.valueText.setText(`${newHeroDto.ataque}`);
         this.defBadge.valueText.setText(`${newHeroDto.defesa}`);
         this.hpBadge.valueText.setText(`${newHeroDto.vidaAtual}`);
+
+        const phaseStates = PlayableCardPrefab.resolveActivePhaseNodes(newHeroDto);
+        this.phaseNodes.forEach((node, idx) => {
+            const st = phaseStates[idx];
+            const pt = {
+                x: ((st.svgX / 280) - 0.5) * this.cardW,
+                y: ((st.svgY / 380) - 0.5) * this.cardH
+            };
+            node.bg
+                .setPosition(pt.x, pt.y)
+                .setFillStyle(st.active ? st.color : 0x111827, 1)
+                .setStrokeStyle(st.active ? 1.5 : 1, st.active ? 0xffffff : 0x475569);
+            node.txt
+                .setPosition(pt.x, pt.y)
+                .setText(st.icon)
+                .setColor(st.active ? st.textColor : '#475569');
+        });
 
         const bonus = newHeroDto.danoBonus ?? newHeroDto.DanoBonus ?? 0;
         const reducao = newHeroDto.reducaoDano ?? 0;
@@ -424,9 +488,9 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         const posture = this.getTargetPosture();
         this.scene.tweens.add({
             targets: this,
-            angle: posture.angle,
-            scaleX: posture.scaleX,
-            scaleY: posture.scaleY,
+            angle: (this.isHovered && !this.isDragging) ? 0 : posture.angle,
+            scaleX: (this.isHovered && !this.isDragging) ? 1.14 : posture.scaleX,
+            scaleY: (this.isHovered && !this.isDragging) ? 1.14 : posture.scaleY,
             duration: 320,
             ease: 'Power2'
         });
@@ -451,10 +515,11 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
 
     syncAttachedCardsVisuals(attachedCards = []) {
         this.attachedBackLayer.removeAll(true);
-        this.attachedFrontLayer.removeAll(true);
+        if (this.attachedFrontLayer) {
+            this.attachedFrontLayer.removeAll(true);
+        }
         this.attachedCardNodes = [];
 
-        // Filtra itens que ainda estão visualmente na fila de resolução (evita anexar antes do COMBAT_END)
         const snap = this.scene?.currentSnapshot;
         const inResolveUuids = new Set([
             ...(snap?.localPlayer?.playedCardsInResolve || []).map(c => c.uuid),
@@ -465,22 +530,26 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
 
         if (visibleAttached.length === 0) {
             this.knownAttachedUuids.clear();
+            if (this.input?.hitArea) {
+                this.input.hitArea.width = this.cardW;
+            }
             return;
         }
 
         const inBattle = this.heroData?.zoneId === 'BATTLE';
-        const count = visibleAttached.length;
+        const exactColWidth = Math.round(this.cardW * (58 / 280));
+        const stepX = inBattle ? exactColWidth : Math.round(exactColWidth * 0.85);
+        const baseY = 0;
+        const restScale = 1.0;
 
-        const maxSpreadX = inBattle ? 138 : 42;
-        const stepX = inBattle
-            ? Math.min(46, Math.max(24, Math.floor(maxSpreadX / count)))
-            : Math.min(20, Math.max(12, Math.floor(maxSpreadX / count)));
-        const baseY = inBattle ? 38 : 28;
-        const restScale = inBattle ? 0.92 : 0.84;
+        // Estende a área de hover do Herói para cobrir também as colunas das cartas anexadas à direita
+        if (this.input?.hitArea) {
+            this.input.hitArea.width = this.cardW + (visibleAttached.length * stepX);
+        }
 
         const currentUuids = new Set();
 
-        for (let i = visibleAttached.length - 1; i >= 0; i--) {
+        for (let i = 0; i < visibleAttached.length; i++) {
             const attDto = visibleAttached[i];
             if (attDto.uuid) currentUuids.add(attDto.uuid);
 
@@ -497,62 +566,11 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
                 0
             );
 
-            attCard.removeAllListeners('pointerover');
-            attCard.removeAllListeners('pointerout');
-            attCard.removeAllListeners('pointerdown');
-
-            attCard.on('pointerover', () => {
-                if (this.isDragging) return;
-                this.setDepth(95);
-                this.attachedFrontLayer.add(attCard);
-
-                this.scene.tweens.killTweensOf(attCard);
-                this.scene.tweens.add({
-                    targets: attCard,
-                    x: baseX,
-                    y: baseY - 58,
-                    scaleX: 1.08,
-                    scaleY: 1.08,
-                    duration: 140,
-                    ease: 'Back.easeOut'
-                });
-                attCard.bg.setStrokeStyle(3, 0xffe600);
-                this.scene.showLargeCardPreview(attDto, false);
-            });
-
-            attCard.on('pointerout', () => {
-                this.scene.hideLargeCardPreview();
-                if (!attCard.scene) return;
-
-                this.attachedBackLayer.add(attCard);
-                this.attachedCardNodes
-                    .slice()
-                    .reverse()
-                    .forEach(node => {
-                        if (node && node.parentContainer === this.attachedBackLayer) {
-                            this.attachedBackLayer.bringToTop(node);
-                        }
-                    });
-
-                this.scene.tweens.killTweensOf(attCard);
-                this.scene.tweens.add({
-                    targets: attCard,
-                    x: baseX,
-                    y: baseY,
-                    scaleX: restScale,
-                    scaleY: restScale,
-                    duration: 150,
-                    ease: 'Power2'
-                });
-                attCard.bg.setStrokeStyle(0, 0x000000);
-                if (!this.isDragging) this.setDepth(10);
-            });
-
-            attCard.on('pointerdown', () => {
-                if (this.scene && typeof this.scene.openAttachedCardsModal === 'function') {
-                    this.scene.openAttachedCardsModal(this.heroData);
-                }
-            });
+            // Desativa completamente a interatividade individual na mesa:
+            // a carta equipada NUNCA sobe nem rouba o hover do Herói
+            attCard.clearLongHoverTimer();
+            attCard.removeAllListeners();
+            attCard.disableInteractive();
 
             if (isNewlyEquipped && this.scene) {
                 const resolveSource = (this.scene.resolveCardPrefabs || []).find(c => c.uuid === attDto.uuid);
@@ -563,8 +581,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
 
                 attCard.setPosition(worldOriginX - this.x, worldOriginY - this.y);
                 attCard.setScale(1.0);
-                attCard.bg.setStrokeStyle(4, 0x55ffff);
-                this.attachedFrontLayer.add(attCard);
+                attCard.bg.setStrokeStyle(4, 0xffe600);
+                this.attachedBackLayer.add(attCard);
 
                 this.scene.tweens.add({
                     targets: attCard,
@@ -576,16 +594,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
                     ease: 'Back.easeInOut',
                     onComplete: () => {
                         if (!attCard.scene) return;
-                        attCard.bg.setStrokeStyle(0, 0x000000);
-                        this.attachedBackLayer.add(attCard);
-                        this.attachedCardNodes
-                            .slice()
-                            .reverse()
-                            .forEach(node => {
-                                if (node && node.parentContainer === this.attachedBackLayer) {
-                                    this.attachedBackLayer.bringToTop(node);
-                                }
-                            });
+                        const theme = getCardVisualTheme(attDto.color, attDto.rarity);
+                        attCard.bg.setStrokeStyle(2.5, theme.border);
                     }
                 });
             } else {
@@ -593,6 +603,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
                 this.attachedBackLayer.add(attCard);
             }
 
+            // Mantém a ordem da cascata: o 1º item fica logo atrás do Herói, o 2º atrás do 1º, etc.
+            this.attachedBackLayer.sendToBack(attCard);
             this.attachedCardNodes[i] = attCard;
         }
 

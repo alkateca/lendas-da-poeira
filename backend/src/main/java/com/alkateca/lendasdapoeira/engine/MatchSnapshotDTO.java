@@ -133,6 +133,10 @@ public class MatchSnapshotDTO {
         private int empunhadura;
         private String descricao;
         private String zoneId;
+        private List<String> racas = new ArrayList<>();
+        private List<String> afinidades = new ArrayList<>();
+        private List<String> ordem = new ArrayList<>();
+        private List<String> classe = new ArrayList<>();
         private boolean faceUp;
         private boolean liberationCard;
         private String missionType;
@@ -141,6 +145,15 @@ public class MatchSnapshotDTO {
         private String targetBaseHeroName;
         private String evolvesIntoHeroName;
         private List<String> keywords = new ArrayList<>();
+        private boolean equipable;
+        private int bonusEspirito;
+        private int bonusAtaque;
+        private int bonusDefesa;
+        private List<String> activePhaseKeys = new ArrayList<>();
+    }
+
+    public static CardSnapshotDTO toCardDTO(com.alkateca.lendasdapoeira.entity.Card card) {
+        return SnapshotFactory.toCardDTO(card);
     }
 
     @Data

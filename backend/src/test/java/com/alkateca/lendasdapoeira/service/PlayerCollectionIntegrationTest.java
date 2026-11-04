@@ -142,5 +142,63 @@ class PlayerCollectionIntegrationTest {
         assertEquals(1, afterMatch.getDecks().size(), "Os baralhos salvos NÃO podem ser apagados após a partida.");
         assertEquals("Deck Carrasco", afterMatch.getCurrentDeck().getDeckName(), "O currentDeck salvo NÃO pode ser sobrescrito pelo deck mutado de batalha.");
         assertNull(storageService.getPlayer(PresetDeckService.PLAYER_2_UUID), "O Bot NÃO deve ser salvo no banco de jogadores.");
+
+        // Assert Histórico de Partida (Issue #40)
+        assertNotNull(afterMatch.getMatchHistory());
+        assertEquals(1, afterMatch.getMatchHistory().size(), "O histórico de partidas deve registrar a partida finalizada.");
+        Player.MatchHistoryEntry matchEntry = afterMatch.getMatchHistory().get(0);
+        assertEquals("alka", matchEntry.getPlayerName());
+        assertEquals("\uD83E\uDD16 Bot - Teste", matchEntry.getOpponentName());
+        assertTrue(matchEntry.isVictory());
+        assertEquals("alka", matchEntry.getWinnerName());
+        assertTrue(matchEntry.getPlayerScore() > 0);
+        assertEquals(List.of("Chefe Carrasco"), matchEntry.getPlayerHeroes());
+        assertEquals(List.of("Bot Hero"), matchEntry.getOpponentHeroes());
+    }
+
+    @Test
+    void testPurchaseHistoryRecordsBoostersDecksAndSingleCards() {
+        PresetDeckService presetDeckService = new PresetDeckService();
+        OpenBoosterService openBoosterService = new OpenBoosterService();
+        openBoosterService.loadCatalog();
+        ShopService shopService = new ShopService(openBoosterService, presetDeckService);
+        PlayerStorageService storageService = new PlayerStorageService();
+        MarketplaceService marketplaceService = new MarketplaceService(storageService, shopService);
+
+        Player buyer = new Player(UUID.randomUUID(), "Comprador", null);
+        buyer.setGold(5000);
+        storageService.saveOrUpdatePlayer(buyer);
+
+        Player seller = new Player(UUID.randomUUID(), "Vendedor", null);
+        seller.setGold(1000);
+        seller.addCardToCollection("Bola de fogo", 2);
+        storageService.saveOrUpdatePlayer(seller);
+
+        // 1. Compra de Booster
+        shopService.purchaseProduct(buyer, "booster-base-5");
+        assertEquals(1, buyer.getPurchaseHistory().size());
+        Player.PurchaseHistoryEntry boosterEntry = buyer.getPurchaseHistory().get(0);
+        assertEquals("BOOSTER", boosterEntry.getPurchaseType());
+        assertEquals("Pacote das Areias (5 Cartas)", boosterEntry.getProductName());
+        assertEquals(5, boosterEntry.getBoosterCards().size());
+
+        // 2. Compra de Baralho Estruturado
+        shopService.purchaseProduct(buyer, "deck-preset-1");
+        assertEquals(2, buyer.getPurchaseHistory().size());
+        Player.PurchaseHistoryEntry deckEntry = buyer.getPurchaseHistory().get(0);
+        assertEquals("DECK", deckEntry.getPurchaseType());
+        assertEquals("Ordem do Cristal", deckEntry.getProductName());
+
+        // 3. Compra de Carta Avulsa no Mercado P2P
+        storageService.saveOrUpdatePlayer(buyer);
+        var listing = marketplaceService.createListing(seller.getUuid(), "Bola de fogo", false, 180, "idem-list-1");
+        marketplaceService.buyListing(buyer.getUuid(), listing.getId(), "idem-buy-1");
+
+        Player updatedBuyer = storageService.getPlayer(buyer.getUuid());
+        assertEquals(3, updatedBuyer.getPurchaseHistory().size());
+        Player.PurchaseHistoryEntry cardEntry = updatedBuyer.getPurchaseHistory().get(0);
+        assertEquals("SINGLE_CARD", cardEntry.getPurchaseType());
+        assertEquals("Bola de fogo", cardEntry.getProductName());
+        assertEquals(180, cardEntry.getPrice());
     }
 }

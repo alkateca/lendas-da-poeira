@@ -173,6 +173,20 @@ start_frontend() {
     cd "$ROOT_DIR" || exit 1
 }
 
+get_local_ip() {
+    local ip=""
+    if command -v ip >/dev/null 2>&1; then
+        ip=$(ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="src") print $(i+1); exit}')
+    fi
+    if [ -z "$ip" ] && command -v hostname >/dev/null 2>&1; then
+        ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+    fi
+    if [ -z "$ip" ]; then
+        ip="127.0.0.1"
+    fi
+    echo "$ip"
+}
+
 start_all() {
     echo -e "${BLUE}=== Iniciando Lendas da Poeira ===${NC}"
     start_backend
@@ -181,11 +195,16 @@ start_all() {
     echo -e "${YELLOW}Aguardando inicialização dos serviços...${NC}"
     sleep 3
 
+    local local_ip
+    local_ip=$(get_local_ip)
+
     echo ""
     echo -e "${GREEN}====================================================${NC}"
     echo -e "${GREEN}✓ Serviços iniciados em segundo plano!${NC}"
-    echo -e "  - ${BLUE}Frontend:${NC} http://localhost:${FRONTEND_PORT}"
-    echo -e "  - ${BLUE}Backend:${NC}  http://localhost:${BACKEND_PORT}"
+    echo -e "  - ${BLUE}Frontend (Local):${NC} http://localhost:${FRONTEND_PORT}"
+    echo -e "  - ${BLUE}Frontend (Rede):${NC}  http://${local_ip}:${FRONTEND_PORT}"
+    echo -e "  - ${BLUE}Backend (Local):${NC}  http://localhost:${BACKEND_PORT}"
+    echo -e "  - ${BLUE}Backend (Rede):${NC}   http://${local_ip}:${BACKEND_PORT}"
     echo -e "${GREEN}====================================================${NC}"
     echo ""
     echo -e "Comandos disponíveis:"
@@ -205,11 +224,13 @@ restart_all() {
 
 status_all() {
     echo -e "${BLUE}=== Status dos Serviços ===${NC}"
+    local local_ip
+    local_ip=$(get_local_ip)
     
     if is_backend_running; then
         local b_pid="N/A"
         [ -f "$BACKEND_PID_FILE" ] && b_pid=$(cat "$BACKEND_PID_FILE")
-        echo -e "Backend (Spring Boot):  ${GREEN}RODANDO${NC} (PID: $b_pid, Porta: $BACKEND_PORT)"
+        echo -e "Backend (Spring Boot):  ${GREEN}RODANDO${NC} (PID: $b_pid, Porta: $BACKEND_PORT -> http://${local_ip}:${BACKEND_PORT})"
     else
         echo -e "Backend (Spring Boot):  ${RED}PARADO${NC}"
     fi
@@ -217,7 +238,7 @@ status_all() {
     if is_frontend_running; then
         local f_pid="N/A"
         [ -f "$FRONTEND_PID_FILE" ] && f_pid=$(cat "$FRONTEND_PID_FILE")
-        echo -e "Frontend (Vite/Phaser): ${GREEN}RODANDO${NC} (PID: $f_pid, Porta: $FRONTEND_PORT)"
+        echo -e "Frontend (Vite/Phaser): ${GREEN}RODANDO${NC} (PID: $f_pid, Porta: $FRONTEND_PORT -> http://${local_ip}:${FRONTEND_PORT})"
     else
         echo -e "Frontend (Vite/Phaser): ${RED}PARADO${NC}"
     fi

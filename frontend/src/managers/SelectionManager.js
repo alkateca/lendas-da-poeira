@@ -1,3 +1,5 @@
+import DeckRestrictionValidator from './DeckRestrictionValidator.js';
+
 export default class SelectionManager {
     constructor(matchScene) {
         this.scene = matchScene;
@@ -69,6 +71,43 @@ export default class SelectionManager {
                 finalSlotIndex = allowedIndices[1];
             } else {
                 finalSlotIndex = freeRedSlot;
+            }
+        }
+
+        // Valida se o Herói ativo em combate cumpre os requisitos de classe, afinidade, ordem/raça e empunhadura
+        const snapshot = this.scene?.currentSnapshot;
+        const localPlayer = snapshot?.localPlayer || {};
+        const activeHero = (localPlayer.heroes || []).find(
+            h => h && (h.uuid === localPlayer.activeHeroId || h.zoneId === 'BATTLE')
+        );
+        const cardData = (localPlayer.hand || []).find(c => c && c.uuid === cardUuid);
+
+        if (activeHero && cardData) {
+            const playCheck = DeckRestrictionValidator.canHeroPlayCard(activeHero, cardData);
+            if (!playCheck.allowed) {
+                this.scene.showToast(`⚠️ ${playCheck.reason}!`);
+                return false;
+            }
+
+            if (String(cardData.itemType || '').toUpperCase() === 'ARMA') {
+                const maxWeaponSlots = activeHero.maxWeaponSlots ?? 2;
+                const attachedWeaponSlots = activeHero.usedWeaponSlots ?? 0;
+                let pendingWeaponSlots = 0;
+
+                for (const [existingUuid, slotIdx] of this.playedCardSlotMap.entries()) {
+                    if (existingUuid !== cardUuid && slotIdx !== finalSlotIndex) {
+                        const otherCard = (localPlayer.hand || []).find(c => c && c.uuid === existingUuid);
+                        if (otherCard && String(otherCard.itemType || '').toUpperCase() === 'ARMA') {
+                            pendingWeaponSlots += (otherCard.empunhadura || 0);
+                        }
+                    }
+                }
+
+                const candidateEmp = cardData.empunhadura || 0;
+                if (attachedWeaponSlots + pendingWeaponSlots + candidateEmp > maxWeaponSlots) {
+                    this.scene.showToast(`⚠️ Limite de empunhadura (${maxWeaponSlots}) excedido para ${activeHero.cardName}!`);
+                    return false;
+                }
             }
         }
 

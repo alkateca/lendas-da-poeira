@@ -2,7 +2,7 @@ export const BOARD_LAYOUT = {
     WIDTH: 1920,
     HEIGHT: 1080,
 
-    // 3 Níveis de Tamanho (LOD - Level of Detail) (+10% maiores)
+    // 3 Níveis de Tamanho (LOD - Level of Detail)
     COMPACT_CARD: { width: 121, height: 156 }, // Carta parada na mão (só imagem + título)
     MEDIUM_CARD:  { width: 150, height: 200 }, // Heróis no banco + Carta da mão em Hover Rápido (com texto)
     LARGE_CARD:   { width: 308, height: 418 }, // Carta em Hover Longo (surge sobre o Botão Principal)
@@ -72,7 +72,7 @@ export const BOARD_LAYOUT = {
         OPPONENT: { x: 310, y: 275, width: 530, height: 300 },
         LOCAL:    { x: 310, y: 805, width: 530, height: 300 }
     },
-
+    
     OPPONENT_BENCH_SLOTS: [
         { x: 138, y: 285 },
         { x: 310, y: 285 },

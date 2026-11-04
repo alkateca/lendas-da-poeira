@@ -105,12 +105,22 @@ public class EquipBuffEffect implements Effect {
 
         // Validação de Empunhadura (game_architecture.md Seção 2): Apenas para ARMA
         if (sourceCard.getItemType() == ItemType.ARMA && sourceCard.getEmpunhadura() > 0) {
+            UUID previousAttachedId = sourceCard.getAttachedToCardId();
+            ZoneId previousZoneId = sourceCard.getZoneId();
+
+            // Desvincula temporariamente a própria carta para não contá-la duas vezes no cálculo de slots
+            sourceCard.setAttachedToCardId(null);
             int currentUsedSlots = gameEngine.getUsedWeaponSlotsForHero(targetHero.getUuid());
-            if (currentUsedSlots + sourceCard.getEmpunhadura() > targetHero.getMaxWeaponSlots()) {
-                sourceCard.setAttachedToCardId(null);
-                System.out.println("-> Falha ao equipar " + sourceCard.getCardName() + ": Slots de arma insuficientes em " + targetHero.getCardName());
+
+            int maxSlots = targetHero.getMaxWeaponSlots() > 0 ? targetHero.getMaxWeaponSlots() : 2;
+            if (currentUsedSlots + sourceCard.getEmpunhadura() > maxSlots) {
+                sourceCard.setZoneId(previousZoneId);
+                System.out.println("-> Falha ao equipar " + sourceCard.getCardName() +
+                        ": Slots de arma insuficientes em " + targetHero.getCardName() +
+                        " (Usados: " + currentUsedSlots + ", Arma: " + sourceCard.getEmpunhadura() + ", Max: " + maxSlots + ")");
                 return;
             }
+            sourceCard.setAttachedToCardId(previousAttachedId);
         }
 
         // Registra o vínculo de anexo e a duração na carta

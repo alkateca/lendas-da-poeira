@@ -282,6 +282,18 @@ public class SnapshotFactory {
         dto.setEmpunhadura(card.getEmpunhadura());
         dto.setDescricao(card.getDescricao());
         dto.setZoneId(card.getZoneId() != null ? card.getZoneId().name() : "DECK");
+        if (card.getRacas() != null) {
+            dto.setRacas(card.getRacas().stream().map(Enum::name).collect(Collectors.toList()));
+        }
+        if (card.getAfinidades() != null) {
+            dto.setAfinidades(card.getAfinidades().stream().map(Enum::name).collect(Collectors.toList()));
+        }
+        if (card.getOrdem() != null) {
+            dto.setOrdem(card.getOrdem().stream().map(Enum::name).collect(Collectors.toList()));
+        }
+        if (card.getClasse() != null) {
+            dto.setClasse(card.getClasse().stream().map(Enum::name).collect(Collectors.toList()));
+        }
         dto.setFaceUp(true);
         dto.setLiberationCard(card.isLiberationCard());
         dto.setMissionType(card.getMissionType());
@@ -292,6 +304,11 @@ public class SnapshotFactory {
         dto.setKeywords(card.getKeywords() != null && !card.getKeywords().isEmpty()
                 ? new ArrayList<>(card.getKeywords())
                 : KeywordExtractor.extract(card));
+        dto.setEquipable(card.isEquipable());
+        dto.setBonusEspirito(card.getBonusEspirito());
+        dto.setBonusAtaque(card.getBonusAtaque());
+        dto.setBonusDefesa(card.getBonusDefesa());
+        dto.setActivePhaseKeys(card.getActivePhaseKeys());
         return dto;
     }
 
@@ -383,7 +400,17 @@ public class SnapshotFactory {
             cardCopy.setDescricao(showFace ? c.getDescricao() : "");
             cardCopy.setRarity(showFace ? c.getRarity() : null);
             cardCopy.setCardSet(showFace ? c.getCardSet() : null);
+            cardCopy.setLiberationCard(showFace && c.isLiberationCard());
+            cardCopy.setRacas(showFace && c.getRacas() != null ? new ArrayList<>(c.getRacas()) : List.of());
+            cardCopy.setAfinidades(showFace && c.getAfinidades() != null ? new ArrayList<>(c.getAfinidades()) : List.of());
+            cardCopy.setOrdem(showFace && c.getOrdem() != null ? new ArrayList<>(c.getOrdem()) : List.of());
+            cardCopy.setClasse(showFace && c.getClasse() != null ? new ArrayList<>(c.getClasse()) : List.of());
             cardCopy.setKeywords(showFace && c.getKeywords() != null ? new ArrayList<>(c.getKeywords()) : List.of());
+            cardCopy.setEquipable(showFace && c.isEquipable());
+            cardCopy.setBonusEspirito(showFace ? c.getBonusEspirito() : 0);
+            cardCopy.setBonusAtaque(showFace ? c.getBonusAtaque() : 0);
+            cardCopy.setBonusDefesa(showFace ? c.getBonusDefesa() : 0);
+            cardCopy.setActivePhaseKeys(showFace && c.getActivePhaseKeys() != null ? new ArrayList<>(c.getActivePhaseKeys()) : List.of());
             return cardCopy;
         }).collect(Collectors.toList()));
 

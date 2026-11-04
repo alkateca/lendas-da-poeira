@@ -8,6 +8,7 @@ import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 import PhantomUIKit from '../ui/PhantomUIKit.js';
 import MatchRecapSidebar from '../ui/MatchRecapSidebar.js';
 import { formatCardDescriptionWithKeywords } from '../config/keywordsConfig.js';
+import { API_BASE_URL } from '../config/apiConfig.js';
 
 export default class MatchScene extends Phaser.Scene {
     constructor() {
@@ -64,6 +65,9 @@ export default class MatchScene extends Phaser.Scene {
         }
         if (!this.textures.exists('card_frame_playable')) {
             this.load.svg('card_frame_playable', 'images/ui/card_frame_playable.svg', { width: 280, height: 380 });
+        }
+        if (!this.textures.exists('card_frame_item')) {
+            this.load.svg('card_frame_item', 'images/ui/card_frame_item.svg', { width: 280, height: 380 });
         }
         if (!this.textures.exists('ui_hud_panel_light')) {
             this.load.svg('ui_hud_panel_light', 'images/ui/ui_hud_panel_light.svg', { width: 360, height: 80 });
@@ -735,7 +739,7 @@ export default class MatchScene extends Phaser.Scene {
 
         const sinceSeq = this.snapshotPlayer.lastPlayedSequence || this.currentSnapshot.snapshotSequence || 0;
         try {
-            const response = await fetch(`http://localhost:8080/api/matches/${this.matchId}/timeout`, {
+            const response = await fetch(`${API_BASE_URL}/api/matches/${this.matchId}/timeout`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -842,8 +846,14 @@ export default class MatchScene extends Phaser.Scene {
     }
 
     createLargeHoverPreviewPanel() {
-        const { x, y } = BOARD_LAYOUT.PILES.LARGE_PREVIEW;
+        const rawPos = BOARD_LAYOUT.PILES.LARGE_PREVIEW;
+        // Garante margem na esquerda para comportar a carta 22% maior sem cortar na borda
+        const x = Math.max(205, rawPos.x);
+        const y = rawPos.y;
         const { width, height } = BOARD_LAYOUT.LARGE_CARD; // 280 x 380
+
+        this.INSPECT_PREVIEW_SCALE = 1.22;
+        this.hoveredPreviewState = null;
 
         const pos = (svgX, svgY) => ({
             x: ((svgX / 280) - 0.5) * width,
@@ -852,14 +862,15 @@ export default class MatchScene extends Phaser.Scene {
 
         this.largePreviewContainer = this.add.container(x, y).setDepth(190).setVisible(false);
 
+        // Container dedicado para exibir as cartas anexadas lado a lado à direita do Herói no hover
+        this.attachedPreviewContainer = this.add.container(0, 0).setDepth(191).setVisible(false);
+
         this.lpShadow = this.add.rectangle(8, 10, width, height, 0x000000, 0.65);
 
-        // Janela de arte (SVG x: 12..261, y: 41..192 -> centro 137, 117)
         const artCenter = pos(137, 117);
         const artW = width * (248 / 280);
         const artH = height * (150 / 380);
 
-        // Fundo creme suave quando não há imagem (em vez de bloco colorido forte)
         this.lpArtBox = this.add.rectangle(artCenter.x, artCenter.y, artW, artH, 0xd6cbb5, 1);
         this.lpArtLabel = this.add.text(artCenter.x, artCenter.y, 'ILUSTRAÇÃO', {
             fontFamily: 'IoskeleyMono, monospace',
@@ -879,7 +890,6 @@ export default class MatchScene extends Phaser.Scene {
             0xffffff
         );
 
-        // 1. Título no Topo (SVG X=132, Y=21)
         const titlePt = pos(132, 21);
         this.lpTitle = this.add.text(titlePt.x, titlePt.y, '', {
             fontFamily: 'IoskeleyMono, monospace',
@@ -890,7 +900,6 @@ export default class MatchScene extends Phaser.Scene {
             wordWrap: { width: width * 0.82 }
         }).setOrigin(0.5).setResolution(2);
 
-        // 2. Modificadores de Dano nas 3 Casas (SVG Y=174 | X=186, 220, 254)
         const mod1 = pos(186, 174);
         const mod2 = pos(220, 174);
         const mod3 = pos(254, 174);
@@ -907,7 +916,6 @@ export default class MatchScene extends Phaser.Scene {
             fontFamily: 'IoskeleyMono, monospace', fontSize: '18px', color: '#7e22ce', fontStyle: 'bold'
         }).setOrigin(0.5).setResolution(2);
 
-        // 3. Os 4 Atributos Verticais na Coluna Direita (SVG X=264 | Y=224, 267, 310, 353)
         const espPt = pos(264, 224);
         const atqPt = pos(264, 267);
         const defPt = pos(264, 310);
@@ -930,7 +938,6 @@ export default class MatchScene extends Phaser.Scene {
             color: '#b91c1c'
         }).setOrigin(1, 0.5).setResolution(2);
 
-        // 4. Caixa de Texto Inferior Esquerda
         this.lpTypeLine = this.add.text(0, 0, '', {
             fontFamily: 'IoskeleyMono, monospace',
             fontSize: '12px',
@@ -950,6 +957,22 @@ export default class MatchScene extends Phaser.Scene {
             wordWrap: { width: width * (194 / 280) }
         }).setOrigin(0, 0).setResolution(2);
 
+        this.lpPhaseNodes = [0, 1, 2, 3].map(() => {
+            const bg = this.add.rectangle(0, 0, width * (22 / 280), height * (18 / 380), 0x111827, 1)
+                .setStrokeStyle(1.5, 0x475569)
+                .setVisible(false);
+            const txt = this.add.text(0, 0, '', {
+                fontFamily: 'IoskeleyMono, monospace',
+                fontSize: '13px',
+                color: '#475569',
+                fontStyle: 'bold'
+            }).setOrigin(0.5).setResolution(2).setVisible(false);
+            return { bg, txt };
+        });
+
+        const lpPhaseElements = [];
+        this.lpPhaseNodes.forEach(n => lpPhaseElements.push(n.bg, n.txt));
+
         this.largePreviewContainer.add([
             this.lpShadow,
             this.lpArtBox,
@@ -965,7 +988,8 @@ export default class MatchScene extends Phaser.Scene {
             this.lpStatDef,
             this.lpStatHp,
             this.lpTypeLine,
-            this.lpDesc
+            this.lpDesc,
+            ...lpPhaseElements
         ]);
     }
 
@@ -992,16 +1016,62 @@ export default class MatchScene extends Phaser.Scene {
         return traits.join(' - ');
     }
 
-    showLargeCardPreview(cardOrHeroDto, isHero = false) {
+    showLargeCardPreview(cardOrHeroDto, isHero = false, isRefresh = false) {
         if (!cardOrHeroDto) return;
         const { width, height } = BOARD_LAYOUT.LARGE_CARD;
+        const targetScale = this.INSPECT_PREVIEW_SCALE || 1.22;
+
+        this.hoveredPreviewState = {
+            uuid: cardOrHeroDto.uuid || null,
+            cardName: cardOrHeroDto.cardName || cardOrHeroDto.nome || '',
+            isHero: Boolean(isHero),
+            lastDto: cardOrHeroDto
+        };
 
         const pos = (svgX, svgY) => ({
             x: ((svgX / 280) - 0.5) * width,
             y: ((svgY / 380) - 0.5) * height
         });
 
-        const frameKey = isHero ? 'card_frame_hero' : 'card_frame_playable';
+        const isItem = !isHero && (
+            cardOrHeroDto.cardType === 'ITEM' ||
+            (cardOrHeroDto.itemType && cardOrHeroDto.itemType !== 'NENHUM') ||
+            cardOrHeroDto.cardName === 'Alma em Chamas'
+        );
+
+        const hasPhaseTrack = isHero || isItem;
+        const artCenter = pos(hasPhaseTrack ? 123 : 137, 117);
+        const artW = width * ((hasPhaseTrack ? 218 : 248) / 280);
+        const artH = height * (150 / 380);
+        this.lpArtBox.setPosition(artCenter.x, artCenter.y).setSize(artW, artH);
+        this.lpArtLabel.setPosition(artCenter.x, artCenter.y);
+
+        if (hasPhaseTrack && this.lpPhaseNodes) {
+            const phaseStates = PlayableCardPrefab.resolveActivePhaseNodes(cardOrHeroDto);
+            this.lpPhaseNodes.forEach((node, idx) => {
+                const st = phaseStates[idx];
+                const pt = pos(st.svgX, st.svgY);
+                node.bg
+                    .setPosition(pt.x, pt.y)
+                    .setFillStyle(st.active ? st.color : 0x111827, 1)
+                    .setStrokeStyle(st.active ? 2 : 1.5, st.active ? 0xffffff : 0x475569)
+                    .setVisible(true);
+                node.txt
+                    .setPosition(pt.x, pt.y)
+                    .setText(st.icon)
+                    .setColor(st.active ? st.textColor : '#475569')
+                    .setVisible(true);
+            });
+        } else if (this.lpPhaseNodes) {
+            this.lpPhaseNodes.forEach(node => {
+                node.bg.setVisible(false);
+                node.txt.setVisible(false);
+            });
+        }
+
+        const frameKey = isHero
+            ? 'card_frame_hero'
+            : ((isItem && this.textures.exists('card_frame_item')) ? 'card_frame_item' : 'card_frame_playable');
         if (this.textures.exists(frameKey)) {
             this.lpFrame.setTexture(frameKey).setDisplaySize(width, height);
         }
@@ -1015,20 +1085,15 @@ export default class MatchScene extends Phaser.Scene {
         if (isHero) {
             this.lpArtLabel.setText('⚔ ARTE DO HERÓI');
 
-            const bonus = cardOrHeroDto.danoBonus ?? cardOrHeroDto.DanoBonus ?? 0;
-            const reducao = cardOrHeroDto.reducaoDano ?? 0;
-            const vulnerabilidade = cardOrHeroDto.vulnerabilidade ?? 0;
+            this.lpModBonus.setVisible(false);
+            this.lpModReducao.setVisible(false);
+            this.lpModVulnerabilidade.setVisible(false);
 
-            this.lpModBonus.setText(String(bonus)).setVisible(true);
-            this.lpModReducao.setText(String(reducao)).setVisible(true);
-            this.lpModVulnerabilidade.setText(String(vulnerabilidade)).setVisible(true);
+            this.lpStatEsp.setText(String(cardOrHeroDto.espirito ?? 0)).setStyle({ color: '#090d16' }).setVisible(true);
+            this.lpStatAtq.setText(String(cardOrHeroDto.ataque ?? 0)).setStyle({ color: '#090d16' }).setVisible(true);
+            this.lpStatDef.setText(String(cardOrHeroDto.defesa ?? 0)).setStyle({ color: '#090d16' }).setVisible(true);
+            this.lpStatHp.setText(String(cardOrHeroDto.vidaAtual ?? cardOrHeroDto.vidaMaxima ?? 0)).setStyle({ color: '#b91c1c' }).setVisible(true);
 
-            this.lpStatEsp.setText(String(cardOrHeroDto.espirito ?? 0)).setVisible(true);
-            this.lpStatAtq.setText(String(cardOrHeroDto.ataque ?? 0)).setVisible(true);
-            this.lpStatDef.setText(String(cardOrHeroDto.defesa ?? 0)).setVisible(true);
-            this.lpStatHp.setText(String(cardOrHeroDto.vidaAtual ?? cardOrHeroDto.vidaMaxima ?? 0)).setVisible(true);
-
-            // Faixa de Atributos no topo da caixa esquerda (SVG X=14, Y=201)
             const traitsPt = pos(14, 201);
             const linhaAtributos = this.formatHeroTraitsLine(cardOrHeroDto);
             this.lpTypeLine
@@ -1044,14 +1109,9 @@ export default class MatchScene extends Phaser.Scene {
                 })
                 .setText(linhaAtributos);
 
-            // Descrição logo abaixo da divisória da caixa (SVG X=14, Y=238)
+            // Descrição limpa do Herói (as cartas equipadas já aparecem abertas ao lado no attachedPreviewContainer)
             const descPt = pos(14, 238);
-            let fullDesc = formatCardDescriptionWithKeywords(cardOrHeroDto.descricao || '');
-            const attached = cardOrHeroDto.attachedCards || [];
-            if (attached.length > 0) {
-                const itemsList = attached.map(it => `🗡️ ${it.cardName}`).join('\n');
-                fullDesc += (fullDesc ? '\n\n' : '') + itemsList;
-            }
+            const fullDesc = formatCardDescriptionWithKeywords(cardOrHeroDto.descricao || '');
 
             this.lpDesc
                 .setOrigin(0, 0)
@@ -1067,8 +1127,51 @@ export default class MatchScene extends Phaser.Scene {
                 })
                 .setText(fullDesc);
 
+        } else if (isItem) {
+            this.lpModBonus.setVisible(false);
+            this.lpModReducao.setVisible(false);
+            this.lpModVulnerabilidade.setVisible(false);
+
+            const stats = PlayableCardPrefab.extractItemStatBonuses(cardOrHeroDto);
+            this.lpStatEsp.setText(stats.esp > 0 ? ('+' + stats.esp) : '-').setStyle({ color: '#6b21a8' }).setVisible(true);
+            this.lpStatAtq.setText(stats.atq > 0 ? ('+' + stats.atq) : '-').setStyle({ color: '#991b1b' }).setVisible(true);
+            this.lpStatDef.setText(stats.def > 0 ? ('+' + stats.def) : '-').setStyle({ color: '#0369a1' }).setVisible(true);
+            this.lpStatHp.setText(String(stats.emp || 0)).setStyle({ color: '#fde047' }).setVisible(true);
+
+            const subType = (cardOrHeroDto.itemType && cardOrHeroDto.itemType !== 'NENHUM')
+                ? (' • ' + cardOrHeroDto.itemType)
+                : '';
+            this.lpArtLabel.setText('✦ ARTE (' + (cardOrHeroDto.cardType || 'ITEM') + ')');
+
+            const typePt = pos(110, 214);
+            this.lpTypeLine
+                .setOrigin(0.5, 0.5)
+                .setPosition(typePt.x, typePt.y)
+                .setStyle({
+                    fontFamily: 'IoskeleyMono, monospace',
+                    fontSize: '12px',
+                    color: '#4a3520',
+                    fontStyle: 'bold',
+                    align: 'center',
+                    wordWrap: { width: width * (192 / 280) }
+                })
+                .setText((cardOrHeroDto.cardType || 'ITEM') + subType);
+
+            const descPt = pos(14, 236);
+            this.lpDesc
+                .setOrigin(0, 0)
+                .setPosition(descPt.x, descPt.y)
+                .setStyle({
+                    fontFamily: 'IoskeleyMono, monospace',
+                    fontSize: '13px',
+                    color: '#090d16',
+                    fontStyle: 'bold',
+                    align: 'left',
+                    lineSpacing: 3,
+                    wordWrap: { width: width * (192 / 280) }
+                })
+                .setText(stats.cleanDesc || formatCardDescriptionWithKeywords(cardOrHeroDto.descricao || ''));
         } else {
-            // Carta Jogável (Magia, Item, Ação, Teurgia)
             this.lpModBonus.setVisible(false);
             this.lpModReducao.setVisible(false);
             this.lpModVulnerabilidade.setVisible(false);
@@ -1086,7 +1189,6 @@ export default class MatchScene extends Phaser.Scene {
 
             this.lpArtLabel.setText(`✦ ARTE (${cardOrHeroDto.cardType})`);
 
-            // Faixa amarela centralizada em SVG X=138, Y=208
             const typePt = pos(138, 208);
             this.lpTypeLine
                 .setOrigin(0.5, 0.5)
@@ -1101,7 +1203,6 @@ export default class MatchScene extends Phaser.Scene {
                 })
                 .setText(`${cardOrHeroDto.cardType}${subType}${empTxt}`);
 
-            // Descrição na caixa inferior de largura total (SVG X=16, Y=230)
             const descPt = pos(16, 230);
             this.lpDesc
                 .setOrigin(0, 0)
@@ -1118,9 +1219,12 @@ export default class MatchScene extends Phaser.Scene {
                 .setText(formatCardDescriptionWithKeywords(cardOrHeroDto.descricao || ''));
         }
 
-        const artKey = cardOrHeroDto.imagem && this.textures.exists(cardOrHeroDto.imagem)
+        const camelKey = PlayableCardPrefab.prototype.toCamelCaseKey(cardOrHeroDto.cardName);
+        const artKey = (cardOrHeroDto.imagem && this.textures.exists(cardOrHeroDto.imagem))
             ? cardOrHeroDto.imagem
-            : (this.textures.exists(cardOrHeroDto.cardName) ? cardOrHeroDto.cardName : null);
+            : (this.textures.exists(cardOrHeroDto.cardName)
+                ? cardOrHeroDto.cardName
+                : (camelKey && this.textures.exists(camelKey) ? camelKey : null));
 
         if (artKey) {
             if (!this.lpArtSprite) {
@@ -1131,7 +1235,7 @@ export default class MatchScene extends Phaser.Scene {
             } else {
                 this.lpArtSprite.setTexture(artKey).setVisible(true);
             }
-            this.lpArtSprite.setDisplaySize(this.lpArtBox.width, this.lpArtBox.height);
+            this.lpArtSprite.setPosition(this.lpArtBox.x, this.lpArtBox.y).setDisplaySize(this.lpArtBox.width, this.lpArtBox.height);
             this.lpArtLabel.setVisible(false);
         } else {
             if (this.lpArtSprite) this.lpArtSprite.setVisible(false);
@@ -1139,38 +1243,156 @@ export default class MatchScene extends Phaser.Scene {
         }
 
         this.largePreviewContainer.setVisible(true);
-        this.largePreviewContainer.setScale(0.94);
         this.tweens.killTweensOf(this.largePreviewContainer);
-        this.tweens.add({
-            targets: this.largePreviewContainer,
-            scaleX: 1.0,
-            scaleY: 1.0,
-            duration: 200,
-            ease: 'Cubic.easeOut'
-        });
 
+        if (isRefresh) {
+            this.largePreviewContainer.setScale(targetScale);
+        } else {
+            this.largePreviewContainer.setScale(targetScale * 0.92);
+            this.tweens.add({
+                targets: this.largePreviewContainer,
+                scaleX: targetScale,
+                scaleY: targetScale,
+                duration: 180,
+                ease: 'Cubic.easeOut'
+            });
+        }
+
+        // =====================================================================
+        // RENDERIZAÇÃO DAS CARTAS ANEXADAS LADO A LADO AO HERÓI NO HOVER
+        // =====================================================================
+        if (this.attachedPreviewContainer) {
+            this.attachedPreviewContainer.removeAll(true);
+        }
+
+        const previewX = this.largePreviewContainer.x;
+        const previewY = this.largePreviewContainer.y;
+        const scaledHeroHalfW = (width * targetScale) / 2;
+        let rightmostPreviewEdgeX = previewX + scaledHeroHalfW;
+
+        if (isHero && this.attachedPreviewContainer) {
+            const inResolveUuids = new Set([
+                ...(this.currentSnapshot?.localPlayer?.playedCardsInResolve || []).map(c => c.uuid),
+                ...(this.currentSnapshot?.opponentPlayer?.playedCardsInResolve || []).map(c => c.uuid)
+            ]);
+            const visibleAttached = (cardOrHeroDto.attachedCards || []).filter(c => c && !inResolveUuids.has(c.uuid));
+
+            if (visibleAttached.length > 0) {
+                const attScale = visibleAttached.length > 3 ? 1.22 : 1.45;
+                const attCardW = BOARD_LAYOUT.MEDIUM_CARD.width * attScale;
+                const attCardH = BOARD_LAYOUT.MEDIUM_CARD.height * attScale;
+                const gapX = 18;
+                const startAttX = previewX + scaledHeroHalfW + gapX + (attCardW / 2);
+
+                visibleAttached.forEach((attDto, idx) => {
+                    const ax = startAttX + idx * (attCardW + gapX);
+                    const ay = previewY;
+
+                    // Placa de título indicando o vínculo do equipamento
+                    const tagBg = this.add.rectangle(ax, ay - (attCardH / 2) - 18, attCardW, 24, 0x07090e, 0.95)
+                        .setStrokeStyle(1.5, 0xffe600);
+                    const tagTxt = this.add.text(ax, ay - (attCardH / 2) - 18, `🗡️ ANEXO ${idx + 1}`, {
+                        fontFamily: 'IoskeleyMono, monospace',
+                        fontSize: '11px',
+                        color: '#ffe600',
+                        fontStyle: 'bold'
+                    }).setOrigin(0.5).setResolution(2);
+
+                    const attView = new PlayableCardPrefab(
+                        this,
+                        ax,
+                        ay,
+                        { ...attDto, faceUp: true },
+                        false,
+                        'MEDIUM',
+                        0
+                    );
+                    // No Hover, exibe a descrição completa da carta anexada!
+                    attView.setShowFullText(true);
+                    attView.disableInteractive();
+                    attView.setScale(attScale);
+
+                    this.attachedPreviewContainer.add([tagBg, tagTxt, attView]);
+                    rightmostPreviewEdgeX = ax + (attCardW / 2);
+                });
+
+                this.attachedPreviewContainer.setVisible(true);
+            } else {
+                this.attachedPreviewContainer.setVisible(false);
+            }
+        } else if (this.attachedPreviewContainer) {
+            this.attachedPreviewContainer.setVisible(false);
+        }
+
+        // Posiciona os popovers de Keywords após o último anexo (ou ao lado da carta principal)
         if (this.keywordTooltipsContainer) {
             this.keywordTooltipsContainer.destroy(true);
         }
-        const previewX = this.largePreviewContainer.x;
-        const previewY = this.largePreviewContainer.y;
-        const tooltipOffsetX = previewX > 960 ? -275 : 275;
+        const tooltipCenterX = Math.min(1760, rightmostPreviewEdgeX + 145);
 
         this.keywordTooltipsContainer = PhantomUIKit.createKeywordTooltipsContainer(
             this,
             cardOrHeroDto,
-            previewX + tooltipOffsetX,
-            previewY - 190
+            tooltipCenterX,
+            previewY - ((height * targetScale) / 2)
         );
     }
 
     hideLargeCardPreview() {
+        this.hoveredPreviewState = null;
         if (this.largePreviewContainer) {
             this.largePreviewContainer.setVisible(false);
+        }
+        if (this.attachedPreviewContainer) {
+            this.attachedPreviewContainer.removeAll(true);
+            this.attachedPreviewContainer.setVisible(false);
         }
         if (this.keywordTooltipsContainer) {
             this.keywordTooltipsContainer.destroy(true);
             this.keywordTooltipsContainer = null;
+        }
+    }
+
+    /**
+     * Atualiza os dados da carta/herói atualmente em hover sem fechar a inspeção
+     * quando um efeito ativa durante a partida.
+     */
+    refreshHoverPreviewFromSnapshot(snapshot) {
+        if (!this.hoveredPreviewState || !this.largePreviewContainer?.visible || !snapshot) return;
+
+        const targetUuid = this.hoveredPreviewState.uuid;
+        if (!targetUuid) return;
+
+        const local = snapshot.localPlayer || {};
+        const opp = snapshot.opponentPlayer || {};
+
+        if (this.hoveredPreviewState.isHero) {
+            const allHeroes = [...(local.heroes || []), ...(opp.heroes || [])];
+            const updatedHero = allHeroes.find(h => h && h.uuid === targetUuid);
+            if (updatedHero) {
+                this.showLargeCardPreview(updatedHero, true, true);
+            }
+            return;
+        }
+
+        const allCards = [
+            ...(local.hand || []),
+            ...(local.playedCardsInResolve || []),
+            ...(opp.playedCardsInResolve || []),
+            ...(local.liberationZone || []),
+            ...(opp.liberationZone || []),
+            ...(local.discardPile || []),
+            ...(opp.discardPile || [])
+        ];
+        [...(local.heroes || []), ...(opp.heroes || [])].forEach(h => {
+            if (h && Array.isArray(h.attachedCards)) {
+                allCards.push(...h.attachedCards);
+            }
+        });
+
+        const updatedCard = allCards.find(c => c && c.uuid === targetUuid);
+        if (updatedCard) {
+            this.showLargeCardPreview(updatedCard, false, true);
         }
     }
 
@@ -1411,7 +1633,8 @@ export default class MatchScene extends Phaser.Scene {
         if (this.recapSidebar) {
             this.recapSidebar.recordSnapshot(snapshot);
         }
-        this.hideLargeCardPreview();
+        // Mantém o hover aberto durante efeitos e atualiza seus valores em tempo real!
+        this.refreshHoverPreviewFromSnapshot(snapshot);
 
         if (previousPhase !== snapshot.turnPhase) {
             this.selectionManager.resetSelections();
@@ -2125,8 +2348,21 @@ export default class MatchScene extends Phaser.Scene {
     highlightSourceCard(sourceUuid) {
         const hero = this.heroPrefabs.get(sourceUuid);
         if (hero) {
+            const baseScale = hero.isHovered ? 1.14 : 1.0;
             this.tweens.killTweensOf(hero);
-            this.tweens.add({ targets: hero, scaleX: 1.16, scaleY: 1.16, yoyo: true, duration: 240 });
+            this.tweens.add({
+                targets: hero,
+                scaleX: baseScale * 1.12,
+                scaleY: baseScale * 1.12,
+                yoyo: true,
+                duration: 240,
+                onComplete: () => {
+                    if (hero.scene) {
+                        const restScale = hero.isHovered ? 1.14 : 1.0;
+                        hero.setScale(restScale);
+                    }
+                }
+            });
             return;
         }
         const resolveCard = this.resolveCardPrefabs.find(c => c.uuid === sourceUuid);
@@ -2214,7 +2450,7 @@ export default class MatchScene extends Phaser.Scene {
         this.mainButtonLabel.setText('ENVIANDO...');
 
         try {
-            const response = await fetch(`http://localhost:8080/api/matches/${this.matchId}/confirm-action`, {
+            const response = await fetch(`${API_BASE_URL}/api/matches/${this.matchId}/confirm-action`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -2233,7 +2469,14 @@ export default class MatchScene extends Phaser.Scene {
                     this.pollServerStateIfWaiting(true);
                 }
             } else {
-                this.showToast('Jogada recusada pelo servidor!');
+                let errMsg = 'Jogada recusada pelo servidor!';
+                try {
+                    const errBody = await response.json();
+                    if (errBody?.error) errMsg = `⚠️ ${errBody.error}`;
+                } catch (_) {
+                    // Ignora falha ao ler JSON de erro
+                }
+                this.showToast(errMsg);
                 this.updateMainButtonState();
             }
         } catch (err) {
@@ -2374,7 +2617,7 @@ export default class MatchScene extends Phaser.Scene {
         try {
             const sinceSeq = this.snapshotPlayer.lastPlayedSequence || this.currentSnapshot.snapshotSequence || 0;
             const res = await fetch(
-                `http://localhost:8080/api/matches/${this.matchId}/state?viewerId=${this.localPlayerId}&sinceSequence=${sinceSeq}`
+                `${API_BASE_URL}/api/matches/${this.matchId}/state?viewerId=${this.localPlayerId}&sinceSequence=${sinceSeq}`
             );
             this.isPolling = false;
             if (!res.ok) return;
@@ -2403,7 +2646,7 @@ export default class MatchScene extends Phaser.Scene {
         this.updateMainButtonState();
 
         try {
-            const response = await fetch(`http://localhost:8080/api/matches/${this.matchId}/confirm-action`, {
+            const response = await fetch(`${API_BASE_URL}/api/matches/${this.matchId}/confirm-action`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -2634,7 +2877,7 @@ export default class MatchScene extends Phaser.Scene {
 
         try {
             if (this.matchId) {
-                await fetch(`http://localhost:8080/api/matches/${this.matchId}/forfeit`, {
+                await fetch(`${API_BASE_URL}/api/matches/${this.matchId}/forfeit`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2642,6 +2885,30 @@ export default class MatchScene extends Phaser.Scene {
                         playerId: this.localPlayerId
                     })
                 });
+            }
+            const stored = JSON.parse(localStorage.getItem('lendas_player')) || {};
+            if (!Array.isArray(stored.matchHistory)) stored.matchHistory = [];
+            const matchIdStr = String(this.matchId || Date.now());
+            if (!stored.matchHistory.some(m => String(m.matchId) === matchIdStr)) {
+                const snap = this.currentSnapshot || {};
+                const localHeroes = (snap.localPlayer?.heroes || []).map(h => h.cardName).filter(Boolean);
+                const oppHeroes = (snap.opponentPlayer?.heroes || []).map(h => h.cardName).filter(Boolean);
+                const oppName = snap.opponentPlayer?.name || 'Oponente';
+                const myName = snap.localPlayer?.name || stored.name || 'Você';
+                stored.matchHistory.unshift({
+                    matchId: matchIdStr,
+                    timestamp: Date.now(),
+                    mode: this.isCurrentMatchPvp() ? 'PVP' : 'PVE',
+                    playerName: myName,
+                    opponentName: oppName,
+                    winnerName: oppName,
+                    victory: false,
+                    playerScore: 0,
+                    opponentScore: 0,
+                    playerHeroes: localHeroes,
+                    opponentHeroes: oppHeroes
+                });
+                localStorage.setItem('lendas_player', JSON.stringify(stored));
             }
         } catch (err) {
             console.warn('Aviso ao notificar saída da partida:', err);
@@ -2793,6 +3060,35 @@ export default class MatchScene extends Phaser.Scene {
             }
         }
 
+        try {
+            const stored = JSON.parse(localStorage.getItem('lendas_player')) || {};
+            if (!Array.isArray(stored.matchHistory)) stored.matchHistory = [];
+            const matchIdStr = String(this.matchId || Date.now());
+            const alreadySaved = stored.matchHistory.some(m => String(m.matchId) === matchIdStr);
+            if (!alreadySaved) {
+                const localHeroes = (snapshot.localPlayer?.heroes || []).map(h => h.cardName).filter(Boolean);
+                const oppHeroes = (snapshot.opponentPlayer?.heroes || []).map(h => h.cardName).filter(Boolean);
+                const oppName = oppStats.playerName || snapshot.opponentPlayer?.name || 'Oponente';
+                const myName = myStats.playerName || snapshot.localPlayer?.name || stored.name || 'Você';
+                stored.matchHistory.unshift({
+                    matchId: matchIdStr,
+                    timestamp: Date.now(),
+                    mode: this.isCurrentMatchPvp() ? 'PVP' : 'PVE',
+                    playerName: myName,
+                    opponentName: oppName,
+                    winnerName: isLocalWinner ? myName : oppName,
+                    victory: Boolean(isLocalWinner),
+                    playerScore: myStats.matchScore ?? 0,
+                    opponentScore: oppStats.matchScore ?? 0,
+                    playerHeroes: localHeroes,
+                    opponentHeroes: oppHeroes
+                });
+                localStorage.setItem('lendas_player', JSON.stringify(stored));
+            }
+        } catch (e) {
+            console.warn('Não foi possível salvar partida no histórico local:', e);
+        }
+
         this.goStatsCardsGroup.removeAll(true);
         const localCard = this.createPlayerStatsSummaryCard(-215, 0, 'SUAS MÉTRICAS', myStats, true);
         const oppCard = this.createPlayerStatsSummaryCard(215, 0, 'MÉTRICAS DO OPONENTE', oppStats, false);
@@ -2884,7 +3180,7 @@ export default class MatchScene extends Phaser.Scene {
 
         try {
             if (isBotMatch) {
-                const res = await fetch(`http://localhost:8080/api/matches/start-pve?playerId=${this.localPlayerId}`, {
+                const res = await fetch(`${API_BASE_URL}/api/matches/start-pve?playerId=${this.localPlayerId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2905,7 +3201,7 @@ export default class MatchScene extends Phaser.Scene {
                 }
             } else {
                 // Reingressa na fila de matchmaking PvP
-                const res = await fetch(`http://localhost:8080/api/matchmaking/join`, {
+                const res = await fetch(`${API_BASE_URL}/api/matchmaking/join`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

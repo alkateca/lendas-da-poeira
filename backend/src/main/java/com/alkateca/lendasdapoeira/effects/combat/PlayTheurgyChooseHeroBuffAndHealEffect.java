@@ -95,8 +95,6 @@ public class PlayTheurgyChooseHeroBuffAndHealEffect implements Effect {
     }
 
     private boolean isGuardiaoDoTrono(HeroCard hero) {
-        boolean hasRaca = hero.getRacas() != null && hero.getRacas().contains(Raca.GUARDIOES_DO_TRONO);
-        boolean hasOrdem = hero.getOrdem() != null && hero.getOrdem().contains(Ordem.GUARDAO_DO_TRONO);
-        return hasRaca || hasOrdem;
+        return hero.getOrdem() != null && hero.getOrdem().contains(Ordem.GUARDIAO_DO_TRONO);
     }
 }

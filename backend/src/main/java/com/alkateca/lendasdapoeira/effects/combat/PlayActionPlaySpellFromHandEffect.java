@@ -1,0 +1,76 @@
+package com.alkateca.lendasdapoeira.effects.combat;
+
+import com.alkateca.lendasdapoeira.effects.Effect;
+import com.alkateca.lendasdapoeira.engine.GameEngine;
+import com.alkateca.lendasdapoeira.entity.Card;
+import com.alkateca.lendasdapoeira.entity.Player;
+import com.alkateca.lendasdapoeira.enums.CardType;
+import com.alkateca.lendasdapoeira.enums.TurnPhase;
+import com.alkateca.lendasdapoeira.enums.ZoneId;
+
+import java.util.List;
+import java.util.UUID;
+
+public class PlayActionPlaySpellFromHandEffect implements Effect {
+
+    public PlayActionPlaySpellFromHandEffect() {
+    }
+
+    @Override
+    public boolean predicate(Card sourceCard, TurnPhase turnPhase) {
+        return turnPhase == TurnPhase.RESOLUTION;
+    }
+
+    @Override
+    public void resolve(GameEngine gameEngine, Card sourceCard) {
+        System.out.println("Efeito de " + sourceCard.getCardName() + " ativado!");
+
+        boolean isPlayer1 = sourceCard.getOwnerId().equals(gameEngine.getPlayer1().getUuid());
+
+        Player myPlayer = isPlayer1
+                ? gameEngine.getPlayer1()
+                : gameEngine.getPlayer2();
+
+        if (myPlayer == null || myPlayer.getCurrentDeck() == null
+                || myPlayer.getCurrentDeck().getCardList() == null) {
+            return;
+        }
+
+        List<Card> spellsInHand = myPlayer.getCurrentDeck().getCardList().stream()
+                .filter(c -> c != null
+                        && c.getZoneId() == ZoneId.HAND
+                        && c.getCardType() == CardType.SPELL)
+                .toList();
+
+        if (spellsInHand.isEmpty()) {
+            System.out.println("-> Nenhum Feitiço disponível na mão de " + myPlayer.getName() + ".");
+            return;
+        }
+
+        List<UUID> validTargetUuids = spellsInHand.stream()
+                .map(Card::getUuid)
+                .toList();
+
+        gameEngine.requestPlayerChoice(
+                myPlayer.getUuid(),
+                sourceCard,
+                "HAND_SPELL",
+                "Escolha 1 Feitiço da sua mão para jogar:",
+                validTargetUuids,
+                true,
+                chosenCardUuid -> {
+                    if (chosenCardUuid == null) return;
+                    Card chosenSpell = myPlayer.getCurrentDeck().getCardList().stream()
+                            .filter(c -> chosenCardUuid.equals(c.getUuid()) && c.getZoneId() == ZoneId.HAND)
+                            .findFirst()
+                            .orElse(null);
+
+                    if (chosenSpell != null) {
+                        System.out.println("-> " + chosenSpell.getCardName()
+                                + " foi jogado da mão para a fila de resolução!");
+                        gameEngine.playCardIntoResolution(chosenSpell);
+                    }
+                }
+        );
+    }
+}

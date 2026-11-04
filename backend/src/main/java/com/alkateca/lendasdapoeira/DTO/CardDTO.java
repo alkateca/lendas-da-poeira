@@ -1,6 +1,8 @@
 package com.alkateca.lendasdapoeira.DTO;
 
 import lombok.Data;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 public class CardDTO {
@@ -12,19 +14,27 @@ public class CardDTO {
     private String rarity;
     private String cardSet;
 
-    // Atributos numéricos (Ficarão nulos se a carta for Item/Magia)
+    // Atributos numéricos de Herói
     private Integer hp;
     private Integer maxHp;
     private Integer attack;
     private Integer defense;
     private Integer spirit;
 
-    // Para renderizar o badge de "X Itens" na interface
-    private int attachedCount;
-    
-    private String description;
-    
-    private Boolean active;
+    // NOVOS CAMPOS: Bônus calculados pelo Back-End para Cartas Equipáveis / Buffs Anexáveis
+    private boolean equipable;
+    private int bonusEspirito;
+    private int bonusAtaque;
+    private int bonusDefesa;
+    private int bonusVidaMaxima;
+    private int empunhadura;
 
-    private java.util.List<String> keywords = new java.util.ArrayList<>();
+    // NOVO CAMPO: Chaves da trilha vertical que devem acender na UI
+    // Valores possíveis: "ON_PLAY", "COMBAT_START", "AURA_COMBAT", "COMBAT_END"
+    private List<String> activePhaseKeys = new ArrayList<>();
+
+    private int attachedCount;
+    private String description;
+    private Boolean active;
+    private List<String> keywords = new ArrayList<>();
 }

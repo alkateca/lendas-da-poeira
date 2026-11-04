@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BOARD_LAYOUT } from '../config/BoardCoordinates.js';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
+import { API_BASE_URL } from '../config/apiConfig.js';
 
 export default class ShopScene extends Phaser.Scene {
     constructor() {
@@ -40,6 +41,9 @@ export default class ShopScene extends Phaser.Scene {
         }
         if (!this.textures.exists('card_frame_playable')) {
             this.load.svg('card_frame_playable', 'images/ui/card_frame_playable.svg', { width: 280, height: 380 });
+        }
+        if (!this.textures.exists('card_frame_item')) {
+            this.load.svg('card_frame_item', 'images/ui/card_frame_item.svg', { width: 280, height: 380 });
         }
         if (!this.textures.exists('ui_p5_crt_button')) {
             this.load.svg('ui_p5_crt_button', 'images/ui/p5_crt_button.svg', { width: 520, height: 84 });
@@ -153,7 +157,7 @@ export default class ShopScene extends Phaser.Scene {
 
     async fetchProductsFromServer() {
         try {
-            const res = await fetch('http://localhost:8080/api/shop/products');
+            const res = await fetch(`${API_BASE_URL}/api/shop/products`);
             if (!res.ok) throw new Error('Falha ao buscar produtos');
             this.products = await res.json();
         } catch (e) {
@@ -195,7 +199,7 @@ export default class ShopScene extends Phaser.Scene {
 
     async fetchMarketListingsFromServer() {
         try {
-            const res = await fetch('http://localhost:8080/api/shop/listings');
+            const res = await fetch(`${API_BASE_URL}/api/shop/listings`);
             if (res.ok) {
                 this.marketListings = await res.json();
             }
@@ -376,7 +380,7 @@ export default class ShopScene extends Phaser.Scene {
 
         try {
             const idempotencyKey = `BUY_PROD_${this.player.uuid}_${product.id}_${Date.now()}`;
-            const res = await fetch('http://localhost:8080/api/shop/buy', {
+            const res = await fetch(`${API_BASE_URL}/api/shop/buy`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -394,7 +398,26 @@ export default class ShopScene extends Phaser.Scene {
                 return;
             }
 
+            const prevPurchases = Array.isArray(this.player?.purchaseHistory) ? this.player.purchaseHistory : [];
+            const prevMatches = Array.isArray(this.player?.matchHistory) ? this.player.matchHistory : [];
             this.player = data.updatedPlayer;
+            if (!Array.isArray(this.player.purchaseHistory) || this.player.purchaseHistory.length === 0) {
+                const pulledNames = (data.openedBoosterCards || []).map(c => c.cardName).filter(Boolean);
+                this.player.purchaseHistory = [
+                    {
+                        id: `${Date.now()}`,
+                        timestamp: Date.now(),
+                        productType: data.productType || product.type,
+                        productName: product.name,
+                        price: product.price,
+                        cardsReceived: pulledNames
+                    },
+                    ...prevPurchases
+                ];
+            }
+            if (!Array.isArray(this.player.matchHistory) && prevMatches.length > 0) {
+                this.player.matchHistory = prevMatches;
+            }
             localStorage.setItem('lendas_player', JSON.stringify(this.player));
             this.balanceText.setText(`🪙 GOLD: ${this.getGoldBalance()}`);
             this.renderProductsGrid();
@@ -416,7 +439,7 @@ export default class ShopScene extends Phaser.Scene {
         this.isProcessingTransaction = true;
 
         try {
-            const res = await fetch(`http://localhost:8080/api/shop/listings/${listing.id}/buy`, {
+            const res = await fetch(`${API_BASE_URL}/api/shop/listings/${listing.id}/buy`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -431,7 +454,25 @@ export default class ShopScene extends Phaser.Scene {
                 return;
             }
 
+            const prevPurchases = Array.isArray(this.player?.purchaseHistory) ? this.player.purchaseHistory : [];
+            const prevMatches = Array.isArray(this.player?.matchHistory) ? this.player.matchHistory : [];
             this.player = data.player;
+            if (!Array.isArray(this.player.purchaseHistory) || this.player.purchaseHistory.length === 0) {
+                this.player.purchaseHistory = [
+                    {
+                        id: `${Date.now()}`,
+                        timestamp: Date.now(),
+                        productType: 'SINGLE_CARD',
+                        productName: listing.cardName,
+                        price: listing.price,
+                        cardsReceived: []
+                    },
+                    ...prevPurchases
+                ];
+            }
+            if (!Array.isArray(this.player.matchHistory) && prevMatches.length > 0) {
+                this.player.matchHistory = prevMatches;
+            }
             localStorage.setItem('lendas_player', JSON.stringify(this.player));
             this.balanceText.setText(`🪙 GOLD: ${this.getGoldBalance()}`);
 
@@ -450,7 +491,7 @@ export default class ShopScene extends Phaser.Scene {
         this.isProcessingTransaction = true;
 
         try {
-            const res = await fetch(`http://localhost:8080/api/shop/listings/${listing.id}/cancel`, {
+            const res = await fetch(`${API_BASE_URL}/api/shop/listings/${listing.id}/cancel`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -465,7 +506,15 @@ export default class ShopScene extends Phaser.Scene {
                 return;
             }
 
+            const prevPurchases = Array.isArray(this.player?.purchaseHistory) ? this.player.purchaseHistory : [];
+            const prevMatches = Array.isArray(this.player?.matchHistory) ? this.player.matchHistory : [];
             this.player = data.player;
+            if (!Array.isArray(this.player.purchaseHistory) && prevPurchases.length > 0) {
+                this.player.purchaseHistory = prevPurchases;
+            }
+            if (!Array.isArray(this.player.matchHistory) && prevMatches.length > 0) {
+                this.player.matchHistory = prevMatches;
+            }
             localStorage.setItem('lendas_player', JSON.stringify(this.player));
             await this.fetchMarketListingsFromServer();
             this.renderProductsGrid();

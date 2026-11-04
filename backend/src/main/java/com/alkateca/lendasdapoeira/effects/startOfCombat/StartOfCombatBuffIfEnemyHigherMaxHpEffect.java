@@ -6,6 +6,7 @@ import com.alkateca.lendasdapoeira.entity.Card;
 import com.alkateca.lendasdapoeira.entity.HeroCard;
 import com.alkateca.lendasdapoeira.entity.Player;
 import com.alkateca.lendasdapoeira.enums.TurnPhase;
+import com.alkateca.lendasdapoeira.enums.ZoneId;
 
 import java.util.UUID;
 
@@ -21,7 +22,12 @@ public class StartOfCombatBuffIfEnemyHigherMaxHpEffect implements Effect {
 
     @Override
     public boolean predicate(Card sourceCard, TurnPhase turnPhase) {
-        return turnPhase == TurnPhase.COMBAT_START;
+        // Se a arma já estava equipada de um turno anterior, ativa no COMBAT_START.
+        // Se foi baixada neste turno (resolved na RESOLUTION pelo EquipBuffEffect), ativa logo após equipar na RESOLUTION.
+        if (sourceCard.getZoneId() == ZoneId.ATTACHED) {
+            return turnPhase == TurnPhase.COMBAT_START;
+        }
+        return turnPhase == TurnPhase.RESOLUTION;
     }
 
     @Override
@@ -41,6 +47,11 @@ public class StartOfCombatBuffIfEnemyHigherMaxHpEffect implements Effect {
         Player enemyPlayer = isPlayer1 ? gameEngine.getPlayer2() : gameEngine.getPlayer1();
 
         if (myPlayer == null || enemyPlayer == null || myHeroId == null || enemyHeroId == null) {
+            return;
+        }
+
+        // Garante que a arma está equipada no Herói Ativo atual (não dispara se o portador estiver no banco)
+        if (sourceCard.getAttachedToCardId() != null && !sourceCard.getAttachedToCardId().equals(myHeroId)) {
             return;
         }
 

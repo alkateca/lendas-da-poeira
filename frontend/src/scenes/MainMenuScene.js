@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import DeckRestrictionValidator from '../managers/DeckRestrictionValidator.js';
 import { DEMO_MATCH_UUID, INITIAL_MATCH_SNAPSHOT } from '../config/mockSnapshots.js';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
+import { API_BASE_URL } from '../config/apiConfig.js';
 
 export default class MainMenuScene extends Phaser.Scene {
     constructor() {
@@ -53,6 +54,29 @@ export default class MainMenuScene extends Phaser.Scene {
         this.playerUuidText = this.add.text(110, 86, `UUID: ${this.player.uuid}`, {
             fontSize: '11px', color: '#64748b'
         });
+
+        // Botão de Perfil e Históricos logo ao lado dos dados do jogador
+        this.profileBtnBg = this.add.rectangle(645, 65, 245, 48, 0x1e293b)
+            .setStrokeStyle(2, 0x38bdf8)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerover', () => {
+                this.profileBtnBg.setFillStyle(0x283548);
+                this.profileBtnTxt.setColor('#ffe600');
+            })
+            .on('pointerout', () => {
+                this.profileBtnBg.setFillStyle(0x1e293b);
+                this.profileBtnTxt.setColor('#38bdf8');
+            })
+            .on('pointerdown', () => {
+                this.scene.start('ProfileScene', { player: this.player });
+            });
+
+        this.profileBtnTxt = this.add.text(645, 65, '📜 PERFIL & HISTÓRICOS', {
+            fontFamily: 'IoskeleyMono, monospace',
+            fontSize: '14px',
+            color: '#38bdf8',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setResolution(2);
 
         const currentGold = this.player.balance?.gold ?? this.player.poeira ?? 0;
         this.add.rectangle(980, 65, 290, 48, 0xfaf8f5).setStrokeStyle(3, 0x090d16);
@@ -149,7 +173,7 @@ export default class MainMenuScene extends Phaser.Scene {
 
         if (DeckRestrictionValidator.isDeckReadyForMatch(nextDeck)) {
             try {
-                await fetch(`http://localhost:8080/api/players/${this.player.uuid}/active-deck/${nextDeck.uuid}`, {
+                await fetch(`${API_BASE_URL}/api/players/${this.player.uuid}/active-deck/${nextDeck.uuid}`, {
                     method: 'PUT'
                 });
             } catch (e) {
@@ -171,7 +195,7 @@ export default class MainMenuScene extends Phaser.Scene {
         this.statusText.setText('A sortear baralho da máquina e a preparar a arena...').setColor('#ffd700');
 
         try {
-            const res = await fetch('http://localhost:8080/api/matches/start-pve', {
+            const res = await fetch(`${API_BASE_URL}/api/matches/start-pve`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -259,7 +283,7 @@ export default class MainMenuScene extends Phaser.Scene {
 
     async checkQueueStatus() {
         try {
-            const res = await fetch(`http://localhost:8080/api/matchmaking/status?playerId=${this.player.uuid}`);
+            const res = await fetch(`${API_BASE_URL}/api/matchmaking/status?playerId=${this.player.uuid}`);
             if (!res.ok) return;
 
             const data = await res.json();
@@ -293,7 +317,7 @@ export default class MainMenuScene extends Phaser.Scene {
     async syncPlayerProfileFromServer() {
         if (!this.player?.uuid) return;
         try {
-            const res = await fetch(`http://localhost:8080/api/players/${this.player.uuid}`);
+            const res = await fetch(`${API_BASE_URL}/api/players/${this.player.uuid}`);
             if (res.ok) {
                 const fresh = await res.json();
                 this.player.permanentElo = fresh.permanentElo ?? 1000;
@@ -305,6 +329,26 @@ export default class MainMenuScene extends Phaser.Scene {
                 if (fresh.ownedHeroes) this.player.ownedHeroes = fresh.ownedHeroes;
                 if (Array.isArray(fresh.decks)) this.player.decks = fresh.decks;
                 if (fresh.currentDeck) this.player.currentDeck = fresh.currentDeck;
+                if (Array.isArray(fresh.purchaseHistory) && fresh.purchaseHistory.length > 0) {
+                    const localPurchases = Array.isArray(this.player.purchaseHistory) ? this.player.purchaseHistory : [];
+                    const merged = [...fresh.purchaseHistory];
+                    for (const lp of localPurchases) {
+                        if (lp && !merged.some(sp => (sp.id && lp.id && String(sp.id) === String(lp.id)) || (Math.abs((sp.timestamp || 0) - (lp.timestamp || 0)) < 2000 && sp.productName === lp.productName))) {
+                            merged.push(lp);
+                        }
+                    }
+                    this.player.purchaseHistory = merged.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                }
+                if (Array.isArray(fresh.matchHistory) && fresh.matchHistory.length > 0) {
+                    const localMatches = Array.isArray(this.player.matchHistory) ? this.player.matchHistory : [];
+                    const merged = [...fresh.matchHistory];
+                    for (const lm of localMatches) {
+                        if (lm && !merged.some(sm => sm.matchId && lm.matchId && String(sm.matchId) === String(lm.matchId))) {
+                            merged.push(lm);
+                        }
+                    }
+                    this.player.matchHistory = merged.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                }
                 this.refreshSelectedDeckLabel();
 
                 localStorage.setItem('lendas_player', JSON.stringify(this.player));

@@ -1,6 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 380" width="280" height="380">
-  <!-- Sombra Externa -->
-  <polygon points="10,8 276,4 272,376 6,374" fill="#090d16" />
+  <!-- Sombra Externa (com Janela de Arte Vazada) -->
+  <path fill-rule="evenodd" d="M 10,8 L 276,4 L 272,376 L 6,374 Z
+           M 14,42 L 262,40 L 260,192 L 14,192 Z" fill="#090d16" />
 
   <!-- Corpo Base com Janela de Arte Vazada (y: 42 a 192) -->
   <path fill-rule="evenodd" d="M 4,4 L 272,2 L 268,372 L 2,370 Z

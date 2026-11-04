@@ -13,6 +13,7 @@ export default class DeckRestrictionValidator {
         const classes = new Set();
 
         let hasEmissor = false;
+        let hasTransformador = false;
         let hasGoblin = false;
 
         selectedHeroes.forEach(h => {
@@ -22,27 +23,22 @@ export default class DeckRestrictionValidator {
                 ordersAndRaces.add(upper);
                 if (upper.includes('GUARDI')) {
                     ordersAndRaces.add('GUARDIÃO DO TRONO');
+                    ordersAndRaces.add('GUARDIAO DO TRONO');
                     ordersAndRaces.add('GUARDIOES DO TRONO');
-                    ordersAndRaces.add('GUARDAO_DO_TRONO');
+                    ordersAndRaces.add('GUARDIAO_DO_TRONO');
                     ordersAndRaces.add('GUARDIOES_DO_TRONO');
                 }
             });
             (h.racas || []).forEach(r => {
                 const upper = String(r).toUpperCase();
                 ordersAndRaces.add(upper);
-                // Normaliza "Guardiões do Trono" (plural em heros.json) com "Guardião do Trono" (singular em cards.json)
-                if (upper.includes('GUARDI')) {
-                    ordersAndRaces.add('GUARDIÃO DO TRONO');
-                    ordersAndRaces.add('GUARDIOES DO TRONO');
-                    ordersAndRaces.add('GUARDAO_DO_TRONO');
-                    ordersAndRaces.add('GUARDIOES_DO_TRONO');
-                }
                 if (upper === 'GOBLIN') hasGoblin = true;
             });
             (h.classe || []).forEach(c => {
                 const upper = String(c).toUpperCase();
                 classes.add(upper);
                 if (upper === 'EMISSOR') hasEmissor = true;
+                if (upper === 'TRANSFORMADOR') hasTransformador = true;
             });
         });
 
@@ -58,8 +54,104 @@ export default class DeckRestrictionValidator {
             ordersAndRaces,
             classes,
             hasEmissor,
+            hasTransformador,
             hasGoblin
         };
+    }
+
+    static normalizeTrait(value) {
+        return String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/_/g, ' ')
+            .trim()
+            .toUpperCase();
+    }
+
+    /**
+     * Avalia se um único Herói pode jogar uma carta em combate (ou habilitá-la individualmente no baralho).
+     */
+    static canHeroPlayCard(hero, card) {
+        if (!hero || !card) {
+            return { allowed: false, reason: 'Herói ou carta inválida' };
+        }
+        if (card.liberationCard) {
+            return { allowed: true, reason: 'Carta de Liberação' };
+        }
+
+        const heroRaces = (hero.racas || []).map(r => this.normalizeTrait(r));
+        if (heroRaces.includes('GOBLIN')) {
+            return { allowed: true, reason: 'Goblin ignora restrições' };
+        }
+
+        const heroClasses = (hero.classe || []).map(c => this.normalizeTrait(c));
+        const hasEmissor = heroClasses.includes('EMISSOR');
+        const hasTransformador = heroClasses.includes('TRANSFORMADOR');
+        const cardType = String(card.cardType || '').toUpperCase();
+
+        // 1. Regra de Teurgias (THEURGY): exclusivo para Transformadores
+        if (cardType === 'THEURGY' && !hasTransformador) {
+            return {
+                allowed: false,
+                reason: `${hero.cardName || 'Este Herói'} precisa ser Transformador para usar Teurgias`
+            };
+        }
+
+        // 2. Regra de Afinidade Elemental e Magias (SPELL)
+        const heroAffinities = (hero.afinidades || []).map(a => this.normalizeTrait(a));
+        const reqAffinities = (card.afinidades || []).map(a => this.normalizeTrait(a));
+        if (reqAffinities.length > 0) {
+            const hasMatchingAffinity = reqAffinities.some(a => heroAffinities.includes(a));
+            if (!hasMatchingAffinity && !hasEmissor) {
+                return {
+                    allowed: false,
+                    reason: `${hero.cardName || 'Este Herói'} requer Afinidade [${card.afinidades.join('/')}] ou classe Emissor`
+                };
+            }
+        } else if (cardType === 'SPELL' && heroAffinities.length === 0 && !hasEmissor) {
+            return {
+                allowed: false,
+                reason: `${hero.cardName || 'Este Herói'} requer Afinidade ou classe Emissor para usar Magias`
+            };
+        }
+
+        // 3. Regra de Classe explícita da carta
+        const reqClasses = (card.classe || []).map(c => this.normalizeTrait(c));
+        if (reqClasses.length > 0) {
+            const hasMatchingClass = reqClasses.some(c => heroClasses.includes(c));
+            if (!hasMatchingClass) {
+                return {
+                    allowed: false,
+                    reason: `${hero.cardName || 'Este Herói'} requer Classe [${card.classe.join('/')}]`
+                };
+            }
+        }
+
+        // 4. Regra de Ordem / Raça explícita da carta
+        const reqOrdersAndRaces = [...(card.ordem || []), ...(card.racas || [])].map(o => this.normalizeTrait(o));
+        if (reqOrdersAndRaces.length > 0) {
+            const heroOrdersAndRaces = new Set();
+            [...(hero.ordem || []), ...(hero.racas || [])].forEach(item => {
+                const norm = this.normalizeTrait(item);
+                heroOrdersAndRaces.add(norm);
+                if (norm.includes('GUARDI')) {
+                    heroOrdersAndRaces.add('GUARDIAO DO TRONO');
+                }
+            });
+
+            const hasMatchingOrder = reqOrdersAndRaces.some(req =>
+                heroOrdersAndRaces.has(req) ||
+                (req.includes('GUARDI') && heroOrdersAndRaces.has('GUARDIAO DO TRONO'))
+            );
+            if (!hasMatchingOrder) {
+                return {
+                    allowed: false,
+                    reason: `${hero.cardName || 'Este Herói'} requer [${[...(card.ordem || []), ...(card.racas || [])].join('/')}]`
+                };
+            }
+        }
+
+        return { allowed: true, reason: 'Compatível com o Herói' };
     }
 
     /**
@@ -125,7 +217,12 @@ export default class DeckRestrictionValidator {
             };
         }
 
-        // 2. Validação de Afinidade Elemental e Magias (SPELL)
+        // 2. Validação de Teurgias (THEURGY) -> exige classe Transformador (ou Goblin)
+        if (String(card.cardType || '').toUpperCase() === 'THEURGY' && !card.liberationCard && !team.hasTransformador && !team.hasGoblin) {
+            return { compatible: false, reason: 'Requer Herói da classe Transformador' };
+        }
+
+        // 3. Validação de Afinidade Elemental e Magias (SPELL)
         const reqAffinities = (card.afinidades || []).map(a => String(a).toUpperCase());
         if (reqAffinities.length > 0) {
             const hasMatchingAffinity = reqAffinities.some(a => team.affinities.has(a));
@@ -136,7 +233,7 @@ export default class DeckRestrictionValidator {
             return { compatible: false, reason: 'Requer Herói com Afinidade ou Emissor' };
         }
 
-        // 3. Validação de Ordem / Raça requerida pela carta
+        // 4. Validação de Ordem / Raça requerida pela carta
         const reqOrders = [...(card.ordem || []), ...(card.racas || [])].map(o => String(o).toUpperCase());
         if (reqOrders.length > 0 && !team.hasGoblin) {
             const hasMatchingOrder = reqOrders.some(o => team.ordersAndRaces.has(o));
@@ -145,12 +242,24 @@ export default class DeckRestrictionValidator {
             }
         }
 
-        // 4. Validação de Classe requerida pela carta
+        // 5. Validação de Classe requerida pela carta
         const reqClasses = (card.classe || []).map(c => String(c).toUpperCase());
         if (reqClasses.length > 0 && !team.hasGoblin) {
             const hasMatchingClass = reqClasses.some(c => team.classes.has(c));
             if (!hasMatchingClass) {
                 return { compatible: false, reason: `Requer Classe [${card.classe.join('/')}]` };
+            }
+        }
+
+        // 6. Garante que ao menos um Herói da equipe consiga jogar a carta individualmente em combate
+        if (!card.liberationCard) {
+            const anyHeroCanPlay = selectedHeroes.some(h => this.canHeroPlayCard(h, card).allowed);
+            if (!anyHeroCanPlay) {
+                const firstFailure = this.canHeroPlayCard(selectedHeroes[0], card);
+                return {
+                    compatible: false,
+                    reason: firstFailure.reason || 'Nenhum Herói da equipe cumpre todos os requisitos desta carta'
+                };
             }
         }
 
@@ -167,7 +276,8 @@ export default class DeckRestrictionValidator {
         const hasCollectionData = Object.keys(ownedCards).length > 0;
         const ownedCount = hasCollectionData ? (ownedCards[card.cardName] || 0) : (card.unica ? 1 : 3);
 
-        const ruleMaxCopies = card.unica ? 1 : 3;
+        const isUnique = Boolean(card.unica);
+        const ruleMaxCopies = isUnique ? 1 : 3;
         const usedCopies = currentCardList.filter(c => c.cardName === card.cardName).length;
 
         if (ownedCount <= 0) {
@@ -204,7 +314,9 @@ export default class DeckRestrictionValidator {
                 compatibleWithTeam: true,
                 usedCopies,
                 ownedCount,
-                reason: `Limite da carta (${usedCopies}/${ruleMaxCopies})`
+                reason: isUnique
+                    ? `Carta Única (${usedCopies}/1 no baralho)`
+                    : `Limite da carta (${usedCopies}/${ruleMaxCopies})`
             };
         }
 
@@ -218,12 +330,15 @@ export default class DeckRestrictionValidator {
             };
         }
 
+        const effectiveMax = Math.min(ruleMaxCopies, ownedCount);
         return {
             allowed: true,
             compatibleWithTeam: true,
             usedCopies,
             ownedCount,
-            reason: `ADICIONAR (${usedCopies}/${ownedCount} possuídas)`
+            reason: isUnique
+                ? `ADICIONAR ÚNICA (${usedCopies}/1)`
+                : `ADICIONAR (${usedCopies}/${effectiveMax})`
         };
     }
 
@@ -281,10 +396,56 @@ export default class DeckRestrictionValidator {
     }
 
     /**
-     * Verifica se o baralho está pronto para iniciar uma partida (3 Heróis + 30 Cartas válidas)
+     * Valida os limites de cópias por carta no baralho:
+     * - Cartas com `unica: true` permitem apenas 1 cópia da mesma carta por baralho (sem limite para diferentes cartas únicas).
+     * - Demais cartas permitem até 3 cópias da mesma carta por baralho.
+     */
+    static validateDeckCopyLimits(cardList = []) {
+        const counts = new Map();
+        const uniqueMap = new Map();
+
+        for (const card of (cardList || [])) {
+            if (!card || !card.cardName) continue;
+            const name = card.cardName;
+            counts.set(name, (counts.get(name) || 0) + 1);
+            if (card.unica) {
+                uniqueMap.set(name, true);
+            } else if (!uniqueMap.has(name)) {
+                uniqueMap.set(name, false);
+            }
+        }
+
+        const violations = [];
+        counts.forEach((count, name) => {
+            const isUnique = uniqueMap.get(name) === true;
+            const maxCopies = isUnique ? 1 : 3;
+            if (count > maxCopies) {
+                violations.push({
+                    name,
+                    count,
+                    maxCopies,
+                    isUnique,
+                    reason: isUnique
+                        ? `Carta Única permite apenas 1 cópia por baralho (${count}/1)`
+                        : `Excede o limite de 3 cópias por baralho (${count}/3)`
+                });
+            }
+        });
+
+        return {
+            valid: violations.length === 0,
+            violations
+        };
+    }
+
+    /**
+     * Verifica se o baralho está pronto para iniciar uma partida (3 Heróis + 30 Cartas válidas e respeitando limite de cópias/únicas)
      */
     static isDeckReadyForMatch(deck) {
         if (!deck || !deck.heroList || !deck.cardList) return false;
-        return deck.heroList.length === 3 && deck.cardList.length === 30;
+        if (deck.heroList.length !== 3 || deck.cardList.length !== 30) return false;
+        const copyCheck = this.validateDeckCopyLimits(deck.cardList);
+        if (!copyCheck.valid) return false;
+        return deck.cardList.every(c => this.checkCardHeroRequirements(c, deck.heroList).compatible);
     }
 }
