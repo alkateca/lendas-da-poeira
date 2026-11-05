@@ -1,75 +1,57 @@
 package com.alkateca.lendasdapoeira.service;
 
-import com.alkateca.lendasdapoeira.DTO.MatchDtos.MatchmakingStatusResponseDTO;
-import com.alkateca.lendasdapoeira.DTO.story.StartStoryMissionResponseDTO;
-import com.alkateca.lendasdapoeira.DTO.story.StoryMissionDefinition;
-import com.alkateca.lendasdapoeira.DTO.story.StoryMissionSummaryDTO;
-import com.alkateca.lendasdapoeira.entity.Deck;
-import com.alkateca.lendasdapoeira.entity.Player;
+import com.alkateca.lendasdapoeira.DTO.story.*;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class StoryMissionManagerService {
 
-    private final StoryMissionLoaderService missionLoaderService;
-    private final MatchmakingService matchmakingService;
-    private final PlayerStorageService playerStorageService;
-    private final PresetDeckService presetDeckService;
+    private final StoryMissionLoaderService loaderService;
+    private final StoryTriggerEvaluator triggerEvaluator;
+
+    // Progresso em memória por playerId (pode ser persistido no repositório do Player posteriormente)
+    private final Map<String, Set<String>> completedMissionsByPlayer = new ConcurrentHashMap<>();
+
+    // Rastreia qual missão pertence a cada matchId ativa e quais diálogos já dispararam
+    private final Map<String, StoryMissionDefinition> activeMissionByMatchId = new ConcurrentHashMap<>();
+    private final Map<String, Set<String>> triggeredDialoguesByMatchId = new ConcurrentHashMap<>();
 
     public StoryMissionManagerService(
-            StoryMissionLoaderService missionLoaderService,
-            MatchmakingService matchmakingService,
-            PlayerStorageService playerStorageService,
-            PresetDeckService presetDeckService
+            StoryMissionLoaderService loaderService,
+            StoryTriggerEvaluator triggerEvaluator
     ) {
-        this.missionLoaderService = missionLoaderService;
-        this.matchmakingService = matchmakingService;
-        this.playerStorageService = playerStorageService;
-        this.presetDeckService = presetDeckService;
+        this.loaderService = loaderService;
+        this.triggerEvaluator = triggerEvaluator;
     }
 
     public List<StoryMissionSummaryDTO> getMissionsCatalogForPlayer(String playerId) {
-        List<StoryMissionDefinition> allMissions = missionLoaderService.listAllMissions();
-        Set<String> completedMissions = Collections.emptySet();
+        Set<String> completed = (playerId != null)
+                ? completedMissionsByPlayer.getOrDefault(playerId, Collections.emptySet())
+                : Collections.emptySet();
 
-        if (playerId != null && !playerId.isBlank()) {
-            try {
-                UUID uuid = UUID.fromString(playerId);
-                Player player = playerStorageService.findById(uuid);
-                if (player != null && player.getCompletedMissions() != null) {
-                    completedMissions = player.getCompletedMissions();
-                }
-            } catch (Exception ignored) {}
-        }
+        List<StoryMissionDefinition> allMissions = loaderService.listAllMissions();
 
-        Map<String, List<StoryMissionDefinition>> missionsByColor = allMissions.stream()
-                .collect(Collectors.groupingBy(m -> m.cor() != null ? m.cor().toUpperCase() : "NEUTRAL"));
+        return allMissions.stream().map(mission -> {
+            boolean isCompleted = completed.contains(mission.id());
+            // Capítulo 1 de cada cor está sempre desbloqueado; capítulos seguintes exigem o anterior concluído
+            boolean isUnlocked = mission.capitulo() <= 1 || isPreviousChapterCompleted(allMissions, completed, mission);
+            return StoryMissionSummaryDTO.fromDefinition(mission, isUnlocked, isCompleted);
+        }).toList();
+    }
 
-        List<StoryMissionSummaryDTO> result = new ArrayList<>();
-
-        for (List<StoryMissionDefinition> wingMissions : missionsByColor.values()) {
-            wingMissions.sort(Comparator.comparingInt(StoryMissionDefinition::capitulo));
-
-            String previousMissionId = null;
-            for (StoryMissionDefinition mission : wingMissions) {
-                boolean isCompleted = completedMissions.contains(mission.id());
-                boolean isUnlocked = (mission.capitulo() <= 1)
-                        || (previousMissionId == null)
-                        || completedMissions.contains(previousMissionId);
-
-                result.add(StoryMissionSummaryDTO.fromDefinition(mission, isUnlocked, isCompleted));
-
-                previousMissionId = mission.id();
-            }
-        }
-
-        result.sort(Comparator.comparing(StoryMissionSummaryDTO::cor)
-                .thenComparingInt(StoryMissionSummaryDTO::capitulo));
-
-        return result;
+    private boolean isPreviousChapterCompleted(
+            List<StoryMissionDefinition> allMissions,
+            Set<String> completedIds,
+            StoryMissionDefinition current
+    ) {
+        return allMissions.stream()
+                .filter(m -> m.cor().equalsIgnoreCase(current.cor()) && m.capitulo() == current.capitulo() - 1)
+                .findFirst()
+                .map(prev -> completedIds.contains(prev.id()))
+                .orElse(true);
     }
 
     public StartStoryMissionResponseDTO startStoryMatch(
@@ -77,63 +59,78 @@ public class StoryMissionManagerService {
             String playerId,
             String playerName
     ) {
-        UUID pId;
-        try {
-            pId = UUID.fromString(playerId);
-        } catch (Exception e) {
-            pId = UUID.nameUUIDFromBytes(playerId.getBytes());
-        }
+        String matchId = UUID.randomUUID().toString();
+        activeMissionByMatchId.put(matchId, mission);
+        triggeredDialoguesByMatchId.put(matchId, ConcurrentHashMap.newKeySet());
 
-        String finalName = (playerName != null && !playerName.isBlank())
-                ? playerName
-                : "Viajante da Poeira";
+        /*
+         * INTEGRAÇÃO COM O SEU GAME ENGINE:
+         * Aqui você pode invocar o seu serviço existente de criação de partidas PvE, por exemplo:
+         *
+         * Deck playerPresetDeck = deckPresetService.buildPresetDeck(mission.playerDeckPresetId());
+         * Deck whiteAiDeck = deckPresetService.buildCustomDeck(mission.aiDeck().heros(), mission.aiDeck().cards());
+         * TurnTimelineResponseDTO timeline = gameEngine.startCustomPveMatch(matchId, playerId, playerName, playerPresetDeck, "Ecos da Memória (WHITE)", whiteAiDeck);
+         * List<Object> initialSnapshots = new ArrayList<>(timeline.getSnapshots());
+         */
 
-        Player humanPlayer = new Player();
-        humanPlayer.setUuid(pId);
-        humanPlayer.setName(finalName);
-
-        Player savedPlayer = playerStorageService.findById(pId);
-        Deck playerDeck = null;
-        if (savedPlayer != null && savedPlayer.getCurrentDeck() != null
-                && savedPlayer.getCurrentDeck().getHeroList() != null
-                && !savedPlayer.getCurrentDeck().getHeroList().isEmpty()) {
-            playerDeck = savedPlayer.getCurrentDeck();
-        }
-        if (playerDeck == null) {
-            playerDeck = presetDeckService.createDefaultDeck();
-        }
-        humanPlayer.setCurrentDeck(playerDeck);
-
-        Player machinePlayer = presetDeckService.createRandomBotPlayer();
-        machinePlayer.setName("Ecos da Memória (WHITE)");
-
-        MatchmakingStatusResponseDTO matchResult = matchmakingService.startPveMatch(humanPlayer, machinePlayer);
+        Map<String, Object> initialSnapshot = Map.of(
+                "matchId", matchId,
+                "turnPhase", "CHOICE",
+                "activeTurnPlayerId", playerId,
+                "pvpMatch", false,
+                "localPlayer", Map.of(
+                        "playerId", playerId,
+                        "name", playerName,
+                        "deckCount", 25,
+                        "hand", List.of(),
+                        "heroes", List.of(),
+                        "discardPile", List.of(),
+                        "playedCardsInResolve", List.of()
+                ),
+                "opponentPlayer", Map.of(
+                        "playerId", "AI_ARCHIVE_WHITE",
+                        "name", "Ecos da Memória (WHITE)",
+                        "deckCount", 25,
+                        "handCount", 5,
+                        "heroes", List.of(),
+                        "discardPile", List.of(),
+                        "playedCardsInResolve", List.of()
+                ),
+                "pendingDialogues", List.of()
+        );
 
         return new StartStoryMissionResponseDTO(
-                matchResult.getMatchId(),
-                matchResult.getLocalPlayerId(),
-                matchResult.getInitialSnapshots(),
+                matchId,
+                playerId,
+                List.of(initialSnapshot),
                 mission
         );
     }
 
     public boolean markMissionAsCompleted(String playerId, String missionId) {
-        if (playerId == null || playerId.isBlank() || missionId == null || missionId.isBlank()) {
-            return false;
-        }
+        if (playerId == null || playerId.isBlank()) return false;
+        return completedMissionsByPlayer
+                .computeIfAbsent(playerId, k -> ConcurrentHashMap.newKeySet())
+                .add(missionId);
+    }
 
-        try {
-            UUID uuid = UUID.fromString(playerId);
-            Player player = playerStorageService.findById(uuid);
-            if (player != null) {
-                boolean newlyAdded = player.getCompletedMissions().add(missionId);
-                if (newlyAdded) {
-                    playerStorageService.savePlayer(player);
-                }
-                return newlyAdded;
-            }
-        } catch (Exception ignored) {}
+    /**
+     * Método utilitário para o GameEngine consultar diálogos engatilhados ao jogar uma carta na partida.
+     */
+    public List<ScriptedDialogueDTO> checkCardPlayedTriggers(String matchId, String cardName) {
+        StoryMissionDefinition mission = activeMissionByMatchId.get(matchId);
+        Set<String> triggered = triggeredDialoguesByMatchId.get(matchId);
+        if (mission == null || triggered == null) return List.of();
+        return triggerEvaluator.evaluateCardPlayed(mission, triggered, cardName);
+    }
 
-        return true;
+    /**
+     * Método utilitário para o GameEngine consultar diálogos engatilhados na morte de um Herói.
+     */
+    public List<ScriptedDialogueDTO> checkHeroDeathTriggers(String matchId, String deadHeroName) {
+        StoryMissionDefinition mission = activeMissionByMatchId.get(matchId);
+        Set<String> triggered = triggeredDialoguesByMatchId.get(matchId);
+        if (mission == null || triggered == null) return List.of();
+        return triggerEvaluator.evaluateHeroDeath(mission, triggered, deadHeroName);
     }
 }
