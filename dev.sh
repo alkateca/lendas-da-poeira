@@ -33,13 +33,21 @@ chmod +x "$BACKEND_DIR/mvnw" 2>/dev/null || true
 if [ -z "$JAVA_HOME" ] || [ ! -d "$JAVA_HOME" ]; then
     for jdk in "$HOME"/.jdks/*; do
         if [ -d "$jdk/bin" ]; then
-            export JAVA_HOME="$jdk"
+            if command -v cygpath >/dev/null 2>&1; then
+                export JAVA_HOME="$(cygpath -m "$jdk")"
+            else
+                export JAVA_HOME="$jdk"
+            fi
             break
         fi
     done
     if [ -z "$JAVA_HOME" ]; then
         if [ -d "/c/Program Files/Java/jdk-25" ]; then
-            export JAVA_HOME="/c/Program Files/Java/jdk-25"
+            if command -v cygpath >/dev/null 2>&1; then
+                export JAVA_HOME="$(cygpath -m "/c/Program Files/Java/jdk-25")"
+            else
+                export JAVA_HOME="/c/Program Files/Java/jdk-25"
+            fi
         elif [ -d "/usr/lib/jvm/java-17-openjdk-amd64" ]; then
             export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
         elif [ -d "/usr/lib/jvm/default-java" ]; then
