@@ -401,6 +401,8 @@ class DeckBuilderFilterAndValidationTest {
         assertTrue(theurgyEx.getMessage().contains("Transformador"));
 
         // Se o herói ativo for o Transformador, ele pode jogar a Teurgia, mas não a Magia!
+        pureFighter.setZoneId(ZoneId.BENCH);
+        transformerHero.setZoneId(ZoneId.BATTLE);
         engine.getGameState().setActiveHeroPlayer1Id(transformerHero.getUuid());
         IllegalArgumentException transformerSpellEx = assertThrows(IllegalArgumentException.class, () ->
                 engine.submitPreparationCards(p1.getUuid(), List.of(spellInHand.getUuid()))
