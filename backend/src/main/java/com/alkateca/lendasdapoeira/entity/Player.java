@@ -24,10 +24,12 @@ public class Player {
     private Deck currentDeck = new Deck();
     private List<Deck> decks = new ArrayList<>();
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public Deck getDeck() {
         return this.currentDeck;
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public void setDeck(Deck deck) {
         this.currentDeck = deck;
     }
