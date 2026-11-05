@@ -51,6 +51,10 @@ public class MatchDtos {
         public List<MatchSnapshotDTO> getInitialSnapshots() {
             return this.snapshots;
         }
+
+        public void setInitialSnapshots(List<MatchSnapshotDTO> snapshots) {
+            this.snapshots = snapshots;
+        }
     }
 
     @Data

@@ -24,6 +24,14 @@ public class Player {
     private Deck currentDeck = new Deck();
     private List<Deck> decks = new ArrayList<>();
 
+    public Deck getDeck() {
+        return this.currentDeck;
+    }
+
+    public void setDeck(Deck deck) {
+        this.currentDeck = deck;
+    }
+
     // Inventário / Coleção Pessoal do Jogador (Chave: cardName -> Valor: Quantidade possuída)
     private Map<String, Integer> ownedHeroes = new HashMap<>();
     private Map<String, Integer> ownedCards = new HashMap<>();
