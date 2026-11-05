@@ -109,27 +109,31 @@ export default class MainMenuScene extends Phaser.Scene {
         this.add.text(1755, 65, 'SAIR / LOGIN', { fontSize: '12px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
 
         // Título Central
-        this.add.text(width / 2, height / 2 - 170, 'LENDAS DA POEIRA', {
+        this.add.text(width / 2, height / 2 - 200, 'LENDAS DA POEIRA', {
             fontSize: '42px', color: '#ffd700', fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        this.statusText = this.add.text(width / 2, height / 2 - 115, 'Escolha um modo de jogo para iniciar', {
+        this.statusText = this.add.text(width / 2, height / 2 - 150, 'Escolha um modo de jogo para iniciar', {
             fontSize: '16px', color: '#94a3b8'
         }).setOrigin(0.5);
 
-        this.createButton(width / 2, height / 2 - 45, '🤖 PARTIDA CONTRA A MÁQUINA (PvE)', 0x1d4ed8, () => {
+        this.createButton(width / 2, height / 2 - 105, '🏛️ GRANDES ARQUIVOS (MODO HISTÓRIA)', 0xd97706, () => {
+            this.scene.start('StoryArchiveScene', { player: this.player });
+        });
+
+        this.createButton(width / 2, height / 2 - 25, '🤖 PARTIDA CONTRA A MÁQUINA (PvE)', 0x1d4ed8, () => {
             this.startMatchAgainstMachine();
         });
 
-        this.createButton(width / 2, height / 2 + 40, '⚔️ PVP (JOGADOR VS JOGADOR)', 0xb91c1c, () => {
+        this.createButton(width / 2, height / 2 + 55, '⚔️ PVP (JOGADOR VS JOGADOR)', 0xb91c1c, () => {
             this.onPvpButtonClicked();
         });
 
-        this.createButton(width / 2, height / 2 + 125, '🃏 MONTAR BARALHO (DECKBUILDER)', 0xca8a04, () => {
+        this.createButton(width / 2, height / 2 + 135, '🃏 MONTAR BARALHO (DECKBUILDER)', 0xca8a04, () => {
             this.scene.start('DeckBuilderScene', { player: this.player });
         });
 
-        this.createButton(width / 2, height / 2 + 210, '📚 MINHA COLEÇÃO (VENDER CARTAS)', 0x7e22ce, () => {
+        this.createButton(width / 2, height / 2 + 215, '📚 MINHA COLEÇÃO (VENDER CARTAS)', 0x7e22ce, () => {
             this.scene.start('CollectionScene', { player: this.player });
         });
 
