@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/story/missions")
@@ -31,8 +32,8 @@ public class StoryMissionController {
     }
 
     /**
-     * Retorna a lista de todas as missões agrupadas/ordenadas por cor e capítulo,
-     * enriquecida com o progresso do jogador (unlocked / completed).
+     * Lista os capítulos dos Grandes Arquivos da Poeira agrupados por cor e capítulo,
+     * indicando o estado de desbloqueio e conclusão para o jogador.
      */
     @GetMapping
     public ResponseEntity<List<StoryMissionSummaryDTO>> listMissions(
@@ -43,7 +44,7 @@ public class StoryMissionController {
     }
 
     /**
-     * Retorna a definição completa de uma missão específica (incluindo prólogo, epílogo e eventos).
+     * Obtém os detalhes completos de uma missão específica lida do ficheiro YAML.
      */
     @GetMapping("/{missionId}")
     public ResponseEntity<StoryMissionDefinition> getMissionDetails(
@@ -58,12 +59,13 @@ public class StoryMissionController {
     }
 
     /**
-     * Instancia uma partida PvE no GameEngine associada à missionId selecionada,
-     * carregando o baralho preset da cor ensinada e o baralho WHITE da máquina.
+     * Constrói o Player humano (com o baralho temático da missão) e o Player da máquina
+     * (Ecos da Memória - WHITE) usando o CardFactory, e inicia a partida no MatchmakingService.
      */
     @PostMapping("/{missionId}/start")
     public ResponseEntity<StartStoryMissionResponseDTO> startStoryMission(
             @PathVariable String missionId,
+            @RequestParam(value = "playerId", required = false) String queryPlayerId,
             @RequestBody(required = false) StartStoryMissionRequestDTO request
     ) {
         StoryMissionDefinition mission = missionLoaderService.getMissionById(missionId)
@@ -72,24 +74,27 @@ public class StoryMissionController {
                         "Missão não encontrada para iniciar partida: " + missionId
                 ));
 
-        String playerId = (request != null && request.playerId() != null && !request.playerId().isBlank())
+        String rawPlayerId = (request != null && request.playerId() != null && !request.playerId().isBlank())
                 ? request.playerId()
-                : "local-story-player";
-        String playerName = (request != null && request.playerName() != null && !request.playerName().isBlank())
+                : queryPlayerId;
+
+        UUID resolvedPlayerId = parseOrGenerateUuid(rawPlayerId);
+
+        String resolvedPlayerName = (request != null && request.playerName() != null && !request.playerName().isBlank())
                 ? request.playerName()
                 : "Viajante da Poeira";
 
         StartStoryMissionResponseDTO response = missionManagerService.startStoryMatch(
                 mission,
-                playerId,
-                playerName
+                resolvedPlayerId,
+                resolvedPlayerName
         );
 
         return ResponseEntity.ok(response);
     }
 
     /**
-     * Regista a conclusão da missão após a vitória do jogador e desbloqueia o próximo capítulo.
+     * Regista a conclusão da missão após a vitória do jogador na StoryMatchScene.
      */
     @PostMapping("/{missionId}/complete")
     public ResponseEntity<Map<String, Object>> completeStoryMission(
@@ -100,13 +105,29 @@ public class StoryMissionController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Missão inválida: " + missionId);
         }
 
-        boolean newlyCompleted = missionManagerService.markMissionAsCompleted(playerId, missionId);
+        boolean firstTime = missionManagerService.markMissionAsCompleted(playerId, missionId);
 
         return ResponseEntity.ok(Map.of(
                 "missionId", missionId,
                 "playerId", playerId,
                 "completed", true,
-                "firstTimeCompletion", newlyCompleted
+                "firstTimeCompletion", firstTime
         ));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage() != null ? e.getMessage() : "Argumento inválido"));
+    }
+
+    private UUID parseOrGenerateUuid(String rawId) {
+        if (rawId == null || rawId.isBlank()) {
+            return UUID.randomUUID();
+        }
+        try {
+            return UUID.fromString(rawId.trim());
+        } catch (IllegalArgumentException e) {
+            return UUID.nameUUIDFromBytes(rawId.trim().getBytes());
+        }
     }
 }

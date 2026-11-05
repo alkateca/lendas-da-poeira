@@ -56,6 +56,18 @@ public class StoryMissionManagerService {
 
     public StartStoryMissionResponseDTO startStoryMatch(
             StoryMissionDefinition mission,
+            UUID playerId,
+            String playerName
+    ) {
+        return startStoryMatch(
+                mission,
+                playerId != null ? playerId.toString() : UUID.randomUUID().toString(),
+                playerName
+        );
+    }
+
+    public StartStoryMissionResponseDTO startStoryMatch(
+            StoryMissionDefinition mission,
             String playerId,
             String playerName
     ) {
