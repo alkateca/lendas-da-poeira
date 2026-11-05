@@ -52,6 +52,9 @@ public class Player {
     private List<PurchaseHistoryEntry> purchaseHistory = new ArrayList<>();
     private List<MatchHistoryEntry> matchHistory = new ArrayList<>();
 
+    // Progresso do Modo História (Issue #41)
+    private java.util.Set<String> completedMissions = new java.util.HashSet<>();
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

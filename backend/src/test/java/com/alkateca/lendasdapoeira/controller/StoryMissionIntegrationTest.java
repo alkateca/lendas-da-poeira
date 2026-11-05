@@ -50,4 +50,35 @@ class StoryMissionIntegrationTest {
                 .andExpect(jsonPath("$.mission.id").value("mission_red_01"))
                 .andExpect(jsonPath("$.mission.cor").value("RED"));
     }
+
+    @Test
+    @DisplayName("GET /api/story/missions/{missionId} deve retornar a definição completa da missão")
+    void shouldReturnMissionDetails() throws Exception {
+        mockMvc.perform(get("/api/story/missions/mission_red_01")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("mission_red_01"))
+                .andExpect(jsonPath("$.cor").value("RED"))
+                .andExpect(jsonPath("$.prologo").isNotEmpty());
+    }
+
+    @Test
+    @DisplayName("POST /api/story/missions/{missionId}/complete deve marcar conclusão da missão")
+    void shouldCompleteStoryMission() throws Exception {
+        mockMvc.perform(post("/api/story/missions/mission_red_01/complete")
+                        .param("playerId", "player-test-001")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.missionId").value("mission_red_01"))
+                .andExpect(jsonPath("$.playerId").value("player-test-001"))
+                .andExpect(jsonPath("$.completed").value(true));
+    }
+
+    @Test
+    @DisplayName("GET /api/story/missions/{missionId} com ID inexistente deve retornar 404")
+    void shouldReturn404WhenMissionNotFound() throws Exception {
+        mockMvc.perform(get("/api/story/missions/mission_inexistente")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
 }
