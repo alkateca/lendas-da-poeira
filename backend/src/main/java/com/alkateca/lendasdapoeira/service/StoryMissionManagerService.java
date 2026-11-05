@@ -60,18 +60,7 @@ public class StoryMissionManagerService {
                         || (previousMissionId == null)
                         || completedMissions.contains(previousMissionId);
 
-                result.add(new StoryMissionSummaryDTO(
-                        mission.id(),
-                        mission.titulo(),
-                        mission.subtitulo(),
-                        mission.cor(),
-                        mission.capitulo(),
-                        mission.prologo(),
-                        mission.epilogo(),
-                        isUnlocked,
-                        isCompleted,
-                        mission.scriptedEvents()
-                ));
+                result.add(StoryMissionSummaryDTO.fromDefinition(mission, isUnlocked, isCompleted));
 
                 previousMissionId = mission.id();
             }
