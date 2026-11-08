@@ -1,0 +1,29 @@
+id: "mission_red_01"
+titulo: "O Primeiro Clarão da Forja"
+subtitulo: "Arquétipo: Caçadores das Cinzas & Purificação pelo Fogo"
+cor: "RED"
+capitulo: 1
+prologo: |
+  Nos ermos do leste, as fornalhas nunca se apagam.
+  Os Caçadores das Cinzas aprendem a moldar a Poeira em ferramentas e armadilhas antes mesmo de empunhar uma lâmina.
+
+  Nos Grandes Arquivos, o Eco de Alka desperta em Poeira Branca para testar se sua velocidade tática supera a guarda dos Heróis do Passado.
+epilogo: |
+  Com o constructo silenciado, a Poeira de fogo assentou revelando o segredo da forja e consagrando seu domínio sobre a Ala das Cinzas.
+playerDeckPresetId: "DECK_RED_TUTORIAL"
+aiDeck:
+  heros:
+    - "10000000-0000-0000-0000-000000000001"
+    - "10000000-0000-0000-0000-000000000002"
+    - "10000000-0000-0000-0000-000000000003"
+  cards:
+    - "20000000-0000-0000-0000-000000000001"
+scriptedEvents:
+  - trigger: "ON_CARD_PLAYED"
+    targetCardName: "Bola de Fogo"
+    speaker: "Narrador dos Arquivos"
+    dialogue: "A canalização elemental de Fogo exige precisão e pureza de Espírito."
+  - trigger: "ON_HERO_DEATH"
+    targetHeroName: "Alka, Lutador do Grupo dos Heróis"
+    speaker: "Eco de Alka"
+    dialogue: "A chama... ainda arde mais forte que a minha guarda..."
