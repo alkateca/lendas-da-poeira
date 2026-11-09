@@ -8407,8 +8407,8 @@
     "Grilhões pesados" : 4,
     "Girlhões pesados" : 4
   },
-  "permanentElo" : 1010,
-  "weeklyElo" : 994,
+  "permanentElo" : 1004,
+  "weeklyElo" : 988,
   "lastWeeklyResetWeek" : "2026-W45",
   "balance" : {
     "gold" : 3080
@@ -8430,7 +8430,19 @@
     "price" : 100,
     "boosterCards" : [ "Auto Defesa Magica", "Manto de Ferro do Algoz", "Peitoral de brasas", "Dragão de Cristal", "Peitoral de brasas" ]
   } ],
-  "matchHistory" : [ ],
+  "matchHistory" : [ {
+    "matchId" : "b9150f38-6c11-4b64-8183-3d9b4027cc9c",
+    "timestamp" : 1793831485813,
+    "mode" : "PVE",
+    "playerName" : "alka",
+    "opponentName" : "\uD83E\uDD16 Bot - Cavaleiros de Cristal",
+    "winnerName" : "\uD83E\uDD16 Bot - Cavaleiros de Cristal",
+    "victory" : false,
+    "playerScore" : 45,
+    "opponentScore" : 92,
+    "playerHeroes" : [ "Izeref, Executor da Ordem Necrótica", "Constructo Carniceiro", "Chefe Carrasco" ],
+    "opponentHeroes" : [ "Enamor,O Grande Cavaleiro", "Cavaleiro Onear", "Ageus, Constructo Cristalino" ]
+  } ],
   "completedMissions" : [ ],
   "gold" : 3080
 }, {
