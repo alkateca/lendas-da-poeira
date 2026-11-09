@@ -1322,5 +1322,100 @@
       "INVOCAR",
       "INICIO_DO_COMBATE"
     ]
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000042",
+    "cardName": "Alevyr da Forja",
+    "cardType": "HERO",
+    "color": "RED",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "descricao": "Aura: Seus Escudos recebem Encore.\nFinal do Combate: Impacto.",
+    "espirito": 1,
+    "ataque": 4,
+    "defesa": 4,
+    "vidaMaxima": 14,
+    "vidaAtual": 14,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Criador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false,
+    "keywords": [
+      "AURA",
+      "FINAL_DO_COMBATE"
+    ]
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000043",
+    "cardName": "Constructo da Caldeira",
+    "cardType": "HERO",
+    "color": "RED",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "descricao": "Aura: Seus Aliados recebem +1 de Dano em efeitos de Impacto.",
+    "espirito": 0,
+    "ataque": 3,
+    "defesa": 4,
+    "vidaMaxima": 15,
+    "vidaAtual": 15,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [
+      "Constructo"
+    ],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Criador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false,
+    "keywords": [
+      "AURA"
+    ]
+  },
+  {
+    "uuid": "10000000-0000-0000-0000-000000000044",
+    "cardName": "Mestra da Forja",
+    "cardType": "HERO",
+    "color": "RED",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "descricao": "Início do Combate: Invocar: Martelo & Bigorna.\nFinal do Combate: Impacto.",
+    "espirito": 1,
+    "ataque": 4,
+    "defesa": 4,
+    "vidaMaxima": 14,
+    "vidaAtual": 14,
+    "maxWeaponSlots": 2,
+    "reducaoDano": 0,
+    "danoBonus": 0,
+    "vulnerabilidade": 0,
+    "racas": [],
+    "afinidades": [],
+    "ordem": [],
+    "classe": [
+      "Criador"
+    ],
+    "estaVivo": true,
+    "estaAtivo": true,
+    "unica": false,
+    "keywords": [
+      "INICIO_DO_COMBATE",
+      "INVOCAR",
+      "FINAL_DO_COMBATE"
+    ]
   }
 ]

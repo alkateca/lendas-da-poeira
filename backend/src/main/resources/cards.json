@@ -2239,5 +2239,144 @@
     "classe": [],
     "afinidades": [],
     "unica": false
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000083",
+    "cardName": "Martelo & Bigorna",
+    "cardType": "ITEM",
+    "color": "RED",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "ARMA",
+    "empunhadura": 2,
+    "descricao": "Arma - Empunhadura Dupla\nSeu Herói recebe +4 de Defesa e +2 de Dano Bônus.\nAo Equipar:\nInício do Combate: Desequipe um Item anexado a um Herói Aliado ou ao Herói Inimigo.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": [],
+    "unica": false,
+    "keywords": [
+      "EMPUNHADURA",
+      "AO_EQUIPAR",
+      "INICIO_DO_COMBATE"
+    ]
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000084",
+    "cardName": "Escudo Improvisado",
+    "cardType": "ITEM",
+    "color": "RED",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "ESCUDO",
+    "empunhadura": 0,
+    "descricao": "Escudo\nSeu Herói recebe +2 de Defesa.\nAo Equipar: Seu Herói recebe +2 de Defesa até o Final do Combate.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": [],
+    "unica": false,
+    "keywords": [
+      "AO_EQUIPAR",
+      "FINAL_DO_COMBATE"
+    ]
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000085",
+    "cardName": "Broquel Explosivo",
+    "cardType": "ITEM",
+    "color": "RED",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "ESCUDO",
+    "empunhadura": 0,
+    "descricao": "Escudo\nSeu Herói recebe +1 de Defesa e +1 de Espírito.\nAo Equipar: Impacto.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": [],
+    "unica": false,
+    "keywords": [
+      "AO_EQUIPAR"
+    ]
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000086",
+    "cardName": "Armadura Antichamas",
+    "cardType": "ITEM",
+    "color": "RED",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "ARMADURA",
+    "empunhadura": 0,
+    "descricao": "Armadura\nSeu Herói recebe +2 de Defesa e +2 de Espírito.\nAo Equipar: Escolha um Escudo anexado a um Herói Aliado e jogue-o.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": [],
+    "unica": false,
+    "keywords": [
+      "AO_EQUIPAR"
+    ]
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000087",
+    "cardName": "Polir o Armamento",
+    "cardType": "ACTION",
+    "color": "RED",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Criador\nSeu Herói recebe +3 de Defesa até o Final do Combate.\nSeu Herói recupera 3 de Vida.",
+    "racas": [],
+    "ordem": [],
+    "classe": [
+      "Criador"
+    ],
+    "afinidades": [],
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE"
+    ]
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000088",
+    "cardName": "Não Apresse um Artista",
+    "cardType": "ACTION",
+    "color": "RED",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Criador\nSeu Herói recebe -3 de Defesa até o Final do Combate.\nInício do Próximo Combate: Seu Herói recebe +4 de Defesa e cause Impacto em todos os Heróis Inimigos.",
+    "racas": [],
+    "ordem": [],
+    "classe": [
+      "Criador"
+    ],
+    "afinidades": [],
+    "unica": false,
+    "keywords": [
+      "FINAL_DO_COMBATE",
+      "INICIO_DO_COMBATE"
+    ]
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000089",
+    "cardName": "Coração da Forja",
+    "cardType": "ITEM",
+    "color": "RED",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "JOIA",
+    "empunhadura": 0,
+    "descricao": "Jóia\nSempre que um efeito de Impacto for ativado: Seu Herói recupera 2 de Vida.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": [],
+    "unica": false,
+    "keywords": []
   }
 ]

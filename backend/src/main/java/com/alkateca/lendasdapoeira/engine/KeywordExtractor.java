@@ -20,6 +20,7 @@ public class KeywordExtractor {
         // Ações e Gatilhos
         TERM_PATTERNS.put("INVOCAR", "invocar:|invoque:");
         TERM_PATTERNS.put("AURA", "aura:");
+        TERM_PATTERNS.put("ENCORE", "encore");
         TERM_PATTERNS.put("INICIO_DA_PARTIDA", "inicio da partida:");
         TERM_PATTERNS.put("INICIO_DO_COMBATE", "inicio do combate:|inicio de combate");
         TERM_PATTERNS.put("FINAL_DO_COMBATE", "final do combate:");
@@ -27,6 +28,7 @@ public class KeywordExtractor {
         TERM_PATTERNS.put("AO_EQUIPAR", "ao equipar:|enquanto estiver equipada:");
 
         // Tipos de Dano e Combate
+        TERM_PATTERNS.put("IMPACTO", "impacto");
         TERM_PATTERNS.put("DANO_DIRETO", "dano direto");
         TERM_PATTERNS.put("DANO_MAGICO", "dano magico");
         TERM_PATTERNS.put("DANO_FISICO", "dano fisico|ataque fisico");
@@ -36,6 +38,7 @@ public class KeywordExtractor {
         TERM_PATTERNS.put("EMPUNHADURA", "empunhadura");
 
         // Estados de Jogo e Zonas
+        TERM_PATTERNS.put("PERSISTIR", "persistir");
         TERM_PATTERNS.put("FERIDO", "ferido");
         TERM_PATTERNS.put("EXILAR", "exilar|exile");
         TERM_PATTERNS.put("MORTO", "morto|morre|reviva");

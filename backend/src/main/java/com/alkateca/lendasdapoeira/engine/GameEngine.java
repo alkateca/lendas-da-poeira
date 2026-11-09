@@ -48,6 +48,12 @@ public class GameEngine {
 
     // Ações de limpeza de buffs/debuffs temporários que expiram ao final do combate
     private List<Runnable> combatEndCleanupActions = new ArrayList<>();
+    private final Map<UUID, List<Runnable>> scheduledNextCombatStartActions = new HashMap<>();
+
+    public void scheduleNextCombatStartEffect(UUID playerId, Runnable action) {
+        if (playerId == null || action == null) return;
+        scheduledNextCombatStartActions.computeIfAbsent(playerId, k -> new ArrayList<>()).add(action);
+    }
 
     // Rastreia as cartas jogadas que já resolveram na fase RESOLUTION atual e as cartas que foram apenas invocadas
     private List<Card> resolvedCardsInCurrentCombat = new ArrayList<>();
@@ -700,6 +706,18 @@ public class GameEngine {
     // 2. SUBSTITUIR triggerActiveHeroesEffects no GameEngine.java:
     // Garante que apenas os itens/cartas anexados aos Heróis ATIVOS na batalha disparem COMBAT_START e COMBAT_END!
     private void triggerActiveHeroesEffects(TurnPhase phase) {
+        if (phase == TurnPhase.COMBAT_START && !scheduledNextCombatStartActions.isEmpty()) {
+            Map<UUID, List<Runnable>> pending = new HashMap<>(scheduledNextCombatStartActions);
+            scheduledNextCombatStartActions.clear();
+            for (List<Runnable> actions : pending.values()) {
+                if (actions != null) {
+                    for (Runnable action : actions) {
+                        action.run();
+                    }
+                }
+            }
+        }
+
         HeroCard p1Hero = getActiveHero(player1, gameState.getActiveHeroPlayer1Id());
         HeroCard p2Hero = getActiveHero(player2, gameState.getActiveHeroPlayer2Id());
 
@@ -734,9 +752,18 @@ public class GameEngine {
                         && c.getAttachedToCardId() != null
                         && (c.getAttachedToCardId().equals(activeP1HeroId) || c.getAttachedToCardId().equals(activeP2HeroId))
                         && c.getEffects() != null)
-                .forEach(attachedCard -> attachedCard.getEffects().stream()
-                        .filter(eff -> eff.predicate(attachedCard, phase))
-                        .forEach(eff -> resolutionQueue.enqueue(eff, attachedCard)));
+                .forEach(attachedCard -> {
+                    boolean repeatEncore = attachedCard.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ESCUDO
+                            && hasShieldEncoreAura(attachedCard.getOwnerId());
+                    attachedCard.getEffects().stream()
+                            .filter(eff -> eff.predicate(attachedCard, phase))
+                            .forEach(eff -> {
+                                resolutionQueue.enqueue(eff, attachedCard);
+                                if (repeatEncore && isEncoreRepeatableEffect(eff)) {
+                                    resolutionQueue.enqueue(eff, attachedCard);
+                                }
+                            });
+                });
     }
 
     // 3. ADICIONAR estes métodos públicos no GameEngine.java para gerenciar Desanexar e Duração:
@@ -1501,10 +1528,15 @@ public class GameEngine {
                 : getActiveHero(player2, gameState.getActiveHeroPlayer2Id());
 
         List<com.alkateca.lendasdapoeira.effects.Effect> cardEffects = new ArrayList<>();
+        boolean repeatShieldEncore = card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ESCUDO
+                && hasShieldEncoreAura(card.getOwnerId());
         if (card.getEffects() != null) {
             for (com.alkateca.lendasdapoeira.effects.Effect eff : card.getEffects()) {
                 if (eff.predicate(card, TurnPhase.RESOLUTION)) {
                     cardEffects.add(eff);
+                    if (repeatShieldEncore && isEncoreRepeatableEffect(eff)) {
+                        cardEffects.add(eff);
+                    }
                 }
             }
         }
@@ -1590,6 +1622,89 @@ public class GameEngine {
                 .filter(eff -> eff instanceof com.alkateca.lendasdapoeira.effects.combat.AuraBonusDamageTakenByEnemyEffect)
                 .mapToInt(eff -> ((com.alkateca.lendasdapoeira.effects.combat.AuraBonusDamageTakenByEnemyEffect) eff).getExtraDamage())
                 .sum();
+    }
+
+    public boolean hasShieldEncoreAura(UUID ownerId) {
+        if (ownerId == null) return false;
+        Player owner = (player1 != null && ownerId.equals(player1.getUuid()))
+                ? player1
+                : ((player2 != null && ownerId.equals(player2.getUuid())) ? player2 : null);
+        if (owner == null || owner.getCurrentDeck() == null || owner.getCurrentDeck().getHeroList() == null) {
+            return false;
+        }
+        return owner.getCurrentDeck().getHeroList().stream()
+                .filter(h -> h != null
+                        && Boolean.TRUE.equals(h.getEstaVivo())
+                        && h.getVidaAtual() > 0
+                        && h.getEffects() != null)
+                .flatMap(h -> h.getEffects().stream())
+                .anyMatch(eff -> eff instanceof com.alkateca.lendasdapoeira.effects.combat.AuraShieldEncoreEffect);
+    }
+
+    private boolean isEncoreRepeatableEffect(com.alkateca.lendasdapoeira.effects.Effect eff) {
+        if (eff == null) return false;
+        String simpleName = eff.getClass().getSimpleName();
+        return !simpleName.startsWith("Equip");
+    }
+
+    public int getAlliesImpactBonusDamage(HeroCard attacker) {
+        if (attacker == null || attacker.getOwnerId() == null) return 0;
+        Player owner = (player1 != null && attacker.getOwnerId().equals(player1.getUuid()))
+                ? player1
+                : ((player2 != null && attacker.getOwnerId().equals(player2.getUuid())) ? player2 : null);
+        if (owner == null || owner.getCurrentDeck() == null || owner.getCurrentDeck().getHeroList() == null) {
+            return 0;
+        }
+        return owner.getCurrentDeck().getHeroList().stream()
+                .filter(h -> h != null
+                        && Boolean.TRUE.equals(h.getEstaVivo())
+                        && h.getVidaAtual() > 0
+                        && h.getEffects() != null)
+                .flatMap(h -> h.getEffects().stream())
+                .filter(eff -> eff instanceof com.alkateca.lendasdapoeira.effects.combat.AuraAlliesImpactBonusDamageEffect)
+                .mapToInt(eff -> ((com.alkateca.lendasdapoeira.effects.combat.AuraAlliesImpactBonusDamageEffect) eff).getBonusImpactDamage())
+                .sum();
+    }
+
+    public void resolveImpactOnTarget(HeroCard attacker, HeroCard defender, Card sourceCard) {
+        if (attacker == null || defender == null) return;
+        int baseImpact = Math.max(0, attacker.getDefesa()) + getAlliesImpactBonusDamage(attacker);
+        int damage = calculatePhysicalDamage(attacker, defender, baseImpact);
+        defender.setVidaAtual(defender.getVidaAtual() - damage);
+        evaluateInstantDeathByAura();
+        System.out.println("-> " + defender.getCardName() + " sofreu " + damage +
+                " de Dano Físico de Impacto! Vida restante: " + defender.getVidaAtual());
+
+        triggerOnImpactEquippedEffects(attacker);
+    }
+
+    private void triggerOnImpactEquippedEffects(HeroCard attacker) {
+        if (attacker == null || attacker.getUuid() == null || attacker.getOwnerId() == null) return;
+        Player owner = (player1 != null && attacker.getOwnerId().equals(player1.getUuid()))
+                ? player1
+                : ((player2 != null && attacker.getOwnerId().equals(player2.getUuid())) ? player2 : null);
+        if (owner == null || owner.getCurrentDeck() == null || owner.getCurrentDeck().getCardList() == null) {
+            return;
+        }
+
+        for (Card c : owner.getCurrentDeck().getCardList()) {
+            if (c != null
+                    && c.getZoneId() == ZoneId.ATTACHED
+                    && attacker.getUuid().equals(c.getAttachedToCardId())
+                    && c.getEffects() != null) {
+                for (com.alkateca.lendasdapoeira.effects.Effect eff : c.getEffects()) {
+                    if (eff instanceof com.alkateca.lendasdapoeira.effects.combat.OnImpactHealHeroEffect healEff) {
+                        if (Boolean.TRUE.equals(attacker.getEstaVivo())) {
+                            int oldHp = attacker.getVidaAtual();
+                            int newHp = Math.min(attacker.getVidaMaxima(), oldHp + healEff.getHealAmount());
+                            attacker.setVidaAtual(newHp);
+                            System.out.println("-> [" + c.getCardName() + "] " + attacker.getCardName() +
+                                    " recuperou " + (newHp - oldHp) + " de Vida ao ativar Impacto! Vida restante: " + attacker.getVidaAtual());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public boolean hasEnemyDeadBelowZeroAura(HeroCard targetHero) {
@@ -2052,7 +2167,7 @@ public class GameEngine {
                 if ("Rapieira de Cristal".equalsIgnoreCase(cardName) || "Dragast".equalsIgnoreCase(cardName)) {
                     invokedCard.setItemType(com.alkateca.lendasdapoeira.enums.ItemType.ARMA);
                     invokedCard.setEmpunhadura(1);
-                } else if ("Espada do Carrasco".equalsIgnoreCase(cardName)) {
+                } else if ("Espada do Carrasco".equalsIgnoreCase(cardName) || "Martelo & Bigorna".equalsIgnoreCase(cardName)) {
                     invokedCard.setItemType(com.alkateca.lendasdapoeira.enums.ItemType.ARMA);
                     invokedCard.setEmpunhadura(2);
                 }
@@ -2069,6 +2184,9 @@ public class GameEngine {
             } else if ("Espada do Carrasco".equalsIgnoreCase(cardName) && invokedCard.getDescricao() == null) {
                 invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.BLACK);
                 invokedCard.setDescricao("Arma - Empunhadura Dupla\nSeu Herói Recebe +3 de Ataque.\nFinal do Combate: Se o Herói Inimigo tiver 0 ou menos de Vida, Seu Herói recupera 5 pontos de Vida.");
+            } else if ("Martelo & Bigorna".equalsIgnoreCase(cardName) && invokedCard.getDescricao() == null) {
+                invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.RED);
+                invokedCard.setDescricao("Arma - Empunhadura Dupla\nSeu Herói recebe +4 de Defesa e +2 de Dano Bônus.\nAo Equipar:\nInício do Combate: Desequipe um Item anexado a um Herói Aliado ou ao Herói Inimigo.");
             } else if ("Bola de fogo".equalsIgnoreCase(cardName)) {
                 invokedCard.setCardType(com.alkateca.lendasdapoeira.enums.CardType.SPELL);
                 if (invokedCard.getColor() == null) invokedCard.setColor(com.alkateca.lendasdapoeira.enums.Colors.NEUTRAL);

@@ -82,10 +82,28 @@ export const KEYWORDS_REGISTRY = {
         summary: 'Resolve antes das cartas normais na fila de Resolução.',
         description: 'Refaz a fila na Fase de Resolução (TurnPhase.RESOLUTION), colocando esta carta no início da pilha antes de qualquer carta sem Prioridade. Se ambos os jogadores jogarem cartas com Prioridade, o jogador ativo que escolheu os Heróis do turno resolve primeiro.'
     },
+    ENCORE: {
+        id: 'ENCORE',
+        label: 'Encore',
+        category: KEYWORD_CATEGORIES.ACAO_GATILHO,
+        badgeColor: '#c084fc',
+        pattern: /\bencore\b/i,
+        summary: 'O efeito definido ocorre uma vez mais no turno.',
+        description: 'O efeito definido ocorre uma vez mais no turno.'
+    },
 
     // ==========================================
     // 2. TIPOS DE DANO E COMBATE
     // ==========================================
+    IMPACTO: {
+        id: 'IMPACTO',
+        label: 'Impacto',
+        category: KEYWORD_CATEGORIES.COMBATE,
+        badgeColor: '#ea580c',
+        pattern: /\bimpacto\b/i,
+        summary: 'Causa dano físico igual à defesa.',
+        description: 'Causa dano físico igual à Defesa do Herói.'
+    },
     DANO_DIRETO: {
         id: 'DANO_DIRETO',
         label: 'Dano Direto',
@@ -197,6 +215,15 @@ export const KEYWORDS_REGISTRY = {
         pattern: /\b(exilar|exile)\b/i,
         summary: 'Remove a carta da partida permanentemente.',
         description: 'Move a carta para a Zona de Exílio (ZoneId.EXILE), impedindo que ela retorne ao baralho ou seja reutilizada do descarte.'
+    },
+    PERSISTIR: {
+        id: 'PERSISTIR',
+        label: 'Persistir',
+        category: KEYWORD_CATEGORIES.ESTADO,
+        badgeColor: '#10b981',
+        pattern: /\bpersistir\b/i,
+        summary: 'Sobrevive com 1 de Vida se for o último Herói aliado.',
+        description: 'Uma vez por partida, se não houverem heróis aliados vivos e houver mais que um herói inimigo vivo, o personagem sobrevive com 1 de vida caso fosse morrer.'
     },
 
     // ==========================================

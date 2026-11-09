@@ -23,3 +23,6 @@ Se houver conflito entre uma sugestão de código e as regras de negócio:
 1. game_architecture.md (Física do Jogo) é a lei suprema.
 2. Manuais específicos (heroRules.md, cardRules.md, effectRules.md, factoryRules.md, testRules.md, frontendRules.md, etc.) regem as entidades.
 3. Este arquivo rege o comportamento geral e a arquitetura limpa.
+
+## 5. Gestão de Tarefas e Issues
+*   **Issues são Remotas no GitHub:** Quando o usuário solicitar abrir, criar ou registrar uma issue, utilize OBRIGATORIAMENTE o GitHub CLI (`gh issue create`). NUNCA crie arquivos Markdown locais (ex: `ISSUE_*.md`) para representar issues.

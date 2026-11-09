@@ -24,3 +24,6 @@ frontend/pnpm-debug.log*
 # Runtime logs and PIDs
 logs/
 .pids/
+
+# Estudos de cartas e designs
+NOVOS_BARALHOS.md

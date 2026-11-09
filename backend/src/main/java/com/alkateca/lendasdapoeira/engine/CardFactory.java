@@ -215,6 +215,17 @@ public class CardFactory {
                 effects.add(new AuraOnDiscardCardBuffAlliesEffect("Tristeza", 0, 1, 0));
                 effects.add(new StartOfCombatInvokeCardEffect("Risada Sarcástica"));
                 break;
+            case "Alevyr da Forja":
+                effects.add(new AuraShieldEncoreEffect());
+                effects.add(new EndOfCombatImpactEffect());
+                break;
+            case "Constructo da Caldeira":
+                effects.add(new AuraAlliesImpactBonusDamageEffect(1));
+                break;
+            case "Mestra da Forja":
+                effects.add(new StartOfCombatInvokeCardEffect("Martelo & Bigorna"));
+                effects.add(new EndOfCombatImpactEffect());
+                break;
 
             // ==========================================
             // ITENS (Armas, Joias, Ferramentas, etc)
@@ -423,6 +434,28 @@ public class CardFactory {
                 effects.add(new EquipBuffEffect(1, 1, 0, 0));
                 effects.add(new OnPlayItemBuffAttachedHeroPermanentEffect(0, 1, 0));
                 break;
+            case "Martelo & Bigorna":
+                effects.add(new EquipBuffEffect(0, 0, 4, 0));
+                effects.add(new EquipBonusDamageEffect(2));
+                effects.add(new OnEquipUnequipAttachedItemEffect());
+                effects.add(new StartOfCombatUnequipAttachedItemEffect());
+                break;
+            case "Escudo Improvisado":
+                effects.add(new EquipBuffEffect(0, 0, 2, 0));
+                effects.add(new PlaySpellBuffEffect(0, 0, 2));
+                break;
+            case "Broquel Explosivo":
+                effects.add(new EquipBuffEffect(1, 0, 1, 0));
+                effects.add(new OnEquipImpactEffect());
+                break;
+            case "Armadura Antichamas":
+                effects.add(new EquipBuffEffect(2, 0, 2, 0));
+                effects.add(new OnEquipChooseAndPlayAttachedAllyShieldEffect());
+                break;
+            case "Coração da Forja":
+                effects.add(new EquipBuffEffect(0, 0, 0, 0));
+                effects.add(new OnImpactHealHeroEffect(2));
+                break;
 
             // ==========================================
             // FEITIÇOS (Spells)
@@ -630,6 +663,14 @@ public class CardFactory {
             case "Conferência dos Sábios Goblins":
                 effects.add(new PlayActionAlliesBuffTemporaryEffect(1, 1, 1));
                 effects.add(new PlayActionHealAlliesIfHeroActiveEffect("Rei Goblin", 3));
+                break;
+            case "Polir o Armamento":
+                effects.add(new PlaySpellBuffEffect(0, 0, 3));
+                effects.add(new PlayTheurgyHealHeroEffect(3));
+                break;
+            case "Não Apresse um Artista":
+                effects.add(new PlaySpellBuffEffect(0, 0, -3));
+                effects.add(new PlayScheduleNextCombatBuffDefenseAndImpactAllEnemiesEffect(4));
                 break;
 
             // ==========================================
