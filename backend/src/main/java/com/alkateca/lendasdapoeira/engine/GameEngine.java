@@ -545,7 +545,8 @@ public class GameEngine {
         Iterator<Card> it = playedCards.iterator();
         while (it.hasNext()) {
             Card card = it.next();
-            if (card.getCardType() != com.alkateca.lendasdapoeira.enums.CardType.ITEM) {
+            if (card.getCardType() != com.alkateca.lendasdapoeira.enums.CardType.ITEM
+                    && card.getCardType() != com.alkateca.lendasdapoeira.enums.CardType.PET) {
                 if (card.getDescricao() != null && card.getDescricao().contains("Exilar.")) {
                     card.setZoneId(com.alkateca.lendasdapoeira.enums.ZoneId.EXILE);
                 } else {
@@ -562,13 +563,22 @@ public class GameEngine {
         UUID activeP2HeroId = gameState.getActiveHeroPlayer2Id();
 
         for (Card card : playedCards) {
-            if (card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM) {
+            if (card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM
+                    || card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.PET) {
+                if (card.getZoneId() == ZoneId.DISCARD
+                        || card.getZoneId() == ZoneId.EXILE
+                        || card.getZoneId() == ZoneId.DECK
+                        || card.getZoneId() == ZoneId.HAND) {
+                    continue;
+                }
                 boolean isP1Owner = card.getOwnerId().equals(player1.getUuid());
                 UUID defaultHeroId = isP1Owner ? activeP1HeroId : activeP2HeroId;
-                if (card.getAttachedToCardId() == null && defaultHeroId != null) {
-                    card.setAttachedToCardId(defaultHeroId);
+                UUID targetHeroId = card.getAttachedToCardId() != null ? card.getAttachedToCardId() : defaultHeroId;
+                if (targetHeroId != null) {
+                    replaceExistingSingleSlotItemIfNecessary(targetHeroId, card);
+                    card.setAttachedToCardId(targetHeroId);
+                    card.setZoneId(com.alkateca.lendasdapoeira.enums.ZoneId.ATTACHED);
                 }
-                card.setZoneId(com.alkateca.lendasdapoeira.enums.ZoneId.ATTACHED);
             }
         }
     }
@@ -681,15 +691,24 @@ public class GameEngine {
         UUID activeP2HeroId = gameState.getActiveHeroPlayer2Id();
 
         for (Card card : playedCards) {
+            if (card.getZoneId() == ZoneId.DISCARD
+                    || card.getZoneId() == ZoneId.EXILE
+                    || card.getZoneId() == ZoneId.DECK
+                    || card.getZoneId() == ZoneId.HAND) {
+                continue;
+            }
             // Se um efeito durante a RESOLUTION já anexou a carta a um Herói (qualquer CardType!)
             if (card.getAttachedToCardId() != null) {
+                replaceExistingSingleSlotItemIfNecessary(card.getAttachedToCardId(), card);
                 card.setZoneId(ZoneId.ATTACHED);
             }
-            // Caso seja um ITEM sem EquipBuffEffect (ex: só tem efeito de Final de Combate como Dragão de Cristal)
-            else if (card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM) {
+            // Caso seja um ITEM ou PET sem EquipBuffEffect (ex: só tem efeito de Final de Combate como Dragão de Cristal)
+            else if (card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM
+                    || card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.PET) {
                 boolean isP1Owner = card.getOwnerId().equals(player1.getUuid());
                 UUID defaultHeroId = isP1Owner ? activeP1HeroId : activeP2HeroId;
                 if (defaultHeroId != null) {
+                    replaceExistingSingleSlotItemIfNecessary(defaultHeroId, card);
                     card.setAttachedToCardId(defaultHeroId);
                     card.setZoneId(ZoneId.ATTACHED);
                 } else {
@@ -790,6 +809,38 @@ public class GameEngine {
             card.setZoneId(ZoneId.EXILE);
         } else {
             card.setZoneId(destinationZone);
+        }
+    }
+
+    /**
+     * Caso a carta sendo anexada ocupe um slot único substituível (ARMADURA, ESCUDO ou PET),
+     * desanexa automaticamente o equipamento anterior do mesmo ItemType naquele Herói.
+     */
+    public void replaceExistingSingleSlotItemIfNecessary(UUID targetHeroId, Card newCard) {
+        if (targetHeroId == null || newCard == null || newCard.getItemType() == null) {
+            return;
+        }
+        com.alkateca.lendasdapoeira.enums.ItemType itemType = newCard.getItemType();
+        if (!itemType.isSingleSlotReplaceable()) {
+            return;
+        }
+
+        List<Card> allCards = new ArrayList<>();
+        if (player1 != null && player1.getCurrentDeck() != null && player1.getCurrentDeck().getCardList() != null) {
+            allCards.addAll(player1.getCurrentDeck().getCardList());
+        }
+        if (player2 != null && player2.getCurrentDeck() != null && player2.getCurrentDeck().getCardList() != null) {
+            allCards.addAll(player2.getCurrentDeck().getCardList());
+        }
+
+        for (Card existing : allCards) {
+            if (existing != null
+                    && !existing.getUuid().equals(newCard.getUuid())
+                    && existing.getZoneId() == ZoneId.ATTACHED
+                    && targetHeroId.equals(existing.getAttachedToCardId())
+                    && existing.getItemType() == itemType) {
+                detachCard(existing, ZoneId.DISCARD);
+            }
         }
     }
 
@@ -1012,14 +1063,6 @@ public class GameEngine {
                 if (usedSlots + requiredSlots > maxSlots) {
                     return false;
                 }
-            } else if (card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMADURA) {
-                if (getUsedItemTypeCountForHero(activeHero.getUuid(), com.alkateca.lendasdapoeira.enums.ItemType.ARMADURA) >= 1) {
-                    return false;
-                }
-            } else if (card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ESCUDO) {
-                if (getUsedItemTypeCountForHero(activeHero.getUuid(), com.alkateca.lendasdapoeira.enums.ItemType.ESCUDO) >= 1) {
-                    return false;
-                }
             }
         }
         return true;
@@ -1040,8 +1083,6 @@ public class GameEngine {
         }
 
         int usedWeaponSlots = getUsedWeaponSlotsForHero(activeHero.getUuid());
-        int usedArmorSlots = getUsedItemTypeCountForHero(activeHero.getUuid(), com.alkateca.lendasdapoeira.enums.ItemType.ARMADURA);
-        int usedShieldSlots = getUsedItemTypeCountForHero(activeHero.getUuid(), com.alkateca.lendasdapoeira.enums.ItemType.ESCUDO);
 
         for (Card card : cardsToPlay) {
             if (!isCardCompatibleForPlay(player, activeHero, card)) {
@@ -1052,9 +1093,7 @@ public class GameEngine {
             }
 
             if (card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM
-                    || card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMA
-                    || card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMADURA
-                    || card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ESCUDO) {
+                    || card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMA) {
 
                 if (card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMA) {
                     int requiredSlots = Math.max(1, card.getEmpunhadura());
@@ -1068,20 +1107,6 @@ public class GameEngine {
                                 + "/" + effectiveMaxWeaponSlots + ", requerido: " + requiredSlots + ").");
                     }
                     usedWeaponSlots += requiredSlots;
-                } else if (card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMADURA) {
-                    if (usedArmorSlots + 1 > 1) {
-                        System.out.println("🚨 [ANTI-CHEAT] Jogador " + player.getUuid()
-                                + " tentou equipar múltiplas Armaduras em " + activeHero.getCardName() + ".");
-                        throw new IllegalArgumentException("O Herói ativo já possui uma Armadura equipada.");
-                    }
-                    usedArmorSlots++;
-                } else if (card.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ESCUDO) {
-                    if (usedShieldSlots + 1 > 1) {
-                        System.out.println("🚨 [ANTI-CHEAT] Jogador " + player.getUuid()
-                                + " tentou equipar múltiplos Escudos em " + activeHero.getCardName() + ".");
-                        throw new IllegalArgumentException("O Herói ativo já possui um Escudo equipado.");
-                    }
-                    usedShieldSlots++;
                 }
             }
         }
@@ -1377,12 +1402,22 @@ public class GameEngine {
         UUID activeP2HeroId = gameState.getActiveHeroPlayer2Id();
 
         for (Card card : playedCards) {
+            if (card.getZoneId() == ZoneId.DISCARD
+                    || card.getZoneId() == ZoneId.EXILE
+                    || card.getZoneId() == ZoneId.DECK
+                    || card.getZoneId() == ZoneId.HAND) {
+                continue;
+            }
             if (card.getAttachedToCardId() != null) {
+                replaceExistingSingleSlotItemIfNecessary(card.getAttachedToCardId(), card);
                 card.setZoneId(ZoneId.ATTACHED);
-            } else if (card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM) {
+            } else if (this.turnPhase != TurnPhase.COMBAT_START
+                    && (card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM
+                    || card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.PET)) {
                 boolean isP1Owner = card.getOwnerId().equals(player1.getUuid());
                 UUID defaultHeroId = isP1Owner ? activeP1HeroId : activeP2HeroId;
                 if (defaultHeroId != null) {
+                    replaceExistingSingleSlotItemIfNecessary(defaultHeroId, card);
                     card.setAttachedToCardId(defaultHeroId);
                     card.setZoneId(ZoneId.ATTACHED);
                 }
@@ -2252,7 +2287,8 @@ public class GameEngine {
         }
 
         // 3. Verifica limites físicos da zona/slot para armas (ItemType.ARMA)
-        if (targetHero != null && invokedCard.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM) {
+        if (targetHero != null && (invokedCard.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM
+                || invokedCard.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.PET)) {
             if (invokedCard.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ARMA) {
                 int usedSlots = getUsedWeaponSlotsForHero(targetHero.getUuid());
                 int requiredSlots = Math.max(1, invokedCard.getEmpunhadura());
@@ -2274,6 +2310,7 @@ public class GameEngine {
                     return invokedCard;
                 }
             }
+            replaceExistingSingleSlotItemIfNecessary(targetHero.getUuid(), invokedCard);
             invokedCard.setAttachedToCardId(targetHero.getUuid());
         }
 
@@ -2297,7 +2334,8 @@ public class GameEngine {
 
         int slotIndex = ownerPlayedList != null ? Math.max(0, ownerPlayedList.indexOf(invokedCard)) : 0;
         String spawnEventType = isDynamicToken ? "TOKEN_SUMMONED" : "CARD_SPAWNED";
-        String destinationZone = (invokedCard.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM && targetHero != null)
+        String destinationZone = ((invokedCard.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM
+                || invokedCard.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.PET) && targetHero != null)
                 ? ZoneId.ATTACHED.name()
                 : ZoneId.RESOLVE.name();
 

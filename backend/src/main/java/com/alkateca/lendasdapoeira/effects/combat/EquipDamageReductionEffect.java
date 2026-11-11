@@ -49,6 +49,7 @@ public class EquipDamageReductionEffect implements Effect {
                 .orElse(null);
 
         if (targetHero != null) {
+            gameEngine.replaceExistingSingleSlotItemIfNecessary(targetHero.getUuid(), sourceCard);
             sourceCard.setAttachedToCardId(targetHero.getUuid());
             sourceCard.setZoneId(ZoneId.ATTACHED);
             targetHero.setReducaoDano(targetHero.getReducaoDano() + damageReduction);

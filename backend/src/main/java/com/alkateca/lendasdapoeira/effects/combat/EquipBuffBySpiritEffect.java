@@ -31,6 +31,7 @@ public class EquipBuffBySpiritEffect implements Effect {
                 .filter(h -> h.getUuid().equals(myHeroId)).findFirst().orElse(null);
 
         if (myHero != null) {
+            gameEngine.replaceExistingSingleSlotItemIfNecessary(myHero.getUuid(), sourceCard);
             sourceCard.setAttachedToCardId(myHero.getUuid());
             sourceCard.setZoneId(ZoneId.ATTACHED);
 

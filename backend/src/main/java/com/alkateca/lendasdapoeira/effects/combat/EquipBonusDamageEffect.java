@@ -71,6 +71,7 @@ public class EquipBonusDamageEffect implements Effect {
             }
         }
 
+        gameEngine.replaceExistingSingleSlotItemIfNecessary(targetHero.getUuid(), sourceCard);
         sourceCard.setAttachedToCardId(targetHero.getUuid());
         sourceCard.setZoneId(ZoneId.ATTACHED);
         targetHero.setDanoBonus(targetHero.getDanoBonus() + bonusDamage);

@@ -63,9 +63,18 @@ public class Card {
 
     // Adicionar dentro de src/main/java/com/alkateca/lendasdapoeira/entity/Card.java:
 
+    public ItemType getItemType() {
+        if (this.cardType == CardType.PET && (this.itemType == null || this.itemType == ItemType.NENHUM)) {
+            return ItemType.PET;
+        }
+        return this.itemType;
+    }
+
     @JsonIgnore
     public boolean isEquipable() {
-        if (this.cardType == CardType.ITEM || (this.itemType != null && this.itemType != ItemType.NENHUM)) {
+        if (this.cardType == CardType.ITEM
+                || this.cardType == CardType.PET
+                || (this.itemType != null && this.itemType != ItemType.NENHUM)) {
             return true;
         }
         return this.effects != null && this.effects.stream()

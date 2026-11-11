@@ -123,6 +123,8 @@ public class EquipBuffEffect implements Effect {
             sourceCard.setAttachedToCardId(previousAttachedId);
         }
 
+        gameEngine.replaceExistingSingleSlotItemIfNecessary(targetHero.getUuid(), sourceCard);
+
         // Registra o vínculo de anexo e a duração na carta
         sourceCard.setAttachedToCardId(targetHero.getUuid());
         sourceCard.setTurnsRemaining(this.durationTurns);
