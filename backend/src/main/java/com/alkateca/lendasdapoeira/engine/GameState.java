@@ -20,6 +20,7 @@ public class GameState {
     private Player player2;
     private TurnPhase turnPhase;
     private UUID activeTurnPlayerId;
+    private UUID resolutionActivePlayerId;
 
     private UUID activeHeroPlayer1Id;
     private UUID activeHeroPlayer2Id;
@@ -30,5 +31,9 @@ public class GameState {
     private List<Card> cardsOnBoard = new ArrayList<>();
 
     private MatchSnapshotDTO.PendingChoiceDTO pendingChoice;
+
+    public UUID getEffectiveResolutionActivePlayerId() {
+        return resolutionActivePlayerId != null ? resolutionActivePlayerId : activeTurnPlayerId;
+    }
 
 }

@@ -58,6 +58,12 @@ public class GameEngine {
     // Rastreia as cartas jogadas que já resolveram na fase RESOLUTION atual e as cartas que foram apenas invocadas
     private List<Card> resolvedCardsInCurrentCombat = new ArrayList<>();
     private Set<UUID> invokedCardIdsInCurrentCombat = new HashSet<>();
+    private Set<UUID> reactionCardIdsInCurrentCombat = new HashSet<>();
+    private final Map<UUID, Integer> resolutionWindowsUsedByPlayer = new HashMap<>();
+    private final Set<UUID> reactionPromptedCardIdsInCurrentCombat = new HashSet<>();
+    private Card currentReactionTriggerCard;
+    private com.alkateca.lendasdapoeira.effects.Effect currentReactionTriggerEffect;
+    private boolean combatStartExecutedInCurrentTurn = false;
     private final Map<UUID, Integer> combatEffectiveHealingByPlayer = new HashMap<>();
     private final Map<UUID, Integer> maxHeroAttackInCurrentCombat = new HashMap<>();
     private final Set<UUID> doubleAttackHeroIdsInCurrentCombat = new HashSet<>();
@@ -116,11 +122,24 @@ public class GameEngine {
         return heroId != null && this.heroesWhoDealtPhysicalOrMagicDamageInCurrentCombat.contains(heroId);
     }
 
+    public int getResolutionWindowsUsedForPlayer(UUID playerId) {
+        if (playerId == null) return 0;
+        return this.resolutionWindowsUsedByPlayer.getOrDefault(playerId, 0);
+    }
+
+    public int getRemainingResolutionWindowsForPlayer(UUID playerId) {
+        if (playerId == null) return 0;
+        int maxWindows = getMaxPreparationCardsForPlayer(playerId);
+        int usedWindows = getResolutionWindowsUsedForPlayer(playerId);
+        return Math.max(0, maxWindows - usedWindows);
+    }
+
     public int getCardsPlayedByPlayerInCurrentTurn(UUID playerId) {
         if (playerId == null) return 0;
         Set<UUID> uniquePlayed = new HashSet<>(
                 this.playedCardIdsInCurrentTurn.getOrDefault(playerId, Collections.emptySet())
         );
+        uniquePlayed.removeAll(this.reactionCardIdsInCurrentCombat);
         Set<UUID> invokedByPlayer = this.invokedCardIdsByPlayerInCurrentTurn.getOrDefault(playerId, Collections.emptySet());
         if (gameState != null && player1 != null) {
             boolean isP1 = playerId.equals(player1.getUuid());
@@ -129,7 +148,8 @@ public class GameEngine {
                 for (Card c : currentStack) {
                     if (c != null && c.getUuid() != null
                             && !invokedCardIdsInCurrentCombat.contains(c.getUuid())
-                            && !invokedByPlayer.contains(c.getUuid())) {
+                            && !invokedByPlayer.contains(c.getUuid())
+                            && !reactionCardIdsInCurrentCombat.contains(c.getUuid())) {
                         uniquePlayed.add(c.getUuid());
                     }
                 }
@@ -207,7 +227,8 @@ public class GameEngine {
             resolvedCardsInCurrentCombat.add(card);
         }
         if (card != null && card.getOwnerId() != null && card.getUuid() != null
-                && !invokedCardIdsInCurrentCombat.contains(card.getUuid())) {
+                && !invokedCardIdsInCurrentCombat.contains(card.getUuid())
+                && !reactionCardIdsInCurrentCombat.contains(card.getUuid())) {
             playedCardIdsInCurrentTurn
                     .computeIfAbsent(card.getOwnerId(), k -> new HashSet<>())
                     .add(card.getUuid());
@@ -246,6 +267,15 @@ public class GameEngine {
         }
         this.resolvedCardsInCurrentCombat.clear();
         this.invokedCardIdsInCurrentCombat.clear();
+        this.reactionCardIdsInCurrentCombat.clear();
+        this.resolutionWindowsUsedByPlayer.clear();
+        this.reactionPromptedCardIdsInCurrentCombat.clear();
+        this.currentReactionTriggerCard = null;
+        this.currentReactionTriggerEffect = null;
+        this.combatStartExecutedInCurrentTurn = false;
+        if (this.gameState != null) {
+            this.gameState.setResolutionActivePlayerId(null);
+        }
         this.combatEffectiveHealingByPlayer.clear();
         this.maxHeroAttackInCurrentCombat.clear();
         this.doubleAttackHeroIdsInCurrentCombat.clear();
@@ -505,6 +535,13 @@ public class GameEngine {
     }
 
     public void choice() {
+        this.combatStartExecutedInCurrentTurn = false;
+        this.resolutionWindowsUsedByPlayer.clear();
+        this.reactionCardIdsInCurrentCombat.clear();
+        this.reactionPromptedCardIdsInCurrentCombat.clear();
+        if (this.gameState != null) {
+            this.gameState.setResolutionActivePlayerId(this.gameState.getActiveTurnPlayerId());
+        }
         changePhase(TurnPhase.PREPARATION);
         triggerActiveHeroesEffects(TurnPhase.PREPARATION);
         resolutionQueue.resolveAll(this);
@@ -1053,6 +1090,7 @@ public class GameEngine {
      */
     public boolean canPlayCardInPreparation(Player player, HeroCard activeHero, Card card) {
         if (player == null || activeHero == null || card == null) return false;
+        if (card.isReactionOnlyCard()) return false;
         if (!isCardCompatibleForPlay(player, activeHero, card)) return false;
 
         if (card.getCardType() == com.alkateca.lendasdapoeira.enums.CardType.ITEM) {
@@ -1085,6 +1123,10 @@ public class GameEngine {
         int usedWeaponSlots = getUsedWeaponSlotsForHero(activeHero.getUuid());
 
         for (Card card : cardsToPlay) {
+            if (card.isReactionOnlyCard()) {
+                throw new IllegalArgumentException("A carta '" + card.getCardName()
+                        + "' é uma Carta de Reação e só pode ser ativada em resposta a um efeito específico.");
+            }
             if (!isCardCompatibleForPlay(player, activeHero, card)) {
                 System.out.println("🚨 [ANTI-CHEAT] Jogador " + player.getUuid() + " tentou jogar carta incompatível ("
                         + card.getCardName() + ") com o Herói/Equipe (" + activeHero.getCardName() + ").");
@@ -1192,21 +1234,34 @@ public class GameEngine {
     }
 
     /**
-     * 2. Executado quando cada jogador clica no Botão Principal na TurnPhase.PREPARATION
+     * Pula apenas a janela atual de jogada de carta na fase de resolução alternada.
      */
-    public void submitPreparationCards(UUID playerId, List<UUID> playedCardUuids) {
-        if (this.turnPhase != TurnPhase.PREPARATION) {
-            throw new IllegalStateException("Ação inválida fora da fase PREPARATION.");
+    public void passResolutionWindow(UUID playerId) {
+        submitResolutionCard(playerId, null);
+    }
+
+    /**
+     * Joga 1 carta (ativando-a imediatamente) ou pula a janela atual (quando playedCardUuid == null)
+     * durante a resolução alternada (TurnPhase.PREPARATION na 1ª jogada -> TurnPhase.RESOLUTION nas seguintes).
+     */
+    public void submitResolutionCard(UUID playerId, UUID playedCardUuid) {
+        if (this.turnPhase != TurnPhase.PREPARATION && this.turnPhase != TurnPhase.RESOLUTION) {
+            throw new IllegalStateException("Ação inválida fora das fases PREPARATION/RESOLUTION.");
         }
         if (isWaitingForPlayerChoice()) {
-            throw new IllegalStateException("Não é possível confirmar a preparação enquanto há uma escolha pendente.");
+            throw new IllegalStateException("Não é possível jogar ou passar enquanto há uma escolha pendente.");
         }
 
         Player player = getValidatedParticipant(playerId);
         boolean isP1 = playerId.equals(player1.getUuid());
 
-        if ((isP1 && this.isPlayer1Ready) || (!isP1 && this.isPlayer2Ready)) {
-            throw new IllegalStateException("Jogador já confirmou a preparação neste turno.");
+        UUID expectedActivePlayer = gameState.getEffectiveResolutionActivePlayerId();
+        if (expectedActivePlayer != null && !playerId.equals(expectedActivePlayer)) {
+            throw new IllegalStateException("Apenas o jogador com a prioridade de resolução atual pode agir agora.");
+        }
+
+        if (getRemainingResolutionWindowsForPlayer(playerId) <= 0) {
+            throw new IllegalArgumentException("Limite de cartas/janelas por turno já atingido para o jogador.");
         }
 
         UUID activeHeroId = isP1 ? gameState.getActiveHeroPlayer1Id() : gameState.getActiveHeroPlayer2Id();
@@ -1215,110 +1270,143 @@ public class GameEngine {
             throw new IllegalStateException("Herói ativo em combate inválido ou não encontrado para o jogador.");
         }
 
-        List<Card> validatedCardsToPlay = new ArrayList<>();
-
-        if (playedCardUuids != null && !playedCardUuids.isEmpty()) {
+        Card validatedCardToPlay = null;
+        if (playedCardUuid != null) {
             int maxAllowedCards = getMaxPreparationCardsForPlayer(playerId);
-            if (playedCardUuids.size() > maxAllowedCards) {
-                System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " tentou jogar "
-                        + playedCardUuids.size() + " cartas na preparação (limite do turno: " + maxAllowedCards + ").");
-                throw new IllegalArgumentException("Limite de cartas por turno excedido: máximo permitido é "
-                        + maxAllowedCards + ", enviado: " + playedCardUuids.size());
+            if (getCardsPlayedByPlayerInCurrentTurn(playerId) >= maxAllowedCards) {
+                throw new IllegalArgumentException("Limite de cartas por turno excedido: máximo permitido é " + maxAllowedCards);
+            }
+            if (invokedCardIdsInCurrentCombat.contains(playedCardUuid)) {
+                throw new IllegalArgumentException("Carta já foi invocada automaticamente neste combate: " + playedCardUuid);
             }
 
             List<Card> deckCards = (player.getCurrentDeck() != null && player.getCurrentDeck().getCardList() != null)
                     ? player.getCurrentDeck().getCardList()
                     : Collections.emptyList();
 
-            Set<UUID> seenCardIds = new HashSet<>();
+            Card cardInHand = deckCards.stream()
+                    .filter(c -> c != null && playedCardUuid.equals(c.getUuid()))
+                    .findFirst()
+                    .orElse(null);
 
-            for (UUID cardId : playedCardUuids) {
-                if (cardId == null) {
-                    System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " enviou UUID de carta nulo na preparação.");
-                    throw new IllegalArgumentException("UUID de carta nulo não é permitido.");
-                }
-                if (!seenCardIds.add(cardId)) {
-                    System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " enviou UUID de carta duplicado na preparação: " + cardId);
-                    throw new IllegalArgumentException("Carta duplicada no mesmo envio de preparação: " + cardId);
-                }
-                if (invokedCardIdsInCurrentCombat.contains(cardId)) {
-                    System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " tentou reenviar carta já invocada: " + cardId);
-                    throw new IllegalArgumentException("Carta já foi invocada automaticamente neste combate: " + cardId);
-                }
-
-                Card cardInHand = deckCards.stream()
-                        .filter(c -> c != null && cardId.equals(c.getUuid()))
-                        .findFirst()
-                        .orElse(null);
-
-                if (cardInHand == null) {
-                    System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " tentou jogar carta inexistente ou de outro jogador: " + cardId);
-                    throw new IllegalArgumentException("Carta não encontrada na mão: " + cardId);
-                }
-                if (cardInHand.getOwnerId() != null && !playerId.equals(cardInHand.getOwnerId())) {
-                    System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " tentou jogar carta pertencente a outro jogador: " + cardId);
-                    throw new IllegalArgumentException("Carta não pertence ao jogador: " + cardId);
-                }
-                if (cardInHand.getZoneId() != ZoneId.HAND) {
-                    System.out.println("🚨 [ANTI-CHEAT] Jogador " + playerId + " tentou jogar carta fora da mão (Zona atual: "
-                            + cardInHand.getZoneId() + "): " + cardId);
-                    throw new IllegalArgumentException("Carta não encontrada na mão (Zona atual: " + cardInHand.getZoneId() + "): " + cardId);
-                }
-
-                if (activeHero != null) {
-                    String restrictionReason = getHeroPlayRestrictionReason(activeHero, cardInHand);
-                    if (restrictionReason != null) {
-                        throw new IllegalArgumentException(restrictionReason);
-                    }
-                }
-
-                validatedCardsToPlay.add(cardInHand);
+            if (cardInHand == null) {
+                throw new IllegalArgumentException("Carta não encontrada na mão: " + playedCardUuid);
+            }
+            if (cardInHand.getOwnerId() != null && !playerId.equals(cardInHand.getOwnerId())) {
+                throw new IllegalArgumentException("Carta não pertence ao jogador: " + playedCardUuid);
+            }
+            if (cardInHand.getZoneId() != ZoneId.HAND) {
+                throw new IllegalArgumentException("Carta não encontrada na mão (Zona atual: " + cardInHand.getZoneId() + "): " + playedCardUuid);
             }
 
-            validateCardsPlayableInPreparation(player, activeHero, validatedCardsToPlay);
-        }
-
-        List<Card> targetPlayedList = isP1 ? gameState.getPlayer1PlayedCards() : gameState.getPlayer2PlayedCards();
-        // Preserva na pilha apenas cartas que tenham sido inseridas por INVOCAR nesta fase, removendo seleções manuais anteriores se houver
-        targetPlayedList.removeIf(c -> c == null || c.getUuid() == null || !invokedCardIdsInCurrentCombat.contains(c.getUuid()));
-
-        for (Card cardToPlay : validatedCardsToPlay) {
-            cardToPlay.setZoneId(ZoneId.RESOLVE);
-            targetPlayedList.add(cardToPlay);
-        }
-
-        if (!validatedCardsToPlay.isEmpty()) {
-            incrementCardsPlayed(playerId, validatedCardsToPlay.size());
-            for (Card playedCard : validatedCardsToPlay) {
-                trackCardPlayedMissions(playerId, playedCard);
+            String restrictionReason = getHeroPlayRestrictionReason(activeHero, cardInHand);
+            if (restrictionReason != null) {
+                throw new IllegalArgumentException(restrictionReason);
             }
+
+            validateCardsPlayableInPreparation(player, activeHero, List.of(cardInHand));
+            validatedCardToPlay = cardInHand;
+        }
+
+        // Consome 1 janela de resolução para o jogador ativo
+        this.resolutionWindowsUsedByPlayer.put(
+                playerId,
+                this.resolutionWindowsUsedByPlayer.getOrDefault(playerId, 0) + 1
+        );
+        this.gameState.setResolutionActivePlayerId(playerId);
+
+        // A fase PREPARATION existe apenas antes da primeira ação de resolução ser executada
+        if (this.turnPhase == TurnPhase.PREPARATION) {
+            if (!this.combatStartExecutedInCurrentTurn) {
+                this.combatStartExecutedInCurrentTurn = true;
+                changePhase(TurnPhase.COMBAT_START);
+                triggerActiveHeroesEffects(TurnPhase.COMBAT_START);
+                resolutionQueue.resolveAll(this);
+                if (!isWaitingForPlayerChoice()) {
+                    attachItemsAlreadyInvokedInCombatStart(gameState.getPlayer1PlayedCards());
+                    attachItemsAlreadyInvokedInCombatStart(gameState.getPlayer2PlayedCards());
+                    changePhase(TurnPhase.RESOLUTION);
+                }
+            } else {
+                changePhase(TurnPhase.RESOLUTION);
+            }
+        }
+
+        if (validatedCardToPlay != null) {
+            List<Card> targetPlayedList = isP1 ? gameState.getPlayer1PlayedCards() : gameState.getPlayer2PlayedCards();
+            validatedCardToPlay.setZoneId(ZoneId.RESOLVE);
+            if (!targetPlayedList.contains(validatedCardToPlay)) {
+                targetPlayedList.add(validatedCardToPlay);
+            }
+            playedCardIdsInCurrentTurn
+                    .computeIfAbsent(playerId, k -> new HashSet<>())
+                    .add(validatedCardToPlay.getUuid());
+            incrementCardsPlayed(playerId, 1);
+            trackCardPlayedMissions(playerId, validatedCardToPlay);
+
+            captureSnapshot(validatedCardToPlay, null, "CARD_PLAYED_IMMEDIATE");
+            enqueueCardAndHeroOnPlayResolution(validatedCardToPlay, false);
         } else {
-            targetPlayedList.clear();
+            captureSnapshot(null, null, "RESOLUTION_WINDOW_PASSED");
         }
 
-        if (isP1) {
-            this.isPlayer1Ready = true;
-        } else {
-            this.isPlayer2Ready = true;
+        resumeCombatChainFromCurrentPhase();
+    }
+
+    /**
+     * 2. Compatibilidade com chamadas que enviam lista de UUIDs (0 = passa a janela, 1 = joga e ativa a carta).
+     */
+    public void submitPreparationCards(UUID playerId, List<UUID> playedCardUuids) {
+        if (this.turnPhase != TurnPhase.PREPARATION && this.turnPhase != TurnPhase.RESOLUTION) {
+            throw new IllegalStateException("Ação inválida fora das fases PREPARATION/RESOLUTION.");
+        }
+        if (isWaitingForPlayerChoice()) {
+            throw new IllegalStateException("Não é possível confirmar a preparação enquanto há uma escolha pendente.");
         }
 
-        // Captura foto mostrando cartas ocultas alocadas na zona RESOLVE
-        captureSnapshot(null, null, "PLAYER_PREPARATION_READY");
+        getValidatedParticipant(playerId);
 
-        // Se ambos confirmaram no Botão Principal, dispara a cadeia automática do combate!
-        if (this.isPlayer1Ready && this.isPlayer2Ready) {
-            this.isPlayer1Ready = false;
-            this.isPlayer2Ready = false;
-            runAutomatedCombatChain();
+        if (playedCardUuids == null || playedCardUuids.isEmpty()) {
+            submitResolutionCard(playerId, null);
+            return;
         }
+
+        int maxAllowedCards = getMaxPreparationCardsForPlayer(playerId);
+        if (playedCardUuids.size() > maxAllowedCards) {
+            throw new IllegalArgumentException("Limite de cartas por turno excedido: máximo permitido é "
+                    + maxAllowedCards + ", enviado: " + playedCardUuids.size());
+        }
+
+        Set<UUID> seenCardIds = new HashSet<>();
+        for (UUID cardId : playedCardUuids) {
+            if (cardId == null) {
+                throw new IllegalArgumentException("UUID de carta nulo não é permitido.");
+            }
+            if (!seenCardIds.add(cardId)) {
+                throw new IllegalArgumentException("Carta duplicada no mesmo envio de preparação: " + cardId);
+            }
+        }
+
+        if (playedCardUuids.size() > 1) {
+            throw new IllegalArgumentException("No fluxo de resolução imediata alternada, envie apenas 1 carta por vez.");
+        }
+
+        submitResolutionCard(playerId, playedCardUuids.get(0));
     }
 
     /**
      * Executa em cadeia todas as fases automáticas gerando uma foto por efeito e por fase
      */
     public void runAutomatedCombatChain() {
+        if (player1 != null) {
+            this.resolutionWindowsUsedByPlayer.put(player1.getUuid(), getMaxPreparationCardsForPlayer(player1.getUuid()));
+        }
+        if (player2 != null) {
+            this.resolutionWindowsUsedByPlayer.put(player2.getUuid(), getMaxPreparationCardsForPlayer(player2.getUuid()));
+        }
         preparation(); // Muda para TurnPhase.COMBAT_START
         triggerActiveHeroesEffects(TurnPhase.COMBAT_START);
+        enqueueInitialResolutionCards();
         resumeCombatChainFromCurrentPhase();
     }
 
@@ -1329,24 +1417,25 @@ public class GameEngine {
             resolutionQueue.resolveAll(this);
             if (isWaitingForPlayerChoice()) return;
 
-            // Equipa itens que já foram invocados no COMBAT_START para que seus buffs valham na RESOLUTION,
-            // mas MANTÉM todas as cartas na lista visual (player1PlayedCards / player2PlayedCards) até o fim!
             attachItemsAlreadyInvokedInCombatStart(gameState.getPlayer1PlayedCards());
             attachItemsAlreadyInvokedInCombatStart(gameState.getPlayer2PlayedCards());
 
             changePhase(TurnPhase.RESOLUTION);
-            enqueueInitialResolutionCards();
         }
 
-        // 2. Se está em RESOLUTION, resolve a fila (incluindo cartas e tokens invocados encadeados!)
+        // 2. Se está em RESOLUTION, resolve a fila da carta atual (incluindo cartas invocadas e reações encadeadas!)
         if (this.turnPhase == TurnPhase.RESOLUTION) {
             resolutionQueue.resolveAll(this);
             if (isWaitingForPlayerChoice()) return;
 
-            // Anexa os itens aos heróis para que contem no combate físico (COMBAT),
+            // Anexa os itens aos heróis imediatamente para que já valham nas próximas cartas e no combate físico,
             // porém NÃO limpa player1PlayedCards/player2PlayedCards ainda para que persistam na mesa!
             attachItemsAlreadyInvokedInCombatStart(gameState.getPlayer1PlayedCards());
             attachItemsAlreadyInvokedInCombatStart(gameState.getPlayer2PlayedCards());
+
+            if (advanceResolutionTurnOrFinish()) {
+                return;
+            }
 
             changePhase(TurnPhase.COMBAT);
         }
@@ -1390,6 +1479,36 @@ public class GameEngine {
                 changePhase(TurnPhase.DISCARD);
             }
         }
+    }
+
+    /**
+     * Alterna a prioridade de ação na RESOLUTION para o próximo jogador com janelas restantes.
+     * Retorna true se ainda há janelas de jogada; false se a RESOLUTION deve encerrar e ir para COMBAT.
+     */
+    private boolean advanceResolutionTurnOrFinish() {
+        if (player1 == null || player2 == null || gameState == null || this.resolutionWindowsUsedByPlayer.isEmpty()) {
+            return false;
+        }
+        UUID currentActor = gameState.getEffectiveResolutionActivePlayerId();
+        if (currentActor == null) {
+            currentActor = player1.getUuid();
+        }
+        UUID opponentId = currentActor.equals(player1.getUuid()) ? player2.getUuid() : player1.getUuid();
+
+        if (getRemainingResolutionWindowsForPlayer(opponentId) > 0) {
+            gameState.setResolutionActivePlayerId(opponentId);
+            captureSnapshot(null, null, "RESOLUTION_TURN_CHANGE");
+            return true;
+        }
+
+        if (getRemainingResolutionWindowsForPlayer(currentActor) > 0) {
+            gameState.setResolutionActivePlayerId(currentActor);
+            captureSnapshot(null, null, "RESOLUTION_TURN_CHANGE");
+            return true;
+        }
+
+        gameState.setResolutionActivePlayerId(null);
+        return false;
     }
 
     /**
@@ -1529,33 +1648,195 @@ public class GameEngine {
         }
     }
 
+    private static class CardResolutionEntryEffect implements com.alkateca.lendasdapoeira.effects.Effect {
+        private final List<com.alkateca.lendasdapoeira.effects.Effect> cardEffects;
+        private final List<com.alkateca.lendasdapoeira.effects.Effect> heroOnPlayEffects;
+        private final HeroCard ownerHero;
+
+        public CardResolutionEntryEffect(
+                List<com.alkateca.lendasdapoeira.effects.Effect> cardEffects,
+                List<com.alkateca.lendasdapoeira.effects.Effect> heroOnPlayEffects,
+                HeroCard ownerHero) {
+            this.cardEffects = cardEffects != null ? cardEffects : Collections.emptyList();
+            this.heroOnPlayEffects = heroOnPlayEffects != null ? heroOnPlayEffects : Collections.emptyList();
+            this.ownerHero = ownerHero;
+        }
+
+        public List<com.alkateca.lendasdapoeira.effects.Effect> getCardEffects() {
+            return cardEffects;
+        }
+
+        @Override
+        public boolean predicate(Card sourceCard, TurnPhase turnPhase) {
+            return turnPhase == TurnPhase.RESOLUTION;
+        }
+
+        @Override
+        public boolean shouldCaptureSnapshot() {
+            return false;
+        }
+
+        @Override
+        public void resolve(GameEngine gameEngine, Card sourceCard) {
+            // Se a carta foi removida/anulada da pilha de resolução (ex: por Reação ou Banir!), aborta sua execução
+            if (sourceCard.getZoneId() != ZoneId.RESOLVE) {
+                return;
+            }
+            gameEngine.markCardAsResolved(sourceCard);
+
+            for (int i = heroOnPlayEffects.size() - 1; i >= 0; i--) {
+                gameEngine.getResolutionQueue().enqueueFirst(heroOnPlayEffects.get(i), ownerHero);
+            }
+            for (int i = cardEffects.size() - 1; i >= 0; i--) {
+                gameEngine.getResolutionQueue().enqueueFirst(cardEffects.get(i), sourceCard);
+            }
+        }
+    }
+
+    /**
+     * Verifica se o oponente possui alguma Carta de Reação válida na mão em resposta à carta prestes a resolver.
+     * Se possuir, abre uma janela de escolha (REACTION_WINDOW) pausando a ResolutionQueue antes da execução.
+     */
+    public boolean checkAndOpenReactionWindowForPendingEffect(Card sourceCard, com.alkateca.lendasdapoeira.effects.Effect effect) {
+        if (this.turnPhase != TurnPhase.RESOLUTION || sourceCard == null || !(effect instanceof CardResolutionEntryEffect entryEffect)) {
+            return false;
+        }
+        if (sourceCard.getZoneId() != ZoneId.RESOLVE || sourceCard.getOwnerId() == null) {
+            return false;
+        }
+        if (sourceCard.getUuid() != null && !this.reactionPromptedCardIdsInCurrentCombat.add(sourceCard.getUuid())) {
+            return false;
+        }
+
+        boolean isP1Source = player1 != null && sourceCard.getOwnerId().equals(player1.getUuid());
+        Player defendingPlayer = isP1Source ? player2 : player1;
+        if (defendingPlayer == null || defendingPlayer.getCurrentDeck() == null || defendingPlayer.getCurrentDeck().getCardList() == null) {
+            return false;
+        }
+
+        UUID defendingHeroId = isP1Source ? gameState.getActiveHeroPlayer2Id() : gameState.getActiveHeroPlayer1Id();
+        HeroCard defendingHero = getActiveHero(defendingPlayer, defendingHeroId);
+        if (defendingHero == null || !Boolean.TRUE.equals(defendingHero.getEstaVivo())) {
+            return false;
+        }
+
+        List<com.alkateca.lendasdapoeira.effects.Effect> triggerEffects = entryEffect.getCardEffects();
+        List<UUID> validReactionCardUuids = new ArrayList<>();
+
+        for (Card candidate : defendingPlayer.getCurrentDeck().getCardList()) {
+            if (candidate == null || candidate.getZoneId() != ZoneId.HAND || !candidate.isReactionCard()) {
+                continue;
+            }
+            if (!isCardCompatibleForPlay(defendingPlayer, defendingHero, candidate)
+                    || !canHeroPlayCard(defendingHero, candidate)) {
+                continue;
+            }
+            if (candidate.getEffects() == null) {
+                continue;
+            }
+
+            boolean matchesTrigger = false;
+            for (com.alkateca.lendasdapoeira.effects.Effect candEff : candidate.getEffects()) {
+                if (candEff instanceof com.alkateca.lendasdapoeira.effects.reaction.ReactionEffect reactionEff) {
+                    if (reactionEff.canReact(this, candidate, sourceCard, null)) {
+                        matchesTrigger = true;
+                        break;
+                    }
+                    for (com.alkateca.lendasdapoeira.effects.Effect trigEff : triggerEffects) {
+                        if (reactionEff.canReact(this, candidate, sourceCard, trigEff)) {
+                            matchesTrigger = true;
+                            break;
+                        }
+                    }
+                    if (matchesTrigger) break;
+                }
+            }
+
+            if (matchesTrigger && candidate.getUuid() != null) {
+                validReactionCardUuids.add(candidate.getUuid());
+            }
+        }
+
+        if (validReactionCardUuids.isEmpty()) {
+            return false;
+        }
+
+        this.currentReactionTriggerCard = sourceCard;
+        this.currentReactionTriggerEffect = triggerEffects.isEmpty() ? null : triggerEffects.get(0);
+
+        requestPlayerChoice(
+                defendingPlayer.getUuid(),
+                sourceCard,
+                "REACTION_WINDOW",
+                "Reação disponível contra '" + sourceCard.getCardName() + "'! Escolha uma Carta de Reação da sua mão para ativar ou pule.",
+                validReactionCardUuids,
+                true,
+                chosenReactionUuid -> {
+                    if (chosenReactionUuid == null) return;
+                    Card chosenReaction = defendingPlayer.getCurrentDeck().getCardList().stream()
+                            .filter(c -> c != null && chosenReactionUuid.equals(c.getUuid()) && c.getZoneId() == ZoneId.HAND)
+                            .findFirst()
+                            .orElse(null);
+                    if (chosenReaction != null) {
+                        playReactionCardIntoResolution(chosenReaction, sourceCard);
+                    }
+                }
+        );
+        return true;
+    }
+
+    /**
+     * Ativa uma Carta de Reação em resposta a um efeito/carta do oponente,
+     * enfileirando-a no início da ResolutionQueue (LIFO) sem consumir o limite de 2 cartas do turno.
+     */
+    public void playReactionCardIntoResolution(Card reactionCard, Card triggeringCard) {
+        if (reactionCard == null) return;
+
+        this.currentReactionTriggerCard = triggeringCard;
+        reactionCard.setZoneId(ZoneId.RESOLVE);
+        if (reactionCard.getUuid() != null) {
+            this.reactionCardIdsInCurrentCombat.add(reactionCard.getUuid());
+        }
+
+        boolean isP1 = player1 != null && reactionCard.getOwnerId() != null && reactionCard.getOwnerId().equals(player1.getUuid());
+        List<Card> ownerPlayedList = isP1
+                ? gameState.getPlayer1PlayedCards()
+                : gameState.getPlayer2PlayedCards();
+
+        if (ownerPlayedList != null && !ownerPlayedList.contains(reactionCard)) {
+            ownerPlayedList.add(reactionCard);
+        }
+
+        incrementCardsPlayed(reactionCard.getOwnerId(), 1);
+        trackCardPlayedMissions(reactionCard.getOwnerId(), reactionCard);
+
+        int slotIndex = ownerPlayedList != null ? Math.max(0, ownerPlayedList.indexOf(reactionCard)) : 0;
+        UUID activeHeroId = isP1 ? gameState.getActiveHeroPlayer1Id() : gameState.getActiveHeroPlayer2Id();
+        HeroCard activeHero = findHeroById(activeHeroId);
+
+        captureSpawnSnapshot(
+                activeHero,
+                reactionCard,
+                null,
+                "REACTION_PLAYED",
+                activeHeroId,
+                ZoneId.RESOLVE.name(),
+                slotIndex,
+                false,
+                false,
+                "⚡ Reação ativada: " + reactionCard.getCardName()
+                        + (triggeringCard != null ? " (em resposta a " + triggeringCard.getCardName() + ")" : "")
+        );
+
+        enqueueCardAndHeroOnPlayResolution(reactionCard, true);
+    }
+
     /**
      * Enfileira uma carta jogada e, imediatamente após seus efeitos de RESOLUTION,
      * enfileira os efeitos de TurnPhase.RESOLUTION ("Ao jogar") do Herói ativo de seu dono.
      */
     private void enqueueCardAndHeroOnPlayResolution(Card card, boolean atFront) {
         if (card == null) return;
-
-        com.alkateca.lendasdapoeira.effects.Effect resolveEntryStep = new com.alkateca.lendasdapoeira.effects.Effect() {
-            @Override
-            public boolean predicate(Card sourceCard, TurnPhase turnPhase) {
-                return turnPhase == TurnPhase.RESOLUTION;
-            }
-
-            @Override
-            public boolean shouldCaptureSnapshot() {
-                return false;
-            }
-
-            @Override
-            public void resolve(GameEngine gameEngine, Card sourceCard) {
-                // Se a carta foi removida/anulada da pilha de resolução (ex: por Banir!), aborta sua execução
-                if (sourceCard.getZoneId() != ZoneId.RESOLVE) {
-                    return;
-                }
-                gameEngine.markCardAsResolved(sourceCard);
-            }
-        };
 
         boolean isP1 = player1 != null && card.getOwnerId() != null && card.getOwnerId().equals(player1.getUuid());
         HeroCard ownerHero = isP1
@@ -1585,21 +1866,15 @@ public class GameEngine {
             }
         }
 
+        CardResolutionEntryEffect resolveEntryStep = new CardResolutionEntryEffect(
+                cardEffects,
+                heroOnPlayEffects,
+                ownerHero
+        );
+
         if (!atFront) {
             resolutionQueue.enqueue(resolveEntryStep, card);
-            for (com.alkateca.lendasdapoeira.effects.Effect eff : cardEffects) {
-                resolutionQueue.enqueue(eff, card);
-            }
-            for (com.alkateca.lendasdapoeira.effects.Effect eff : heroOnPlayEffects) {
-                resolutionQueue.enqueue(eff, ownerHero);
-            }
         } else {
-            for (int i = heroOnPlayEffects.size() - 1; i >= 0; i--) {
-                resolutionQueue.enqueueFirst(heroOnPlayEffects.get(i), ownerHero);
-            }
-            for (int i = cardEffects.size() - 1; i >= 0; i--) {
-                resolutionQueue.enqueueFirst(cardEffects.get(i), card);
-            }
             resolutionQueue.enqueueFirst(resolveEntryStep, card);
         }
     }

@@ -64,8 +64,9 @@ class MatchRewardEconomyIntegrationTest {
             engine.submitHeroChoice(bot.getUuid(), botHeroId, p1HeroId);
         }
 
-        engine.submitPreparationCards(p1.getUuid(), List.of());
-        engine.submitPreparationCards(bot.getUuid(), List.of());
+        while (engine.getTurnPhase() == TurnPhase.PREPARATION || engine.getTurnPhase() == TurnPhase.RESOLUTION) {
+            engine.passResolutionWindow(engine.getGameState().getEffectiveResolutionActivePlayerId());
+        }
 
         // Assert
         assertEquals(TurnPhase.GAME_OVER, engine.getTurnPhase());
@@ -96,8 +97,9 @@ class MatchRewardEconomyIntegrationTest {
             engine.submitHeroChoice(p2.getUuid(), p2HeroId, p1HeroId);
         }
 
-        engine.submitPreparationCards(p1.getUuid(), List.of());
-        engine.submitPreparationCards(p2.getUuid(), List.of());
+        while (engine.getTurnPhase() == TurnPhase.PREPARATION || engine.getTurnPhase() == TurnPhase.RESOLUTION) {
+            engine.passResolutionWindow(engine.getGameState().getEffectiveResolutionActivePlayerId());
+        }
 
         // Chamada extra a buildMatchResultSummary não deve duplicar o prêmio
         engine.buildMatchResultSummary();

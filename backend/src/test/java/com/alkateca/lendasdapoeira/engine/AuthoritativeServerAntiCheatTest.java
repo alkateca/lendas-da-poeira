@@ -204,18 +204,26 @@ class AuthoritativeServerAntiCheatTest {
         engine.addTurnPreparationCardLimitModifier(player1.getUuid(), 1);
         assertEquals(3, engine.getMaxPreparationCardsForPlayer(player1.getUuid()));
 
-        // Act: Agora o envio das 3 cartas deve ser aceito
+        // Act: Joga as 3 cartas em suas 3 janelas de resolução (enquanto P2 passa suas 2 janelas)
+        assertDoesNotThrow(() -> {
+            engine.submitResolutionCard(player1.getUuid(), handCards.get(0).getUuid());
+            engine.passResolutionWindow(player2.getUuid());
+            engine.submitResolutionCard(player1.getUuid(), handCards.get(1).getUuid());
+            engine.passResolutionWindow(player2.getUuid());
+        });
+
+        // Antes da 3ª janela de P1, ainda resta 1 janela para P1 (total de 3) e 0 para P2, com 2 cartas já jogadas no combate
+        assertEquals(2, engine.getCardsPlayedByPlayerInCurrentTurn(player1.getUuid()));
+        assertEquals(1, engine.getRemainingResolutionWindowsForPlayer(player1.getUuid()));
+        assertEquals(0, engine.getRemainingResolutionWindowsForPlayer(player2.getUuid()));
+
         assertDoesNotThrow(() ->
-                engine.submitPreparationCards(player1.getUuid(), threeCardIds)
+                engine.submitResolutionCard(player1.getUuid(), handCards.get(2).getUuid())
         );
 
-        // Assert
-        assertTrue(engine.isPlayer1Ready());
-        assertEquals(3, engine.getGameState().getPlayer1PlayedCards().size());
-        assertTrue(handCards.stream().allMatch(c -> c.getZoneId() == ZoneId.RESOLVE));
-
-        // Cleanup reseta o modificador dinâmico para o padrão (2)
-        engine.runCombatEndCleanup();
+        // Assert: O turno avançou para DISCARD após as 3 cartas de P1 (que foram para o descarte após resolverem)
+        assertEquals(TurnPhase.DISCARD, engine.getTurnPhase());
+        assertTrue(handCards.stream().allMatch(c -> c.getZoneId() == ZoneId.DISCARD));
         assertEquals(2, engine.getMaxPreparationCardsForPlayer(player1.getUuid()));
     }
 
@@ -238,11 +246,10 @@ class AuthoritativeServerAntiCheatTest {
                 engine.submitPreparationCards(player1.getUuid(), List.of(invokedSpell.getUuid()))
         );
 
-        // Act 2: Jogador envia suas 2 cartas manuais normalmente além da carta já invocada
-        engine.submitPreparationCards(
-                player1.getUuid(),
-                List.of(manualHandCards.get(0).getUuid(), manualHandCards.get(1).getUuid())
-        );
+        // Act 2: Jogador envia suas 2 cartas manuais nas janelas 1 e 2 além da carta já invocada
+        engine.submitResolutionCard(player1.getUuid(), manualHandCards.get(0).getUuid());
+        engine.passResolutionWindow(player2.getUuid());
+        engine.submitResolutionCard(player1.getUuid(), manualHandCards.get(1).getUuid());
 
         // Assert 2: A pilha contém a carta invocada + as 2 cartas jogadas da mão (total 3), mas o contador manual marca 2
         assertEquals(3, engine.getGameState().getPlayer1PlayedCards().size());
@@ -286,11 +293,14 @@ class AuthoritativeServerAntiCheatTest {
         );
         assertEquals(ZoneId.HAND, greatsword.getZoneId());
 
-        // Act & Assert 3: Jogar "Estilo Secreto do Caçador" (slots -> 3) junto com a Espada de empunhadura 2 (1 + 2 <= 3) é permitido!
-        assertDoesNotThrow(() ->
-                engine.submitPreparationCards(player1.getUuid(), List.of(tripleWieldCard.getUuid(), greatsword.getUuid()))
-        );
-        assertTrue(engine.isPlayer1Ready());
+        // Act & Assert 3: Jogar "Estilo Secreto do Caçador" na janela 1 (slots -> 3 imediatamente) e depois a Espada de empunhadura 2 na janela 2 (1 + 2 <= 3) é permitido!
+        assertDoesNotThrow(() -> {
+            engine.submitResolutionCard(player1.getUuid(), tripleWieldCard.getUuid());
+            assertEquals(3, heroP1.getMaxWeaponSlots());
+            engine.passResolutionWindow(player2.getUuid());
+            engine.submitResolutionCard(player1.getUuid(), greatsword.getUuid());
+        });
+        assertEquals(ZoneId.ATTACHED, greatsword.getZoneId());
     }
 
     @Test
@@ -340,9 +350,10 @@ class AuthoritativeServerAntiCheatTest {
                 engine.submitPreparationCards(intruderId, List.of())
         );
 
-        // Avança legalmente para a fase DISCARD
-        engine.submitPreparationCards(player1.getUuid(), List.of());
-        engine.submitPreparationCards(player2.getUuid(), List.of());
+        // Avança legalmente para a fase DISCARD passando as janelas de resolução
+        while (engine.getTurnPhase() == TurnPhase.PREPARATION || engine.getTurnPhase() == TurnPhase.RESOLUTION) {
+            engine.passResolutionWindow(engine.getGameState().getEffectiveResolutionActivePlayerId());
+        }
         assertEquals(TurnPhase.DISCARD, engine.getTurnPhase());
 
         Card validHandCard = player1.getCurrentDeck().getCardList().stream()

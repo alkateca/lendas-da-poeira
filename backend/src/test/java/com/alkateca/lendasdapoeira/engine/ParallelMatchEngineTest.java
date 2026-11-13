@@ -103,7 +103,8 @@ class ParallelMatchEngineTest {
                     matchmakingService.processPlayerAction(match.getMatchId(), action);
                 }
 
-                assertEquals(TurnPhase.PREPARATION, engine.getTurnPhase());
+                assertTrue(engine.getTurnPhase() == TurnPhase.PREPARATION || engine.getTurnPhase() == TurnPhase.RESOLUTION);
+                assertEquals(p1.getUuid(), engine.getGameState().getEffectiveResolutionActivePlayerId());
                 return match.getMatchId();
             });
         }

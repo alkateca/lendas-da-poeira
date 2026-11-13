@@ -17,6 +17,7 @@ public class MatchSnapshotDTO {
     private long snapshotSequence;
     private TurnPhase turnPhase;
     private UUID activeTurnPlayerId;
+    private UUID resolutionActivePlayerId;
     private boolean waitingForMainButton;
     private TriggerContextDTO triggerContext;
 
@@ -83,6 +84,9 @@ public class MatchSnapshotDTO {
         private int deckCount;
         private int handCount;
         private UUID activeHeroId;
+        private int cardsPlayedThisTurn;
+        private int resolutionWindowsUsed;
+        private int maxCardsThisTurn;
         private List<HeroSnapshotDTO> heroes = new ArrayList<>();
         private List<CardSnapshotDTO> hand = new ArrayList<>();
         private List<CardSnapshotDTO> playedCardsInResolve = new ArrayList<>();
@@ -138,6 +142,7 @@ public class MatchSnapshotDTO {
         private List<String> ordem = new ArrayList<>();
         private List<String> classe = new ArrayList<>();
         private boolean faceUp;
+        private boolean reactionCard;
         private boolean liberationCard;
         private String missionType;
         private int missionTargetValue;

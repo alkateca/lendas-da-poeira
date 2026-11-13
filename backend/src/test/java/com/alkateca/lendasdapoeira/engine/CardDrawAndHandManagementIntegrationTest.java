@@ -104,13 +104,18 @@ class CardDrawAndHandManagementIntegrationTest {
                 .filter(c -> c.getZoneId() == ZoneId.HAND)
                 .toList();
 
-        // P1 joga 2 cartas da mão
-        List<UUID> p1Played = List.of(p1Hand.get(0).getUuid(), p1Hand.get(1).getUuid());
-        engine.submitPreparationCards(p1.getUuid(), p1Played);
-
-        // P2 joga 1 carta da mão (dispara runAutomatedCombatChain automaticamente)
-        List<UUID> p2Played = List.of(p2Hand.get(0).getUuid());
-        engine.submitPreparationCards(p2.getUuid(), p2Played);
+        // P1 joga 2 cartas da mão e P2 joga 1 carta da mão nas janelas alternadas
+        if (activePlayerId.equals(p1.getUuid())) {
+            engine.submitResolutionCard(p1.getUuid(), p1Hand.get(0).getUuid());
+            engine.submitResolutionCard(p2.getUuid(), p2Hand.get(0).getUuid());
+            engine.submitResolutionCard(p1.getUuid(), p1Hand.get(1).getUuid());
+            engine.passResolutionWindow(p2.getUuid());
+        } else {
+            engine.submitResolutionCard(p2.getUuid(), p2Hand.get(0).getUuid());
+            engine.submitResolutionCard(p1.getUuid(), p1Hand.get(0).getUuid());
+            engine.passResolutionWindow(p2.getUuid());
+            engine.submitResolutionCard(p1.getUuid(), p1Hand.get(1).getUuid());
+        }
 
         // Assert 3: Combate automático resolve e atinge fase DISCARD
         assertEquals(TurnPhase.DISCARD, engine.getTurnPhase());

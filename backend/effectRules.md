@@ -20,7 +20,8 @@ Antes de gerar o código Java, você DEVE obrigatoriamente imprimir um "Relatór
 *   **Atributos:** Valores numéricos (ex: `magicDamage`) devem ser declarados como `private final` e inicializados no construtor.
 *   **Predicate:** Deve retornar `true` apenas através da comparação estrita `turnPhase == TurnPhase.[FASE]`.
 *   **Mapeamento de Fases:**
-    *   Efeitos padrão (Ao Jogar, Resolução normal) = `TurnPhase.RESOLUTION` (Pacote: `effects.combat`).
+    *   Efeitos padrão (Ao Jogar, Resolução imediata alternada) = `TurnPhase.RESOLUTION` (Pacote: `effects.combat`).
+    *   Efeitos de Reação (Ativados em resposta a carta/efeito inimigo via `REACTION_WINDOW`, resolvendo em LIFO antes do gatilho sem gastar janela do turno) = `TurnPhase.RESOLUTION` implementando `ReactionEffect` ou decorados com `TriggeredReactionEffect` (Pacote: `effects.reaction`).
     *   "Início do Combate" = `TurnPhase.COMBAT_START` (Pacote: `effects.startOfCombat`).
     *   "Final do Combate" = `TurnPhase.COMBAT_END` (Pacote: `effects.endOfCombat`).
 

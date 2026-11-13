@@ -15,6 +15,11 @@ public class ResolutionQueue {
     private static class PendingEffect {
         private Effect effect;
         private Card sourceCard;
+        private boolean reactionChecked;
+
+        public PendingEffect(Effect effect, Card sourceCard) {
+            this(effect, sourceCard, false);
+        }
     }
 
     public void enqueue(Effect effect, Card sourceCard) {
@@ -35,7 +40,19 @@ public class ResolutionQueue {
                 return;
             }
 
+            PendingEffect head = queue.peekFirst();
+            if (head != null && !head.isReactionChecked()) {
+                head.setReactionChecked(true);
+                if (engine.checkAndOpenReactionWindowForPendingEffect(head.getSourceCard(), head.getEffect())) {
+                    engine.captureSnapshot(head.getSourceCard(), head.getEffect(), "CHOICE_REQUESTED");
+                    return;
+                }
+            }
+
             PendingEffect pending = queue.pollFirst();
+            if (pending == null) {
+                break;
+            }
             int historySizeBefore = engine.getSnapshotHistory().size();
             pending.getEffect().resolve(engine, pending.getSourceCard());
             engine.evaluateInstantDeathByAura();

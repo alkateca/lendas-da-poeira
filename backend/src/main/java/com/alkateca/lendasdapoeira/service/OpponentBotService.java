@@ -34,13 +34,12 @@ public class OpponentBotService {
         if (engine.getTurnPhase() == TurnPhase.CHOICE
                 && botId.equals(engine.getGameState().getActiveTurnPlayerId())) {
             executeBotHeroChoice(engine, botPlayer, humanPlayer);
-            return; // <-- IMPORTANTE: Para aqui e entrega a tela na fase PREPARATION para o jogador humano!
         }
 
-        // 2. Na fase PREPARATION, assim que o jogador humano confirmar (isPlayer1Ready), o Bot joga até 2 cartas
-        if (engine.getTurnPhase() == TurnPhase.PREPARATION
-                && engine.isPlayer1Ready()
-                && !engine.isPlayer2Ready()) {
+        // 2. Na fase PREPARATION ou RESOLUTION, sempre que a janela de resolução for do Bot, ele joga 1 carta (ou passa)
+        while ((engine.getTurnPhase() == TurnPhase.PREPARATION || engine.getTurnPhase() == TurnPhase.RESOLUTION)
+                && !engine.isWaitingForPlayerChoice()
+                && botId.equals(engine.getGameState().getEffectiveResolutionActivePlayerId())) {
             executeBotPreparation(engine, botPlayer);
         }
 
@@ -105,11 +104,12 @@ public class OpponentBotService {
         int maxSlots = activeBotHero != null ? activeBotHero.getMaxWeaponSlots() : 2;
         int currentUsedSlots = activeBotHero != null ? engine.getUsedWeaponSlotsForHero(activeBotHero.getUuid()) : 0;
 
-        int maxCardsForBot = engine.getMaxPreparationCardsForPlayer(botPlayer.getUuid());
-        List<UUID> chosenCards = new ArrayList<>();
+        UUID chosenCardUuid = null;
 
         for (Card candidate : botHand) {
-            if (chosenCards.size() >= maxCardsForBot) break; // Respeita o limite dinâmico de cartas na preparação
+            if (candidate.isReactionOnlyCard()) {
+                continue;
+            }
             if (activeBotHero != null && !engine.isCardCompatibleForPlay(botPlayer, activeBotHero, candidate)) {
                 continue;
             }
@@ -121,16 +121,17 @@ public class OpponentBotService {
             if (candidate.getItemType() == ItemType.ARMA) {
                 int emp = Math.max(1, candidate.getEmpunhadura());
                 if (currentUsedSlots + emp <= maxSlots) {
-                    chosenCards.add(candidate.getUuid());
-                    currentUsedSlots += emp;
+                    chosenCardUuid = candidate.getUuid();
+                    break;
                 }
             } else {
-                chosenCards.add(candidate.getUuid());
+                chosenCardUuid = candidate.getUuid();
+                break;
             }
         }
 
-        System.out.println("🤖 [BOT] Preparou " + chosenCards.size() + " carta(s) oculta(s) na zona RESOLVE.");
-        engine.submitPreparationCards(botPlayer.getUuid(), chosenCards);
+        System.out.println("🤖 [BOT] Jogou na janela de resolução: " + (chosenCardUuid != null ? chosenCardUuid : "PASSOU"));
+        engine.submitResolutionCard(botPlayer.getUuid(), chosenCardUuid);
     }
 
     /**

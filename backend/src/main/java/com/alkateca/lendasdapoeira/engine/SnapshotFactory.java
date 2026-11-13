@@ -21,9 +21,11 @@ public class SnapshotFactory {
         snapshot.setSnapshotSequence(engine.nextSnapshotSequence());
         snapshot.setTurnPhase(engine.getTurnPhase());
         snapshot.setActiveTurnPlayerId(engine.getGameState().getActiveTurnPlayerId());
+        snapshot.setResolutionActivePlayerId(engine.getGameState().getEffectiveResolutionActivePlayerId());
 
         boolean waiting = engine.getTurnPhase() == TurnPhase.CHOICE ||
                 engine.getTurnPhase() == TurnPhase.PREPARATION ||
+                engine.getTurnPhase() == TurnPhase.RESOLUTION ||
                 engine.getTurnPhase() == TurnPhase.DISCARD ||
                 engine.isWaitingForPlayerChoice();
         snapshot.setWaitingForMainButton(waiting);
@@ -144,6 +146,9 @@ public class SnapshotFactory {
                 ? engine.getGameState().getActiveHeroPlayer1Id()
                 : engine.getGameState().getActiveHeroPlayer2Id();
         view.setActiveHeroId(activeHeroId);
+        view.setCardsPlayedThisTurn(engine.getCardsPlayedByPlayerInCurrentTurn(player.getUuid()));
+        view.setResolutionWindowsUsed(engine.getResolutionWindowsUsedForPlayer(player.getUuid()));
+        view.setMaxCardsThisTurn(engine.getMaxPreparationCardsForPlayer(player.getUuid()));
 
         if (player.getCurrentDeck() != null) {
             List<Card> allDeckCards = player.getCurrentDeck().getCardList();
@@ -295,6 +300,7 @@ public class SnapshotFactory {
             dto.setClasse(card.getClasse().stream().map(Enum::name).collect(Collectors.toList()));
         }
         dto.setFaceUp(true);
+        dto.setReactionCard(card.isReactionCard());
         dto.setLiberationCard(card.isLiberationCard());
         dto.setMissionType(card.getMissionType());
         dto.setMissionTargetValue(card.getMissionTargetValue());
@@ -314,9 +320,7 @@ public class SnapshotFactory {
 
     private static MatchSnapshotDTO.CardSnapshotDTO toCardVisibleDTO(Card card, TurnPhase phase, boolean revealed) {
         MatchSnapshotDTO.CardSnapshotDTO dto = toCardDTO(card);
-        if (phase == TurnPhase.PREPARATION && !revealed) {
-            dto.setFaceUp(false);
-        }
+        dto.setFaceUp(true);
         return dto;
     }
 
@@ -335,6 +339,7 @@ public class SnapshotFactory {
         adapted.setSnapshotSequence(original.getSnapshotSequence());
         adapted.setTurnPhase(original.getTurnPhase());
         adapted.setActiveTurnPlayerId(original.getActiveTurnPlayerId());
+        adapted.setResolutionActivePlayerId(original.getResolutionActivePlayerId());
         adapted.setWaitingForMainButton(original.isWaitingForMainButton());
         adapted.setTriggerContext(cloneTriggerContext(original.getTriggerContext()));
         adapted.setPendingChoice(original.getPendingChoice());
@@ -377,6 +382,9 @@ public class SnapshotFactory {
         copy.setDeckCount(src.getDeckCount());
         copy.setHandCount(src.getHandCount());
         copy.setActiveHeroId(src.getActiveHeroId());
+        copy.setCardsPlayedThisTurn(src.getCardsPlayedThisTurn());
+        copy.setResolutionWindowsUsed(src.getResolutionWindowsUsed());
+        copy.setMaxCardsThisTurn(src.getMaxCardsThisTurn());
         copy.setHeroes(src.getHeroes());
         copy.setDiscardPile(src.getDiscardPile());
         copy.setExilePile(src.getExilePile());
@@ -400,6 +408,7 @@ public class SnapshotFactory {
             cardCopy.setDescricao(showFace ? c.getDescricao() : "");
             cardCopy.setRarity(showFace ? c.getRarity() : null);
             cardCopy.setCardSet(showFace ? c.getCardSet() : null);
+            cardCopy.setReactionCard(showFace && c.isReactionCard());
             cardCopy.setLiberationCard(showFace && c.isLiberationCard());
             cardCopy.setRacas(showFace && c.getRacas() != null ? new ArrayList<>(c.getRacas()) : List.of());
             cardCopy.setAfinidades(showFace && c.getAfinidades() != null ? new ArrayList<>(c.getAfinidades()) : List.of());

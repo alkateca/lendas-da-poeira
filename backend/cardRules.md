@@ -37,7 +37,7 @@ Deve conter o `itemType`, `afinidades`, `racas`, `classe` e `ordem`, sempre sepa
 **Regras de Efeitos e Modificadores:**
 *   **Mudanças de atributos:** "O Herói Inimigo recebe -X de Espírito/Ataque/Defesa/Vida Máxima" ou "Seu Herói recebe +X de Espírito/Ataque/Defesa/Vida Máxima".
 *   **Dano:** "O Herói Inimigo Sofre X de Dano Direto/Mágico/Físico".
-*   **Tempo (Gatilhos):** Podem existir os prefixos `Início da Partida:`, `Início do Combate:` e `Final do Combate:`.
+*   **Tempo (Gatilhos):** Podem existir os prefixos `Início da Partida:`, `Início do Combate:`, `Final do Combate:` e `Reação:` (para cartas do tipo `REACTION` ou efeitos reativos acionados em resposta a uma ação/efeito específico do oponente, sem consumir o limite de 2 cartas jogadas no turno).
 *   **Duração:** Os efeitos podem ser permanentes ou conter o sufixo `até o Final do Combate.`.
 
 **Palavras-Chave:**

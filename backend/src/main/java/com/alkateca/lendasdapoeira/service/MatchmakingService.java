@@ -699,7 +699,7 @@ public class MatchmakingService {
                 engine.submitPlayerChoice(playerId, request.getSelectedTargetUuid());
             } else if (currentPhase == TurnPhase.CHOICE) {
                 engine.submitHeroChoice(playerId, request.getSelectedOwnHeroId(), request.getSelectedEnemyHeroId());
-            } else if (currentPhase == TurnPhase.PREPARATION) {
+            } else if (currentPhase == TurnPhase.PREPARATION || currentPhase == TurnPhase.RESOLUTION) {
                 engine.submitPreparationCards(playerId, request.getPlayedCardUuids());
             } else if (currentPhase == TurnPhase.DISCARD) {
                 engine.submitDiscard(playerId, request.getDiscardCardUuids());
@@ -720,8 +720,7 @@ public class MatchmakingService {
                 releasePlayersFromMatch(match);
             }
 
-            boolean waitingForOpponent = (isP1 && engine.isPlayer1Ready() && !engine.isPlayer2Ready())
-                    || (!isP1 && engine.isPlayer2Ready() && !engine.isPlayer1Ready());
+            boolean waitingForOpponent = isWaitingForOpponent(engine, playerId);
 
             List<MatchSnapshotDTO> newSnapshots = getAdaptedSnapshotsSince(engine, playerId, lastSeqBeforeAction);
             match.updatePhaseTimerIfNeeded(newSnapshots.size());
@@ -771,6 +770,28 @@ public class MatchmakingService {
                 + " excedeu o tempo de 30s da fase. Vitória concedida a " + engine.getWinnerPlayerId() + ".");
     }
 
+    private boolean isWaitingForOpponent(GameEngine engine, UUID viewerId) {
+        if (engine == null || viewerId == null || engine.getTurnPhase() == TurnPhase.GAME_OVER) {
+            return false;
+        }
+        if (engine.isWaitingForPlayerChoice() && engine.getGameState().getPendingChoice() != null) {
+            return !viewerId.equals(engine.getGameState().getPendingChoice().getChoosingPlayerId());
+        }
+        TurnPhase phase = engine.getTurnPhase();
+        if (phase == TurnPhase.CHOICE) {
+            return !viewerId.equals(engine.getGameState().getActiveTurnPlayerId());
+        }
+        if (phase == TurnPhase.PREPARATION || phase == TurnPhase.RESOLUTION) {
+            return !viewerId.equals(engine.getGameState().getEffectiveResolutionActivePlayerId());
+        }
+        if (phase == TurnPhase.DISCARD) {
+            boolean isP1 = viewerId.equals(engine.getPlayer1().getUuid());
+            return (isP1 && engine.isPlayer1Ready() && !engine.isPlayer2Ready())
+                    || (!isP1 && engine.isPlayer2Ready() && !engine.isPlayer1Ready());
+        }
+        return false;
+    }
+
     private UUID determineTimedOutPlayerId(GameEngine engine, UUID reportingPlayerId) {
         if (engine.isWaitingForPlayerChoice() && engine.getGameState().getPendingChoice() != null) {
             return engine.getGameState().getPendingChoice().getChoosingPlayerId();
@@ -779,7 +800,10 @@ public class MatchmakingService {
         if (phase == TurnPhase.CHOICE) {
             return engine.getGameState().getActiveTurnPlayerId();
         }
-        if (phase == TurnPhase.PREPARATION || phase == TurnPhase.DISCARD) {
+        if (phase == TurnPhase.PREPARATION || phase == TurnPhase.RESOLUTION) {
+            return engine.getGameState().getEffectiveResolutionActivePlayerId();
+        }
+        if (phase == TurnPhase.DISCARD) {
             boolean p1Ready = engine.isPlayer1Ready();
             boolean p2Ready = engine.isPlayer2Ready();
             if (p1Ready && !p2Ready) {
@@ -804,9 +828,7 @@ public class MatchmakingService {
                 resolvePhaseTimeoutLocked(match, null);
             }
             GameEngine engine = match.getGameEngine();
-            boolean isP1 = viewerId.equals(engine.getPlayer1().getUuid());
-            boolean waitingForOpponent = (isP1 && engine.isPlayer1Ready() && !engine.isPlayer2Ready())
-                    || (!isP1 && engine.isPlayer2Ready() && !engine.isPlayer1Ready());
+            boolean waitingForOpponent = isWaitingForOpponent(engine, viewerId);
 
             List<MatchSnapshotDTO> newSnapshots = getAdaptedSnapshotsSince(engine, viewerId, sinceSequence);
             return new MatchTimelineResponseDTO(waitingForOpponent, newSnapshots);
@@ -929,7 +951,8 @@ public class MatchmakingService {
             boolean botReady = isBotP1 ? engine.isPlayer1Ready() : engine.isPlayer2Ready();
             boolean humanReady = isBotP1 ? engine.isPlayer2Ready() : engine.isPlayer1Ready();
 
-            if (engine.getTurnPhase() == TurnPhase.PREPARATION && humanReady && !botReady) {
+            if ((engine.getTurnPhase() == TurnPhase.PREPARATION || engine.getTurnPhase() == TurnPhase.RESOLUTION)
+                    && botId.equals(engine.getGameState().getEffectiveResolutionActivePlayerId())) {
                 UUID botActiveHeroId = isBotP1
                         ? engine.getGameState().getActiveHeroPlayer1Id()
                         : engine.getGameState().getActiveHeroPlayer2Id();
@@ -944,25 +967,27 @@ public class MatchmakingService {
                         .filter(c -> c.getZoneId() == ZoneId.HAND)
                         .collect(Collectors.toList());
 
-                int maxCardsForBot = engine.getMaxPreparationCardsForPlayer(botId);
-                List<UUID> cardsToPlay = new ArrayList<>();
+                UUID chosenCardUuid = null;
                 for (Card c : botHand) {
-                    if (cardsToPlay.size() >= maxCardsForBot) break;
+                    if (c.isReactionOnlyCard()) {
+                        continue;
+                    }
                     if (botActiveHero != null && (!engine.canHeroPlayCard(botActiveHero, c) || !engine.isCardCompatibleForPlay(botPlayer, botActiveHero, c))) {
                         continue;
                     }
                     if (c.getItemType() == ItemType.ARMA) {
                         int emp = Math.max(1, c.getEmpunhadura());
                         if (emp <= freeWeaponSlots) {
-                            cardsToPlay.add(c.getUuid());
-                            freeWeaponSlots -= emp;
+                            chosenCardUuid = c.getUuid();
+                            break;
                         }
                     } else {
-                        cardsToPlay.add(c.getUuid());
+                        chosenCardUuid = c.getUuid();
+                        break;
                     }
                 }
 
-                engine.submitPreparationCards(botId, cardsToPlay);
+                engine.submitResolutionCard(botId, chosenCardUuid);
                 continue;
             }
 

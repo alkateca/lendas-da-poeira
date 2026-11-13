@@ -58,8 +58,9 @@ class MatchStatsAccumulationTest {
             engine.submitHeroChoice(p2.getUuid(), p2HeroId, p1HeroId);
         }
 
-        engine.submitPreparationCards(p1.getUuid(), List.of());
-        engine.submitPreparationCards(p2.getUuid(), List.of());
+        while (engine.getTurnPhase() == TurnPhase.PREPARATION || engine.getTurnPhase() == TurnPhase.RESOLUTION) {
+            engine.passResolutionWindow(engine.getGameState().getEffectiveResolutionActivePlayerId());
+        }
 
         assertEquals(TurnPhase.GAME_OVER, engine.getTurnPhase());
 

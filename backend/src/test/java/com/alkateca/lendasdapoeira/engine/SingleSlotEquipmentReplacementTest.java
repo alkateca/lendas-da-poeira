@@ -146,11 +146,13 @@ class SingleSlotEquipmentReplacementTest {
         assertEquals(6, heroP1.getAtaque()); // 4 + 2 (pet1)
         assertEquals(7, heroP1.getDefesa()); // 4 + 2 (armor1) + 1 (shield1)
 
-        // Permite jogar nova Armadura e novo Escudo na fase de preparação
-        assertDoesNotThrow(() ->
-                engine.submitPreparationCards(player1.getUuid(), List.of(armor2.getUuid(), shield2.getUuid()))
-        );
-        engine.submitPreparationCards(player2.getUuid(), List.of());
+        // Permite jogar nova Armadura e novo Escudo nas janelas alternadas de resolução
+        assertDoesNotThrow(() -> {
+            engine.submitResolutionCard(player1.getUuid(), armor2.getUuid());
+            engine.passResolutionWindow(player2.getUuid());
+            engine.submitResolutionCard(player1.getUuid(), shield2.getUuid());
+            engine.passResolutionWindow(player2.getUuid());
+        });
 
         // Após a cadeia de combate, armor1 e shield1 foram substituídos por armor2 e shield2, e pet1 continua anexado
         assertEquals(ZoneId.DISCARD, armor1.getZoneId());

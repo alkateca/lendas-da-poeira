@@ -132,6 +132,7 @@ class PlayerCollectionIntegrationTest {
         prepReq.setPlayerId(playerId);
         prepReq.setPlayedCardUuids(List.of());
         matchmakingService.processPlayerAction(match.getMatchId(), prepReq);
+        matchmakingService.processPlayerAction(match.getMatchId(), prepReq);
 
         // Assert: O perfil salvo deve ter recebido +50 Gold e ELO sem perder os decks nem a coleção!
         Player afterMatch = storageService.getPlayer(playerId);

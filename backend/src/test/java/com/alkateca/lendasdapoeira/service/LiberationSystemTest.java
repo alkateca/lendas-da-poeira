@@ -199,11 +199,10 @@ class LiberationSystemTest {
         gameEngine.getGameState().setActiveTurnPlayerId(player1.getUuid());
         gameEngine.submitHeroChoice(player1.getUuid(), moyraBaseHero.getUuid(), enemyHero.getUuid());
 
-        // P1 joga a Carta de Liberação; P2 passa
+        // P1 joga a Carta de Liberação (resolve imediatamente na janela 1 de P1!)
         gameEngine.submitPreparationCards(player1.getUuid(), List.of(moyraLiberationCard.getUuid()));
-        gameEngine.submitPreparationCards(player2.getUuid(), List.of());
 
-        // 1º Efeito resolveu: Moyra evoluiu para "Moyra, Santa das Laminas" preservando a arma equipada!
+        // 1º Efeito resolveu imediatamente: Moyra evoluiu para "Moyra, Santa das Laminas" preservando a arma equipada!
         assertEquals("Moyra, Santa das Laminas", moyraBaseHero.getCardName());
         assertEquals(22, moyraBaseHero.getVidaMaxima());
         assertEquals(3, moyraBaseHero.getMaxWeaponSlots());
@@ -213,6 +212,11 @@ class LiberationSystemTest {
         // 2º Efeito (PlayCardFromHandEffect) abriu escolha pendente para jogar 1 carta da mão:
         if (gameEngine.isWaitingForPlayerChoice()) {
             gameEngine.submitPlayerChoice(player1.getUuid(), extraCardInHand.getUuid());
+        }
+
+        // Passa as janelas restantes de resolução para concluir o combate
+        while (gameEngine.getTurnPhase() == TurnPhase.PREPARATION || gameEngine.getTurnPhase() == TurnPhase.RESOLUTION) {
+            gameEngine.passResolutionWindow(gameEngine.getGameState().getEffectiveResolutionActivePlayerId());
         }
 
         // Após o término do combate, a arma extra escolhida da mão também foi resolvida e equipada em Moyra!
@@ -261,11 +265,14 @@ class LiberationSystemTest {
         gameEngine.submitHeroChoice(player1.getUuid(), moyraBaseHero.getUuid(), enemyHero.getUuid());
 
         gameEngine.submitPreparationCards(player1.getUuid(), List.of(goblinReviveLiberationCard.getUuid()));
-        gameEngine.submitPreparationCards(player2.getUuid(), List.of());
 
-        // Como havia 2 aliados mortos (Esquadrão Goblin e Rei Goblin), o motor solicita escolher qual morto reviver:
+        // Como havia 2 aliados mortos (Esquadrão Goblin e Rei Goblin), o motor solicita imediatamente escolher qual morto reviver:
         assertTrue(gameEngine.isWaitingForPlayerChoice());
         gameEngine.submitPlayerChoice(player1.getUuid(), goblinSquadHero.getUuid());
+
+        while (gameEngine.getTurnPhase() == TurnPhase.PREPARATION || gameEngine.getTurnPhase() == TurnPhase.RESOLUTION) {
+            gameEngine.passResolutionWindow(gameEngine.getGameState().getEffectiveResolutionActivePlayerId());
+        }
 
         // 3. Verifica que o Esquadrão Goblin foi revivido, mudou de nome, recebeu os status extras (+2 ESP, +3 ATQ, +2 DEF, +8 HP),
         // herdou seus efeitos originais e NÃO trouxe a arma descartada de volta!

@@ -109,12 +109,52 @@ public class Card {
     }
 
     @JsonIgnore
+    public boolean isReactionCard() {
+        if (this.cardType == CardType.REACTION) {
+            return true;
+        }
+        return this.effects != null && this.effects.stream()
+                .anyMatch(e -> e instanceof com.alkateca.lendasdapoeira.effects.reaction.ReactionEffect);
+    }
+
+    @JsonIgnore
+    public boolean isReactionOnlyCard() {
+        if (!isReactionCard()) {
+            return false;
+        }
+        if (this.effects == null || this.effects.isEmpty()) {
+            return this.cardType == CardType.REACTION;
+        }
+        boolean hasReaction = false;
+        for (com.alkateca.lendasdapoeira.effects.Effect effect : this.effects) {
+            if (effect instanceof com.alkateca.lendasdapoeira.effects.reaction.ReactionEffect reactionEff) {
+                hasReaction = true;
+                if (reactionEff.canPlayProactively()) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        return hasReaction;
+    }
+
+    @JsonIgnore
     public java.util.List<String> getActivePhaseKeys() {
         java.util.List<String> phases = new java.util.ArrayList<>();
+        if (this.cardType == CardType.REACTION && !phases.contains("REACTION")) {
+            phases.add("REACTION");
+        }
         if (this.effects == null) return phases;
 
         for (com.alkateca.lendasdapoeira.effects.Effect effect : this.effects) {
             if (effect instanceof com.alkateca.lendasdapoeira.effects.combat.EquipBuffEffect) {
+                continue;
+            }
+            if (effect instanceof com.alkateca.lendasdapoeira.effects.reaction.ReactionEffect) {
+                if (!phases.contains("REACTION")) {
+                    phases.add("REACTION");
+                }
                 continue;
             }
             if (effect.predicate(this, TurnPhase.COMBAT_START) && !phases.contains("COMBAT_START")) {
