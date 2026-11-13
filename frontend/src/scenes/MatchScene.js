@@ -1035,6 +1035,7 @@ export default class MatchScene extends Phaser.Scene {
 
         const isItem = !isHero && (
             cardOrHeroDto.cardType === 'ITEM' ||
+            cardOrHeroDto.cardType === 'PET' ||
             (cardOrHeroDto.itemType && cardOrHeroDto.itemType !== 'NENHUM') ||
             cardOrHeroDto.cardName === 'Alma em Chamas'
         );
@@ -1138,7 +1139,7 @@ export default class MatchScene extends Phaser.Scene {
             this.lpStatDef.setText(stats.def > 0 ? ('+' + stats.def) : '-').setStyle({ color: '#0369a1' }).setVisible(true);
             this.lpStatHp.setText(String(stats.emp || 0)).setStyle({ color: '#fde047' }).setVisible(true);
 
-            const subType = (cardOrHeroDto.itemType && cardOrHeroDto.itemType !== 'NENHUM')
+            const subType = (cardOrHeroDto.itemType && cardOrHeroDto.itemType !== 'NENHUM' && cardOrHeroDto.itemType !== cardOrHeroDto.cardType)
                 ? (' • ' + cardOrHeroDto.itemType)
                 : '';
             this.lpArtLabel.setText('✦ ARTE (' + (cardOrHeroDto.cardType || 'ITEM') + ')');

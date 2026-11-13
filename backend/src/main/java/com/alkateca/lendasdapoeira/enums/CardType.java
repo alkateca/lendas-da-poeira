@@ -6,5 +6,6 @@ public enum CardType {
         ITEM,
         ACTION,
         THEURGY,
-        RELIC
+        RELIC,
+        PET
 }

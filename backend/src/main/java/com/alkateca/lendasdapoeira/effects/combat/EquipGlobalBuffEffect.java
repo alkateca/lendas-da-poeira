@@ -62,6 +62,7 @@ public class EquipGlobalBuffEffect implements Effect {
                     return;
                 }
             }
+            gameEngine.replaceExistingSingleSlotItemIfNecessary(targetHero.getUuid(), sourceCard);
             sourceCard.setAttachedToCardId(targetHero.getUuid());
             sourceCard.setZoneId(ZoneId.ATTACHED);
         }

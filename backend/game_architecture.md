@@ -15,6 +15,7 @@ A construção do baralho é estritamente vinculada aos 3 Heróis escolhidos pel
 *   **Regra de Afinidade e Classe:** Uma carta (Magia, Ação, Item) só pode ser adicionada ao baralho e jogada se o jogador possuir um Herói com a respectiva Afinidade (ex: Fogo, Água) ou Classe requerida pela carta.
 *   **Exceções Sistêmicas:** Raças ou categorias específicas, como **Emissores** e **Goblins**, ignoram ou contornam as restrições padrão de classe/afinidade. Ao lidar com cartas dessas raças, flexibilize a regra de restrição.
 *   **Equipamentos (Empunhadura):** Heróis possuem slots limitados de armas. O padrão mecânico é `2` slots (`maxWeaponSlots = 2`). Armas possuem o atributo Empunhadura (1, 2, 3, etc). Um Herói não pode equipar armas cuja soma de Empunhadura exceda seu limite de slots.
+*   **Equipamentos de Slot Único (`ARMADURA`, `ESCUDO` e `PET`):** Cada Herói possui 1 slot exclusivo para Armadura, 1 para Escudo e 1 para Pet. Ao anexar um novo equipamento de um desses tipos em um Herói que já possui um do mesmo tipo anexado, o anterior é desanexado automaticamente (`detachCard`), revertendo seus modificadores (`onDetach`) e indo para o descarte (ou exílio, se possuir `Exilar.`).
 
 ## 3. A Máquina de Estados (Ciclo do Turno)
 O jogo não possui turnos fluidos de ação livre. Todo turno segue OBRIGATORIAMENTE uma máquina de estados linear. Mecânicas de cartas só podem ser ativadas nestes gatilhos específicos (`TurnPhase`):

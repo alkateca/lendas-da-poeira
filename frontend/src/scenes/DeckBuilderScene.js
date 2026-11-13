@@ -303,6 +303,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
                         <option value="SUB:ESCUDO">Escudo</option>
                         <option value="SUB:JOIA">Joia / Acessório</option>
                         <option value="SUB:FERRAMENTA">Ferramenta</option>
+                        <option value="SUB:PET">Pet</option>
                     </optgroup>
                 </select>
 
@@ -829,7 +830,9 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 if ((item.cardType || '').toUpperCase() !== reqType) return false;
             } else if (f.typeOrSubtype.startsWith('SUB:')) {
                 const reqSub = f.typeOrSubtype.replace('SUB:', '');
-                if ((item.itemType || 'NENHUM').toUpperCase() !== reqSub) return false;
+                const matchesItemType = (item.itemType || 'NENHUM').toUpperCase() === reqSub;
+                const matchesCardType = (item.cardType || '').toUpperCase() === reqSub;
+                if (!matchesItemType && !matchesCardType) return false;
             }
         }
 
@@ -1335,6 +1338,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
 
         const isItem = !isHero && (
             cardOrHeroDto.cardType === 'ITEM' ||
+            cardOrHeroDto.cardType === 'PET' ||
             (cardOrHeroDto.itemType && cardOrHeroDto.itemType !== 'NENHUM') ||
             cardOrHeroDto.cardName === 'Alma em Chamas'
         );
@@ -1437,7 +1441,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
             this.lpStatDef.setText(stats.def > 0 ? ('+' + stats.def) : '-').setStyle({ color: '#0369a1' }).setVisible(true);
             this.lpStatHp.setText(String(stats.emp || 0)).setStyle({ color: '#fde047' }).setVisible(true);
 
-            const subType = (cardOrHeroDto.itemType && cardOrHeroDto.itemType !== 'NENHUM')
+            const subType = (cardOrHeroDto.itemType && cardOrHeroDto.itemType !== 'NENHUM' && cardOrHeroDto.itemType !== cardOrHeroDto.cardType)
                 ? (' • ' + cardOrHeroDto.itemType)
                 : '';
             this.lpArtLabel.setText('✦ ARTE (' + (cardOrHeroDto.cardType || 'ITEM') + ')');

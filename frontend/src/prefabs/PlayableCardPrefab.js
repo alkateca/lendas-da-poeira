@@ -154,7 +154,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
     isEquipmentLayout(cardDto) {
         if (!cardDto) return false;
         if (cardDto.equipable) return true;
-        if (cardDto.cardType === 'ITEM') return true;
+        if (cardDto.cardType === 'ITEM' || cardDto.cardType === 'PET') return true;
         if (cardDto.itemType && cardDto.itemType !== 'NENHUM') return true;
         if (cardDto.zoneId === 'ATTACHED' || cardDto.attachedToCardId) return true;
         return false;
@@ -604,7 +604,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             this.artSprite.setVisible(false);
         }
 
-        const subInfo = (cardDto.itemType && cardDto.itemType !== 'NENHUM')
+        const subInfo = (cardDto.itemType && cardDto.itemType !== 'NENHUM' && cardDto.itemType !== cardDto.cardType)
             ? ` • ${cardDto.itemType}` : '';
 
         if (isItem) {

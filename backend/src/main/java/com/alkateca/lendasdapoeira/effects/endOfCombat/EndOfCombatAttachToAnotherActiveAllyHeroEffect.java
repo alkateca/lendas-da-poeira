@@ -72,6 +72,7 @@ public class EndOfCombatAttachToAnotherActiveAllyHeroEffect implements Effect {
                 }
             }
 
+            gameEngine.replaceExistingSingleSlotItemIfNecessary(targetAllyHero.getUuid(), sourceCard);
             sourceCard.setAttachedToCardId(targetAllyHero.getUuid());
             sourceCard.setZoneId(ZoneId.ATTACHED);
 
