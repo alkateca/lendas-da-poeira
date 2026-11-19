@@ -55,7 +55,7 @@ public class MagicDamageEffect implements Effect {
                 .orElse(null);
 
         if (enemyHero != null) {
-            int damage = gameEngine.calculateMagicDamage(myHero, enemyHero, magicDamage);
+            int damage = gameEngine.calculateMagicDamage(myHero, enemyHero, magicDamage, sourceCard);
             enemyHero.setVidaAtual(enemyHero.getVidaAtual() - damage);
             System.out.println("-> " + enemyHero.getCardName() + " sofreu " + damage +
                     " de dano mágico! Vida restante: " + enemyHero.getVidaAtual());

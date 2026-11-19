@@ -2,6 +2,7 @@ package com.alkateca.lendasdapoeira.engine;
 
 import com.alkateca.lendasdapoeira.entity.Card;
 import com.alkateca.lendasdapoeira.entity.HeroCard;
+import com.alkateca.lendasdapoeira.enums.CounterType;
 import com.alkateca.lendasdapoeira.enums.ItemType;
 
 import java.text.Normalizer;
@@ -35,6 +36,7 @@ public class KeywordExtractor {
         TERM_PATTERNS.put("DANO_BONUS", "dano bonus");
         TERM_PATTERNS.put("REDUCAO_DE_DANO", "reducao de dano");
         TERM_PATTERNS.put("VULNERABILIDADE", "vulnerabilidade");
+        TERM_PATTERNS.put("COMBUSTAO", "combustao");
         TERM_PATTERNS.put("EMPUNHADURA", "empunhadura");
 
         // Estados de Jogo e Zonas
@@ -65,6 +67,9 @@ public class KeywordExtractor {
             if (hero.getDanoBonus() > 0) result.add("DANO_BONUS");
             if (hero.getReducaoDano() > 0) result.add("REDUCAO_DE_DANO");
             if (hero.getVulnerabilidade() > 0) result.add("VULNERABILIDADE");
+        }
+        if (card.hasCounter(CounterType.COMBUSTAO)) {
+            result.add("COMBUSTAO");
         }
 
         String rawDesc = card.getDescricao();

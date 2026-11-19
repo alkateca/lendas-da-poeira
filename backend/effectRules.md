@@ -107,3 +107,10 @@ public class StartOfCombatPhysicalDamageEffect implements Effect {
     }
 }
 ```
+
+## 7. Manipulação de Contadores em Efeitos (`CounterType`)
+Para efeitos que adicionam, removem, consomem ou consultam contadores em cartas/heróis, utilize obrigatoriamente os métodos centralizados do `GameEngine` (ou a implementação reutilizável `ModifyHeroCounterEffect`):
+*   `gameEngine.addCounter(targetCard, CounterType.POEIRA, amount)`
+*   `gameEngine.removeCounter(targetCard, CounterType.VENENO, amount)`
+*   `gameEngine.consumeAllCounters(targetCard, CounterType.POLVORA)`
+*   `gameEngine.getCounterCount(targetCard, CounterType.POEIRA)`

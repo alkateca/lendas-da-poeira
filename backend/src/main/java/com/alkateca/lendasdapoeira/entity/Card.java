@@ -8,7 +8,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -39,6 +41,7 @@ public class Card {
 
     private UUID attachedToCardId;
     private Integer turnsRemaining;
+    private Map<CounterType, Integer> counters = new LinkedHashMap<>();
 
     // Metadados do Sistema de Liberação (Missão / Evolução)
     private boolean liberationCard = false;
@@ -128,5 +131,84 @@ public class Card {
             }
         }
         return phases;
+    }
+
+    public Map<CounterType, Integer> getCounters() {
+        if (this.counters == null) {
+            this.counters = new LinkedHashMap<>();
+        }
+        return this.counters;
+    }
+
+    public void setCounters(Map<CounterType, Integer> counters) {
+        this.counters = new LinkedHashMap<>();
+        if (counters == null) return;
+        counters.forEach((type, qty) -> {
+            if (type != null && qty != null && qty > 0) {
+                this.counters.put(type, qty);
+            }
+        });
+    }
+
+    @JsonIgnore
+    public int getCounterCount(CounterType type) {
+        if (type == null || this.counters == null) {
+            return 0;
+        }
+        return Math.max(0, this.counters.getOrDefault(type, 0));
+    }
+
+    public int addCounter(CounterType type, int amount) {
+        if (type == null || amount <= 0) {
+            return getCounterCount(type);
+        }
+        int updated = getCounterCount(type) + amount;
+        getCounters().put(type, updated);
+        return updated;
+    }
+
+    public int removeCounter(CounterType type, int amount) {
+        if (type == null || amount <= 0) {
+            return getCounterCount(type);
+        }
+        int current = getCounterCount(type);
+        int updated = Math.max(0, current - amount);
+        if (updated == 0) {
+            getCounters().remove(type);
+        } else {
+            getCounters().put(type, updated);
+        }
+        return updated;
+    }
+
+    public void setCounterCount(CounterType type, int amount) {
+        if (type == null) return;
+        if (amount <= 0) {
+            getCounters().remove(type);
+        } else {
+            getCounters().put(type, amount);
+        }
+    }
+
+    public void clearCounters() {
+        if (this.counters != null) {
+            this.counters.clear();
+        }
+    }
+
+    @JsonIgnore
+    public boolean hasCounter(CounterType type) {
+        return getCounterCount(type) > 0;
+    }
+
+    @JsonIgnore
+    public int getTotalCounters() {
+        if (this.counters == null || this.counters.isEmpty()) {
+            return 0;
+        }
+        return this.counters.values().stream()
+                .filter(v -> v != null && v > 0)
+                .mapToInt(Integer::intValue)
+                .sum();
     }
 }

@@ -5,12 +5,14 @@ import com.alkateca.lendasdapoeira.entity.Card;
 import com.alkateca.lendasdapoeira.entity.HeroCard;
 import com.alkateca.lendasdapoeira.entity.Player;
 import com.alkateca.lendasdapoeira.enums.CardType;
+import com.alkateca.lendasdapoeira.enums.CounterType;
 import com.alkateca.lendasdapoeira.enums.ItemType;
 import com.alkateca.lendasdapoeira.enums.TurnPhase;
 import com.alkateca.lendasdapoeira.enums.ZoneId;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -74,6 +76,8 @@ public class SnapshotFactory {
             trigger.setEvolvedHeroName(sourceCard.getCardName());
             trigger.setOwnerPlayerId(sourceCard.getOwnerId());
             trigger.setLogMessage("🔥 EVOLUÇÃO SUPREMA! " + sourceCard.getCardName() + " despertou na arena!");
+        } else if ("COUNTER_UPDATED".equals(eventType) && sourceCard != null) {
+            trigger.setLogMessage("💠 Contadores atualizados em " + sourceCard.getCardName() + ".");
         } else {
             trigger.setLogMessage("Fase atual: " + engine.getTurnPhase());
         }
@@ -267,6 +271,7 @@ public class SnapshotFactory {
         dto.setUsedWeaponSlots(weaponSlotsUsed);
 
         dto.setKeywords(hero.getKeywords() != null ? new ArrayList<>(hero.getKeywords()) : KeywordExtractor.extract(hero));
+        dto.setCounters(toCounterDTOList(hero));
         return dto;
     }
 
@@ -309,7 +314,30 @@ public class SnapshotFactory {
         dto.setBonusAtaque(card.getBonusAtaque());
         dto.setBonusDefesa(card.getBonusDefesa());
         dto.setActivePhaseKeys(card.getActivePhaseKeys());
+        dto.setCounters(toCounterDTOList(card));
         return dto;
+    }
+
+    public static List<MatchSnapshotDTO.CardCounterDTO> toCounterDTOList(Card card) {
+        List<MatchSnapshotDTO.CardCounterDTO> list = new ArrayList<>();
+        if (card == null || card.getCounters() == null || card.getCounters().isEmpty()) {
+            return list;
+        }
+        for (Map.Entry<CounterType, Integer> entry : card.getCounters().entrySet()) {
+            CounterType type = entry.getKey();
+            Integer qty = entry.getValue();
+            if (type != null && qty != null && qty > 0) {
+                list.add(new MatchSnapshotDTO.CardCounterDTO(
+                        type.name(),
+                        type.getDisplayName(),
+                        type.getIconKey(),
+                        type.getAccentColor(),
+                        type.getDescription(),
+                        qty
+                ));
+            }
+        }
+        return list;
     }
 
     private static MatchSnapshotDTO.CardSnapshotDTO toCardVisibleDTO(Card card, TurnPhase phase, boolean revealed) {
@@ -411,6 +439,7 @@ public class SnapshotFactory {
             cardCopy.setBonusAtaque(showFace ? c.getBonusAtaque() : 0);
             cardCopy.setBonusDefesa(showFace ? c.getBonusDefesa() : 0);
             cardCopy.setActivePhaseKeys(showFace && c.getActivePhaseKeys() != null ? new ArrayList<>(c.getActivePhaseKeys()) : List.of());
+            cardCopy.setCounters(showFace && c.getCounters() != null ? new ArrayList<>(c.getCounters()) : List.of());
             return cardCopy;
         }).collect(Collectors.toList()));
 
@@ -438,6 +467,10 @@ public class SnapshotFactory {
         copy.setMissionTarget(src.getMissionTarget());
         copy.setPreviousHeroName(src.getPreviousHeroName());
         copy.setEvolvedHeroName(src.getEvolvedHeroName());
+        copy.setCounterType(src.getCounterType());
+        copy.setCounterDisplayName(src.getCounterDisplayName());
+        copy.setCounterDelta(src.getCounterDelta());
+        copy.setCounterQuantity(src.getCounterQuantity());
         return copy;
     }
 }

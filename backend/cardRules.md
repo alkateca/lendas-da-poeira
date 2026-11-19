@@ -16,6 +16,7 @@ Antes de gerar o JSON de saída, você DEVE obrigatoriamente imprimir um "Relat�
 *   **Raridades (rarity):** `src/main/java/com/alkateca/lendasdapoeira/enums/CardRarity.java`
 *   **Coleções/Sets (cardSet):** `src/main/java/com/alkateca/lendasdapoeira/enums/CardSet.java`
 *   **Tipos de Item (itemType):** `src/main/java/com/alkateca/lendasdapoeira/enums/ItemType.java`
+*   **Tipos de Contador (CounterType):** `src/main/java/com/alkateca/lendasdapoeira/enums/CounterType.java`
 
 ## 3. Regras de Estrutura de Dados (JSON)
 *   **UUID:** Deve ser único e incremental em relação à última carta da lista no formato padrão (ex: se a última for `...0004`, a nova será `...0005`).
@@ -36,6 +37,7 @@ Deve conter o `itemType`, `afinidades`, `racas`, `classe` e `ordem`, sempre sepa
 
 **Regras de Efeitos e Modificadores:**
 *   **Mudanças de atributos:** "O Herói Inimigo recebe -X de Espírito/Ataque/Defesa/Vida Máxima" ou "Seu Herói recebe +X de Espírito/Ataque/Defesa/Vida Máxima".
+*   **Contadores (Marcadores):** "ganha X Marcador(es) [Tipo]" ou "recebe X Marcador(es) [Tipo]" / "perde X Marcador(es) [Tipo]" (ex: `Poeira`, `Veneno`, `Pólvora`, `Combustão`).
 *   **Dano:** "O Herói Inimigo Sofre X de Dano Direto/Mágico/Físico".
 *   **Tempo (Gatilhos):** Podem existir os prefixos `Início da Partida:`, `Início do Combate:` e `Final do Combate:`.
 *   **Duração:** Os efeitos podem ser permanentes ou conter o sufixo `até o Final do Combate.`.

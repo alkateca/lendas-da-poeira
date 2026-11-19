@@ -53,6 +53,10 @@ Devem ser instanciadas como um `Phaser.GameObjects.Container` contendo:
 *   **Estados Booleano Visuais:**
     *   `estaAtivo`: Destaque visual indicando se o Herói pode atuar ou teve seu estado alterado.
     *   `estaVivo`: Quando `estaVivo == false`, o Herói **NÃO é removido da mesa**; ele permanece em seu slot na `BENCH`, mas recebe um filtro visual de derrotado (ex: escala de cinza / `setTint(0x555555)` + ícone de caveira/derrota) e fica bloqueado para seleção de combate normal. Caso seja revivido por cartas como *Ritos Fúnebres*, o estado retorna para `estaVivo = true` e o visual normal é restaurado.
+*   **Contadores em Cartas (`counters` / `CounterCardPrefab`):**
+    *   Cada tipo de contador ativo (`quantity > 0`) sobre um Herói (ex: `POEIRA`, `VENENO`, `POLVORA`) deve ser renderizado como uma **mini-carta retangular menor** contendo **apenas a imagem representativa do tipo de contador e o valor no formato `x(número)`** (ex: `x3`).
+    *   As mini-cartas de contadores ficam **alocadas sob a carta do Herói** (camada traseira inferior), na **parte de baixo perto da caixa de regras**, sendo exibidas tanto na **Bancada (`ZoneId.BENCH`)** quanto na **Área Ativa (`ZoneId.BATTLE`)**.
+    *   Quando o valor de um contador retornar a `0`, a mini-carta correspondente é removida da tela imediatamente.
 
 ### 3.2. Cartas de Jogo (`ITEM`, `SPELL`, `ACTION`, `THEURGY`)
 Devem ser instanciadas contendo:

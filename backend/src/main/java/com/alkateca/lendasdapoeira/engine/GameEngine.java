@@ -3,6 +3,9 @@ package com.alkateca.lendasdapoeira.engine;
 import com.alkateca.lendasdapoeira.entity.Card;
 import com.alkateca.lendasdapoeira.entity.HeroCard;
 import com.alkateca.lendasdapoeira.entity.Player;
+import com.alkateca.lendasdapoeira.enums.Afinidade;
+import com.alkateca.lendasdapoeira.enums.CardType;
+import com.alkateca.lendasdapoeira.enums.CounterType;
 import com.alkateca.lendasdapoeira.enums.TurnPhase;
 import com.alkateca.lendasdapoeira.enums.ZoneId;
 import lombok.*;
@@ -810,6 +813,124 @@ public class GameEngine {
         } else {
             card.setZoneId(destinationZone);
         }
+
+        ZoneId finalZone = card.getZoneId();
+        if (finalZone == ZoneId.DISCARD || finalZone == ZoneId.EXILE || finalZone == ZoneId.DECK || finalZone == ZoneId.HAND) {
+            card.clearCounters();
+        }
+    }
+
+    /**
+     * Consulta a quantidade atual de contadores de um tipo específico sobre uma carta.
+     */
+    public int getCounterCount(Card targetCard, CounterType counterType) {
+        if (targetCard == null || counterType == null) {
+            return 0;
+        }
+        return targetCard.getCounterCount(counterType);
+    }
+
+    /**
+     * Adiciona uma quantidade positiva de contadores sobre uma carta e retorna o novo total.
+     */
+    public int addCounter(Card targetCard, CounterType counterType, int amount) {
+        if (targetCard == null || counterType == null || amount <= 0) {
+            return getCounterCount(targetCard, counterType);
+        }
+        int updated = targetCard.addCounter(counterType, amount);
+        System.out.println("-> " + targetCard.getCardName() + " recebeu +" + amount
+                + " marcador(es) de " + counterType.getDisplayName() + " (Total: " + updated + ")");
+        return updated;
+    }
+
+    /**
+     * Remove até {@code amount} contadores de um tipo sobre a carta. Se atingir 0, o marcador é removido.
+     */
+    public int removeCounter(Card targetCard, CounterType counterType, int amount) {
+        if (targetCard == null || counterType == null || amount <= 0) {
+            return getCounterCount(targetCard, counterType);
+        }
+        int before = targetCard.getCounterCount(counterType);
+        int updated = targetCard.removeCounter(counterType, amount);
+        int removed = Math.max(0, before - updated);
+        if (removed > 0) {
+            System.out.println("-> " + targetCard.getCardName() + " perdeu " + removed
+                    + " marcador(es) de " + counterType.getDisplayName() + " (Restante: " + updated + ")");
+        }
+        return updated;
+    }
+
+    /**
+     * Consome todos os contadores de um tipo específico sobre a carta e retorna a quantidade consumida.
+     */
+    public int consumeAllCounters(Card targetCard, CounterType counterType) {
+        if (targetCard == null || counterType == null) {
+            return 0;
+        }
+        int existing = targetCard.getCounterCount(counterType);
+        if (existing > 0) {
+            targetCard.removeCounter(counterType, existing);
+            System.out.println("-> " + existing + " marcador(es) de " + counterType.getDisplayName()
+                    + " consumido(s) de " + targetCard.getCardName() + ".");
+        }
+        return existing;
+    }
+
+    /**
+     * Define diretamente a quantidade de um contador sobre a carta (valores <= 0 removem o marcador).
+     */
+    public void setCounterCount(Card targetCard, CounterType counterType, int amount) {
+        if (targetCard == null || counterType == null) {
+            return;
+        }
+        targetCard.setCounterCount(counterType, amount);
+    }
+
+    /**
+     * Remove todos os contadores de uma carta.
+     */
+    public void clearCounters(Card targetCard) {
+        if (targetCard != null) {
+            targetCard.clearCounters();
+        }
+    }
+
+    /**
+     * Captura explicitamente um snapshot de alteração de contador para a timeline do Front-End.
+     */
+    public void captureCounterSnapshot(
+            Card sourceCard,
+            Card targetCard,
+            CounterType counterType,
+            int delta,
+            int newQuantity,
+            String customLogMessage) {
+
+        MatchSnapshotDTO snapshot = SnapshotFactory.createSnapshot(
+                this,
+                sourceCard != null ? sourceCard : targetCard,
+                null,
+                "COUNTER_UPDATED"
+        );
+        MatchSnapshotDTO.TriggerContextDTO trigger = snapshot.getTriggerContext();
+        if (targetCard != null) {
+            trigger.setTargetHeroId(targetCard.getUuid());
+            trigger.setOwnerPlayerId(targetCard.getOwnerId());
+        }
+        if (counterType != null) {
+            trigger.setCounterType(counterType.name());
+            trigger.setCounterDisplayName(counterType.getDisplayName());
+        }
+        trigger.setCounterDelta(delta);
+        trigger.setCounterQuantity(Math.max(0, newQuantity));
+        if (customLogMessage != null && !customLogMessage.isBlank()) {
+            trigger.setLogMessage(customLogMessage);
+        } else if (targetCard != null && counterType != null) {
+            String sign = delta >= 0 ? "+" : "";
+            trigger.setLogMessage("💠 " + targetCard.getCardName() + ": " + sign + delta + " "
+                    + counterType.getDisplayName() + " (x" + Math.max(0, newQuantity) + ")");
+        }
+        this.snapshotHistory.add(snapshot);
     }
 
     /**
@@ -1772,9 +1893,7 @@ public class GameEngine {
                     && Boolean.TRUE.equals(hero.getEstaVivo())
                     && hero.getVidaAtual() < 0
                     && hasEnemyDeadBelowZeroAura(hero)) {
-                hero.setEstaVivo(false);
-                hero.setEstaAtivo(false);
-                detachAllCardsFromHero(hero.getUuid(), ZoneId.DISCARD);
+                markHeroDefeated(hero);
                 newlyDeadAllies++;
                 if (player1 != null && player2 != null && player.getUuid() != null) {
                     UUID killerPlayerId = player.getUuid().equals(player1.getUuid())
@@ -1806,10 +1925,34 @@ public class GameEngine {
         return finalDamage;
     }
 
+    public boolean isFireSpell(Card sourceCard) {
+        return sourceCard != null
+                && sourceCard.getCardType() == CardType.SPELL
+                && sourceCard.getAfinidades() != null
+                && sourceCard.getAfinidades().contains(Afinidade.FOGO);
+    }
+
+    private int consumeCombustionBonusIfApplicable(HeroCard defender, Card sourceCard) {
+        if (defender == null || !isFireSpell(sourceCard)) {
+            return 0;
+        }
+        int combustionValue = consumeAllCounters(defender, CounterType.COMBUSTAO);
+        if (combustionValue > 0) {
+            System.out.println("-> Combustão detonada por magia de fogo (" + sourceCard.getCardName()
+                    + "): +" + combustionValue + " de dano mágico e marcadores zerados em " + defender.getCardName() + "!");
+        }
+        return combustionValue;
+    }
+
     public int calculateMagicDamage(HeroCard attacker, HeroCard defender, int baseMagicDamage) {
+        return calculateMagicDamage(attacker, defender, baseMagicDamage, null);
+    }
+
+    public int calculateMagicDamage(HeroCard attacker, HeroCard defender, int baseMagicDamage, Card sourceCard) {
         if (defender == null) return 0;
         int bonusDamage = attacker != null ? attacker.getDanoBonus() : 0;
-        int rawMagic = baseMagicDamage + bonusDamage;
+        int combustionBonus = consumeCombustionBonusIfApplicable(defender, sourceCard);
+        int rawMagic = baseMagicDamage + bonusDamage + combustionBonus;
         int magicMitigation = defender.getEspirito();
         int finalDamage = Math.max(0, (rawMagic - magicMitigation) + defender.getVulnerabilidade());
         if (finalDamage > 0) {
@@ -1940,11 +2083,7 @@ public class GameEngine {
                 }
                 if (hero.getVidaAtual() <= 0) {
                     boolean wasAlive = Boolean.TRUE.equals(hero.getEstaVivo());
-                    hero.setEstaVivo(false);
-                    hero.setEstaAtivo(false);
-
-                    // Regra: Quando o personagem morre, todas as cartas anexadas a ele são descartadas!
-                    detachAllCardsFromHero(hero.getUuid(), ZoneId.DISCARD);
+                    markHeroDefeated(hero);
 
                     if (wasAlive) {
                         newlyDeadAllies++;
@@ -1960,6 +2099,15 @@ public class GameEngine {
         if (newlyDeadAllies > 0) {
             trackMissionProgress(player.getUuid(), "ALLY_HEROES_DEAD", newlyDeadAllies);
         }
+    }
+
+    private void markHeroDefeated(HeroCard hero) {
+        if (hero == null) return;
+        hero.setEstaVivo(false);
+        hero.setEstaAtivo(false);
+        // Quando um Herói é derrotado, seus anexos são descartados e seus contadores em campo são limpos
+        detachAllCardsFromHero(hero.getUuid(), ZoneId.DISCARD);
+        hero.clearCounters();
     }
 
     /**

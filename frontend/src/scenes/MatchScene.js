@@ -2,12 +2,14 @@ import Phaser from 'phaser';
 import { BOARD_LAYOUT, getCardVisualTheme } from '../config/BoardCoordinates.js';
 import HeroCardPrefab from '../prefabs/HeroCardPrefab.js';
 import PlayableCardPrefab from '../prefabs/PlayableCardPrefab.js';
+import CounterCardPrefab from '../prefabs/CounterCardPrefab.js';
 import SnapshotPlayerManager from '../managers/SnapshotPlayerManager.js';
 import SelectionManager from '../managers/SelectionManager.js';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 import PhantomUIKit from '../ui/PhantomUIKit.js';
 import MatchRecapSidebar from '../ui/MatchRecapSidebar.js';
 import { formatCardDescriptionWithKeywords } from '../config/keywordsConfig.js';
+import { normalizeCountersList, computeCounterLayoutPositions } from '../config/counterConfig.js';
 import { API_BASE_URL } from '../config/apiConfig.js';
 
 export default class MatchScene extends Phaser.Scene {
@@ -861,6 +863,7 @@ export default class MatchScene extends Phaser.Scene {
         });
 
         this.largePreviewContainer = this.add.container(x, y).setDepth(190).setVisible(false);
+        this.lpCountersLayer = this.add.container(0, 0);
 
         // Container dedicado para exibir as cartas anexadas lado a lado à direita do Herói no hover
         this.attachedPreviewContainer = this.add.container(0, 0).setDepth(191).setVisible(false);
@@ -974,6 +977,7 @@ export default class MatchScene extends Phaser.Scene {
         this.lpPhaseNodes.forEach(n => lpPhaseElements.push(n.bg, n.txt));
 
         this.largePreviewContainer.add([
+            this.lpCountersLayer,
             this.lpShadow,
             this.lpArtBox,
             this.lpArtLabel,
@@ -1243,6 +1247,19 @@ export default class MatchScene extends Phaser.Scene {
             this.lpArtLabel.setVisible(true);
         }
 
+        if (this.lpCountersLayer) {
+            this.lpCountersLayer.removeAll(true);
+            const activeCounters = normalizeCountersList(cardOrHeroDto);
+            if (activeCounters.length > 0) {
+                const positions = computeCounterLayoutPositions(activeCounters.length, width, height);
+                activeCounters.forEach((counterItem, idx) => {
+                    const pt = positions[idx];
+                    const node = new CounterCardPrefab(this, pt.x, pt.y, counterItem, pt.scale);
+                    this.lpCountersLayer.add(node);
+                });
+            }
+        }
+
         this.largePreviewContainer.setVisible(true);
         this.tweens.killTweensOf(this.largePreviewContainer);
 
@@ -1343,6 +1360,9 @@ export default class MatchScene extends Phaser.Scene {
         this.hoveredPreviewState = null;
         if (this.largePreviewContainer) {
             this.largePreviewContainer.setVisible(false);
+        }
+        if (this.lpCountersLayer) {
+            this.lpCountersLayer.removeAll(true);
         }
         if (this.attachedPreviewContainer) {
             this.attachedPreviewContainer.removeAll(true);
@@ -1716,7 +1736,7 @@ export default class MatchScene extends Phaser.Scene {
             this.handleCardLiberatedEvent(snapshot.triggerContext);
         } else if (eventType === 'HERO_EVOLVED') {
             this.handleHeroEvolvedEvent(snapshot.triggerContext);
-        } else if (eventType === 'EFFECT_RESOLVED' && snapshot.triggerContext?.sourceCardUuid) {
+        } else if ((eventType === 'EFFECT_RESOLVED' || eventType === 'COUNTER_UPDATED') && snapshot.triggerContext?.sourceCardUuid) {
             this.highlightSourceCard(snapshot.triggerContext.sourceCardUuid);
         }
 

@@ -60,7 +60,7 @@ public class PlayTheurgyMagicDamagePerOpponentPlayedOrInvokedCardEffect implemen
 
         if (enemyHero != null) {
             int rawMagicDamage = magicDamagePerCard * opponentCardsCount;
-            int finalDamage = gameEngine.calculateMagicDamage(myHero, enemyHero, rawMagicDamage);
+            int finalDamage = gameEngine.calculateMagicDamage(myHero, enemyHero, rawMagicDamage, sourceCard);
             enemyHero.setVidaAtual(enemyHero.getVidaAtual() - finalDamage);
             gameEngine.evaluateInstantDeathByAura();
             System.out.println("-> " + enemyHero.getCardName() + " sofreu " + finalDamage +

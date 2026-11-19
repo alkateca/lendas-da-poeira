@@ -48,6 +48,13 @@ export class Preloader extends Scene
             this.load.svg('vga_chain_link_shard', 'images/ui/vga_chain_link_shard.svg', { width: 48, height: 48 });
         }
 
+        // Ícones SVG dos contadores em cartas (Poeira, Veneno, Pólvora, Combustão e fallback genérico)
+        ['counter_poeira', 'counter_veneno', 'counter_polvora', 'counter_combustao', 'counter_generic'].forEach((counterKey) => {
+            if (!this.textures.exists(counterKey)) {
+                this.load.svg(counterKey, `images/counters/${counterKey}.svg`, { width: 64, height: 64 });
+            }
+        });
+
         const cardKeys = [
             'ataqueMagico', 'atmosferaPesada', 'autoDefesaMagica', 'banir', 'barreiraDeGelo',
             'bolaDeFogo', 'brocheCristal', 'convocacao', 'determinacaoCristalina', 'dragaoCristal',

@@ -35,3 +35,10 @@ O jogo não possui turnos fluidos de ação livre. Todo turno segue OBRIGATORIAM
 *   **Dano Mágico:** É mitigado pelo `Espírito` do alvo. Fórmula base: `Dano Sofrido = Dano Mágico - Espírito do Alvo`.
 *   **Dano Direto:** Ignora quaisquer reduções, defesas ou espírito. Atinge a vida diretamente.
 *   **Buffs Temporários:** "Até o Final do Combate" significa que o status bônus é removido matematicamente ao final da fase `COMBAT_END`.
+
+## 5. Sistema de Contadores em Cartas (`CounterType`)
+*   **Definição:** Contadores são marcadores numéricos (`>= 0`) aplicados sobre cartas em jogo (especialmente `HeroCard`) para indicar condições ou cargas acumuláveis (ex: `POEIRA`, `VENENO`, `POLVORA`, `COMBUSTAO`).
+*   **Combustão (`CounterType.COMBUSTAO`):** Palavra-chave acumulável sobre o Herói. Quando o portador sofre dano mágico proveniente **apenas de uma Magia de Fogo** (`CardType.SPELL` com `Afinidade.FOGO`), o valor total de `COMBUSTAO` é adicionado ao dano bruto da magia e todos os marcadores de `COMBUSTAO` daquele Herói são zerados.
+*   **Unicidade e Acúmulo:** Uma carta pode acumular múltiplas unidades de um mesmo contador e portar diferentes tipos simultaneamente. Ao atingir `0`, o marcador é automaticamente removido da carta.
+*   **Fonte da Verdade:** Toda adição, remoção, consumo ou leitura de contadores ocorre exclusivamente via `GameEngine` (`addCounter`, `removeCounter`, `consumeAllCounters`, `getCounterCount`) e é serializada para o Front-End via `MatchSnapshotDTO`.
+*   **Ciclo de Vida:** Quando um Herói é derrotado (`estaVivo = false`), seus contadores ativos em campo são limpos junto ao descarte de seus anexos (`detachAllCardsFromHero`). Quando uma carta retorna ao descarte, exílio, baralho ou mão via `detachCard`, seus contadores são limpos. A evolução de Herói (`evolveHero`) preserva os contadores ativos.

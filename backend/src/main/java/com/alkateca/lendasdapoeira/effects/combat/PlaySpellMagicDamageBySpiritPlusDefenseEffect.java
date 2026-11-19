@@ -35,7 +35,7 @@ public class PlaySpellMagicDamageBySpiritPlusDefenseEffect implements Effect {
 
         if (myHero != null && enemyHero != null) {
             int rawMagicDamage = myHero.getEspirito() + myHero.getDefesa() + 2;
-            int damage = gameEngine.calculateMagicDamage(myHero, enemyHero, rawMagicDamage);
+            int damage = gameEngine.calculateMagicDamage(myHero, enemyHero, rawMagicDamage, sourceCard);
             enemyHero.setVidaAtual(enemyHero.getVidaAtual() - damage);
             System.out.println("-> " + enemyHero.getCardName() + " sofreu " + damage +
                     " de Dano Mágico (Espírito + Defesa: " + rawMagicDamage + " - Espírito Alvo: " +

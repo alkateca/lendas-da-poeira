@@ -1,3 +1,5 @@
+import { normalizeCountersList, formatCounterQuantity, resolveCounterVisualMeta } from '../config/counterConfig.js';
+
 export default class MatchRecapSidebar {
     constructor(scene) {
         this.scene = scene;
@@ -6,6 +8,7 @@ export default class MatchRecapSidebar {
         this.lastBattleHeroesKey = '';
         this.lastPrepCountKey = '';
         this.previousHeroHp = new Map();
+        this.previousHeroCounters = new Map();
         this.entryIndex = 0;
 
         this.mountSidebarDOM();
@@ -247,8 +250,9 @@ export default class MatchRecapSidebar {
             }
         }
 
-        // 4. Calcula variações de HP em relação ao snapshot anterior
+        // 4. Calcula variações de HP e contadores em relação ao snapshot anterior
         const hpChanges = [];
+        const counterChanges = [];
         allHeroes.forEach(h => {
             if (!h || !h.uuid) return;
             const prevHp = this.previousHeroHp.has(h.uuid) ? this.previousHeroHp.get(h.uuid) : h.vidaMaxima;
@@ -257,6 +261,24 @@ export default class MatchRecapSidebar {
                 hpChanges.push(`${h.cardName}: ${diff > 0 ? '+' : ''}${diff} HP (${h.vidaAtual}/${h.vidaMaxima})`);
             }
             this.previousHeroHp.set(h.uuid, h.vidaAtual);
+
+            const prevMap = this.previousHeroCounters.get(h.uuid) || new Map();
+            const nextMap = new Map();
+            normalizeCountersList(h).forEach(cnt => {
+                nextMap.set(cnt.counterType, cnt.quantity);
+                const prevQty = prevMap.get(cnt.counterType) || 0;
+                const cDiff = cnt.quantity - prevQty;
+                if (cDiff !== 0) {
+                    counterChanges.push(`${h.cardName}: ${cDiff > 0 ? '+' : ''}${cDiff} ${cnt.displayName} (${formatCounterQuantity(cnt.quantity)})`);
+                }
+            });
+            prevMap.forEach((prevQty, prevType) => {
+                if (!nextMap.has(prevType) && prevQty > 0) {
+                    const meta = resolveCounterVisualMeta({ counterType: prevType });
+                    counterChanges.push(`${h.cardName}: -${prevQty} ${meta.displayName} (x0)`);
+                }
+            });
+            this.previousHeroCounters.set(h.uuid, nextMap);
         });
 
         // 5. Invocações, Resoluções de Cartas e Combate Físico
@@ -288,11 +310,18 @@ export default class MatchRecapSidebar {
                 title: `⚡ ${actorName} > ${trigger.sourceCardName || 'Efeito'}`,
                 lines: [
                     trigger.logMessage || 'Efeito resolvido.',
-                    ...hpChanges
+                    ...hpChanges,
+                    ...counterChanges
                 ],
                 accent: isLocalCard ? '#e60012' : '#2563eb',
                 previewDto: srcDto,
                 isHero: Boolean(srcDto && srcDto.vidaMaxima !== undefined)
+            });
+        } else if (eventType === 'COUNTER_UPDATED') {
+            this.appendNode({
+                title: `💠 Contadores (${trigger.counterDisplayName || 'Marcador'})`,
+                lines: counterChanges.length > 0 ? counterChanges : [trigger.logMessage || 'Marcadores atualizados.'],
+                accent: '#facc15'
             });
         } else if (eventType === 'PHYSICAL_COMBAT_EXCHANGE') {
             this.appendNode({

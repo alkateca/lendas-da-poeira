@@ -158,6 +158,15 @@ export const KEYWORDS_REGISTRY = {
         summary: 'Amplia o dano recebido pelo Herói.',
         description: 'Acúmulo negativo que aumenta o dano sofrido pelo Herói portador.'
     },
+    COMBUSTAO: {
+        id: 'COMBUSTAO',
+        label: 'Combustão',
+        category: KEYWORD_CATEGORIES.COMBATE,
+        badgeColor: '#f97316',
+        pattern: /\bcombust[ãa]o\b/i,
+        summary: 'Soma seu valor ao dano de Magias de Fogo e zera os contadores.',
+        description: 'Contador acumulável: adiciona o valor total de Combustão ao dano causado APENAS por Magias de Fogo (Feitiços com Afinidade Fogo) contra o portador e zera esses contadores.'
+    },
     EMPUNHADURA: {
         id: 'EMPUNHADURA',
         label: 'Empunhadura',
@@ -302,6 +311,7 @@ export function formatCardDescriptionWithKeywords(rawText) {
     formatted = formatted.replace(/\bPrioridade\./gi, '[PRIORIDADE]');
     formatted = formatted.replace(/\bInvocar:\s*/gi, '⚡INVOCAR: ');
     formatted = formatted.replace(/\bExilar\./gi, '[EXILAR]');
+    formatted = formatted.replace(/\bcombust[ãa]o\b/gi, '[COMBUSTÃO]');
 
     return formatted;
 }

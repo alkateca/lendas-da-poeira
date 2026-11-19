@@ -2378,5 +2378,26 @@
     "afinidades": [],
     "unica": false,
     "keywords": []
+  },
+  {
+    "uuid": "40000000-0000-0000-0000-000000000090",
+    "cardName": "Resíduo Incendiário",
+    "cardType": "SPELL",
+    "color": "BLUE",
+    "rarity": "COMUM",
+    "cardSet": "BASE",
+    "itemType": "NENHUM",
+    "empunhadura": 0,
+    "descricao": "Afinidade Cristal\nO Herói Inimigo recebe 5 Marcadores de Combustão.",
+    "racas": [],
+    "ordem": [],
+    "classe": [],
+    "afinidades": [
+      "Cristal"
+    ],
+    "unica": false,
+    "keywords": [
+      "COMBUSTAO"
+    ]
   }
 ]

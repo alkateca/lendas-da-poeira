@@ -2,6 +2,7 @@ package com.alkateca.lendasdapoeira.engine;
 
 import com.alkateca.lendasdapoeira.entity.Card;
 import com.alkateca.lendasdapoeira.entity.HeroCard;
+import com.alkateca.lendasdapoeira.enums.CounterType;
 import com.alkateca.lendasdapoeira.enums.ItemType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,5 +59,18 @@ class KeywordExtractorTest {
         // Não deve duplicar
         long count = keywords.stream().filter(k -> k.equals("INVOCAR")).count();
         org.junit.jupiter.api.Assertions.assertEquals(1, count);
+    }
+
+    @Test
+    @DisplayName("Deve extrair COMBUSTAO pela descrição da carta e pelos contadores ativos no Herói")
+    void testExtractCombustaoKeyword() {
+        Card spell = new Card();
+        spell.setCardName("Resíduo Incendiário");
+        spell.setDescricao("Afinidade Cristal\nO Herói Inimigo recebe 5 Marcadores de Combustão.");
+        assertTrue(KeywordExtractor.extract(spell).contains("COMBUSTAO"));
+
+        HeroCard heroWithCounters = new HeroCard();
+        heroWithCounters.addCounter(CounterType.COMBUSTAO, 5);
+        assertTrue(KeywordExtractor.extract(heroWithCounters).contains("COMBUSTAO"));
     }
 }
