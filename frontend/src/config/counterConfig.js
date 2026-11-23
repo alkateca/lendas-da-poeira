@@ -1,33 +1,19 @@
 import { BOARD_LAYOUT } from './BoardCoordinates.js';
 
 export const COUNTER_VISUAL_REGISTRY = {
-    POEIRA: {
-        counterType: 'POEIRA',
-        displayName: 'Poeira',
-        iconKey: 'counter_poeira',
-        accentColor: '#facc15',
-        description: 'Marcador de Poeira acumulado sobre a carta.'
-    },
-    VENENO: {
-        counterType: 'VENENO',
-        displayName: 'Veneno',
-        iconKey: 'counter_veneno',
-        accentColor: '#22c55e',
-        description: 'Marcador de Veneno acumulado sobre a carta.'
-    },
-    POLVORA: {
-        counterType: 'POLVORA',
-        displayName: 'Pólvora',
-        iconKey: 'counter_polvora',
-        accentColor: '#ef4444',
-        description: 'Marcador de Pólvora acumulado sobre a carta.'
-    },
     COMBUSTAO: {
         counterType: 'COMBUSTAO',
         displayName: 'Combustão',
         iconKey: 'counter_combustao',
         accentColor: '#f97316',
         description: 'Adiciona o valor total de Combustão ao dano causado apenas por Magias de Fogo contra o portador e zera esses contadores.'
+    },
+    SEDA: {
+        counterType: 'SEDA',
+        displayName: 'Seda',
+        iconKey: 'counter_seda',
+        accentColor: '#e2e8f0',
+        description: 'Marcador acumulável de Seda consumido por cartas e habilidades compatíveis para ampliar seus efeitos (como bônus de Ataque, Defesa, Espírito, Cura ou Dano).'
     }
 };
 

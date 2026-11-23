@@ -16,23 +16,24 @@ import {
 import { BOARD_LAYOUT } from '../../config/BoardCoordinates.js';
 
 describe('counterConfig — Sistema Visual de Contadores em Cartas', () => {
-    it('deve resolver metadados visuais de Poeira, Veneno, Pólvora e fallback genérico', () => {
-        const poeira = resolveCounterVisualMeta({ counterType: 'POEIRA' });
-        assert.equal(poeira.displayName, 'Poeira');
-        assert.equal(poeira.iconKey, 'counter_poeira');
+    it('deve manter apenas Combustão, Seda e fallback genérico (sem Pólvora, Veneno ou Poeira)', () => {
+        const combustao = resolveCounterVisualMeta({ counterType: 'combustao' });
+        assert.equal(combustao.displayName, 'Combustão');
+        assert.equal(combustao.iconKey, 'counter_combustao');
 
-        const veneno = resolveCounterVisualMeta({ counterType: 'veneno' });
-        assert.equal(veneno.displayName, 'Veneno');
-        assert.equal(veneno.iconKey, 'counter_veneno');
+        const seda = resolveCounterVisualMeta({ counterType: 'seda' });
+        assert.equal(seda.displayName, 'Seda');
+        assert.equal(seda.iconKey, 'counter_seda');
 
-        const polvora = resolveCounterVisualMeta({ counterType: 'Pólvora' });
-        assert.equal(polvora.displayName, 'Pólvora');
-        assert.equal(polvora.iconKey, 'counter_polvora');
+        assert.equal(COUNTER_VISUAL_REGISTRY.POEIRA, undefined);
+        assert.equal(COUNTER_VISUAL_REGISTRY.VENENO, undefined);
+        assert.equal(COUNTER_VISUAL_REGISTRY.POLVORA, undefined);
+        assert.ok(COUNTER_VISUAL_REGISTRY.COMBUSTAO);
+        assert.ok(COUNTER_VISUAL_REGISTRY.SEDA);
 
         const unknown = resolveCounterVisualMeta({ counterType: 'CARGA_ARCANICA' });
         assert.equal(unknown.counterType, 'CARGA_ARCANICA');
         assert.equal(unknown.iconKey, 'counter_generic');
-        assert.ok(COUNTER_VISUAL_REGISTRY.POEIRA);
     });
 
     it('deve formatar quantidades no padrão x(número)', () => {
@@ -45,22 +46,22 @@ describe('counterConfig — Sistema Visual de Contadores em Cartas', () => {
     it('deve normalizar contadores ignorando quantidades <= 0 (array ou mapa)', () => {
         const fromArray = normalizeCountersList({
             counters: [
-                { counterType: 'POEIRA', quantity: 3 },
-                { counterType: 'VENENO', quantity: 0 },
-                { counterType: 'POLVORA', quantity: -1 },
+                { counterType: 'SEDA', quantity: 3 },
+                { counterType: 'COMBUSTAO', quantity: 0 },
+                { counterType: 'SEDA', quantity: -1 },
                 null
             ]
         });
         assert.equal(fromArray.length, 1);
-        assert.equal(fromArray[0].counterType, 'POEIRA');
+        assert.equal(fromArray[0].counterType, 'SEDA');
         assert.equal(fromArray[0].quantity, 3);
 
         const fromMap = normalizeCountersList({
-            counters: { POEIRA: 2, VENENO: 4, POLVORA: 0 }
+            counters: { SEDA: 2, COMBUSTAO: 4 }
         });
         assert.equal(fromMap.length, 2);
-        assert.equal(fromMap[0].counterType, 'POEIRA');
-        assert.equal(fromMap[1].counterType, 'VENENO');
+        assert.equal(fromMap[0].counterType, 'SEDA');
+        assert.equal(fromMap[1].counterType, 'COMBUSTAO');
         assert.equal(fromMap[1].quantity, 4);
     });
 
@@ -84,22 +85,34 @@ describe('counterConfig — Sistema Visual de Contadores em Cartas', () => {
         assert.ok(five[4].x + halfMiniW <= 45, 'Múltiplos contadores devem permanecer na faixa da caixa de regras');
     });
 
-    it('deve registrar Combustão como contador visual e keyword destacável com explicação', () => {
+    it('deve registrar Combustão e Seda como contadores visuais e keywords destacáveis', () => {
         const combustaoMeta = resolveCounterVisualMeta({ counterType: 'COMBUSTAO' });
         assert.equal(combustaoMeta.displayName, 'Combustão');
         assert.equal(combustaoMeta.iconKey, 'counter_combustao');
 
+        const sedaMeta = resolveCounterVisualMeta({ counterType: 'SEDA' });
+        assert.equal(sedaMeta.displayName, 'Seda');
+        assert.equal(sedaMeta.iconKey, 'counter_seda');
+
         assert.ok(KEYWORDS_REGISTRY.COMBUSTAO);
-        const resolved = resolveCardKeywords({
+        assert.ok(KEYWORDS_REGISTRY.SEDA);
+
+        const resolvedCombustao = resolveCardKeywords({
             descricao: 'Afinidade Cristal\nO Herói Inimigo recebe 5 Marcadores de Combustão.',
             faceUp: true
         });
-        assert.ok(resolved.some(k => k.id === 'COMBUSTAO'));
+        assert.ok(resolvedCombustao.some(k => k.id === 'COMBUSTAO'));
 
-        const formatted = formatCardDescriptionWithKeywords('O Herói Inimigo recebe 5 Marcadores de Combustão.');
-        assert.ok(formatted.includes('[COMBUSTÃO]'));
+        const resolvedSeda = resolveCardKeywords({
+            descricao: 'Consuma todos os Marcadores de Seda: Seu Herói recebe +2 de Defesa.',
+            faceUp: true
+        });
+        assert.ok(resolvedSeda.some(k => k.id === 'SEDA'));
 
-        const glossaryHits = searchGlossaryKeywords('combustão');
-        assert.ok(glossaryHits.some(k => k.id === 'COMBUSTAO'));
+        assert.ok(formatCardDescriptionWithKeywords('Recebe 5 Marcadores de Combustão.').includes('[COMBUSTÃO]'));
+        assert.ok(formatCardDescriptionWithKeywords('Consuma 2 Marcadores de Seda.').includes('[SEDA]'));
+
+        assert.ok(searchGlossaryKeywords('combustão').some(k => k.id === 'COMBUSTAO'));
+        assert.ok(searchGlossaryKeywords('seda').some(k => k.id === 'SEDA'));
     });
 });

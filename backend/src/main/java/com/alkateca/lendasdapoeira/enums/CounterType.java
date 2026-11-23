@@ -9,29 +9,17 @@ import java.util.Locale;
  * sem exigir alterações estruturais no motor ou no Front-End.
  */
 public enum CounterType {
-    POEIRA(
-            "Poeira",
-            "counter_poeira",
-            "#facc15",
-            "Marcador de Poeira acumulado sobre a carta."
-    ),
-    VENENO(
-            "Veneno",
-            "counter_veneno",
-            "#22c55e",
-            "Marcador de Veneno acumulado sobre a carta."
-    ),
-    POLVORA(
-            "Pólvora",
-            "counter_polvora",
-            "#ef4444",
-            "Marcador de Pólvora acumulado sobre a carta."
-    ),
     COMBUSTAO(
             "Combustão",
             "counter_combustao",
             "#f97316",
             "Adiciona o valor total de Combustão ao dano causado apenas por Magias de Fogo contra o portador e zera esses contadores."
+    ),
+    SEDA(
+            "Seda",
+            "counter_seda",
+            "#e2e8f0",
+            "Marcador acumulável de Seda consumido por cartas e habilidades compatíveis para ampliar seus efeitos (como bônus de Ataque, Defesa, Espírito, Cura ou Dano)."
     );
 
     private final String displayName;

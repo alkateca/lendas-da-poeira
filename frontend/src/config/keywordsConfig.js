@@ -167,6 +167,15 @@ export const KEYWORDS_REGISTRY = {
         summary: 'Soma seu valor ao dano de Magias de Fogo e zera os contadores.',
         description: 'Contador acumulável: adiciona o valor total de Combustão ao dano causado APENAS por Magias de Fogo (Feitiços com Afinidade Fogo) contra o portador e zera esses contadores.'
     },
+    SEDA: {
+        id: 'SEDA',
+        label: 'Seda',
+        category: KEYWORD_CATEGORIES.COMBATE,
+        badgeColor: '#e2e8f0',
+        pattern: /\bseda\b/i,
+        summary: 'Recurso acumulável que amplia cartas e efeitos que o consomem.',
+        description: 'Contador acumulável: cartas e habilidades que utilizam ou consomem Marcadores de Seda ampliam seus efeitos (como bônus de Ataque, Defesa, Espírito, Cura ou Dano) conforme a quantidade consumida.'
+    },
     EMPUNHADURA: {
         id: 'EMPUNHADURA',
         label: 'Empunhadura',
@@ -312,6 +321,7 @@ export function formatCardDescriptionWithKeywords(rawText) {
     formatted = formatted.replace(/\bInvocar:\s*/gi, '⚡INVOCAR: ');
     formatted = formatted.replace(/\bExilar\./gi, '[EXILAR]');
     formatted = formatted.replace(/\bcombust[ãa]o\b/gi, '[COMBUSTÃO]');
+    formatted = formatted.replace(/\bseda\b/gi, '[SEDA]');
 
     return formatted;
 }

@@ -73,4 +73,21 @@ class KeywordExtractorTest {
         heroWithCounters.addCounter(CounterType.COMBUSTAO, 5);
         assertTrue(KeywordExtractor.extract(heroWithCounters).contains("COMBUSTAO"));
     }
+
+    @Test
+    @DisplayName("Deve extrair SEDA pela descrição da carta e pelos contadores ativos sem falsos positivos")
+    void testExtractSedaKeyword() {
+        Card spell = new Card();
+        spell.setCardName("Tecelagem Protetora");
+        spell.setDescricao("Consuma todos os Marcadores de Seda: Seu Herói recebe +2 de Defesa por marcador.");
+        assertTrue(KeywordExtractor.extract(spell).contains("SEDA"));
+
+        HeroCard heroWithSeda = new HeroCard();
+        heroWithSeda.addCounter(CounterType.SEDA, 3);
+        assertTrue(KeywordExtractor.extract(heroWithSeda).contains("SEDA"));
+
+        Card unrelatedCard = new Card();
+        unrelatedCard.setDescricao("Um sedativo místico adormece o alvo.");
+        assertFalse(KeywordExtractor.extract(unrelatedCard).contains("SEDA"));
+    }
 }

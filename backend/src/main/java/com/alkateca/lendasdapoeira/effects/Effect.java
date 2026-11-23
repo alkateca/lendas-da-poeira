@@ -25,4 +25,21 @@ public interface Effect {
     default boolean canTriggerFromBench() {
         return false;
     }
+
+    /**
+     * Indica se este efeito (em um Herói ou carta já em {@code ZoneId.ATTACHED}) deve ser acionado
+     * automaticamente uma vez na transição para {@code TurnPhase.RESOLUTION}, independente de haver
+     * cartas jogadas na pilha. Efeitos do tipo "ao jogar" / "ao equipar" permanecem como {@code false}.
+     */
+    default boolean canTriggerOnResolutionPhaseEntry() {
+        return false;
+    }
+
+    /**
+     * Indica se este efeito em uma carta ainda na zona {@code ZoneId.RESOLVE} deve disparar
+     * quando o motor entrar em fases posteriores de combate ({@code COMBAT_START}, {@code COMBAT}, {@code COMBAT_END}).
+     */
+    default boolean canTriggerFromResolveZone(TurnPhase turnPhase) {
+        return false;
+    }
 }

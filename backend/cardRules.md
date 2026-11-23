@@ -37,7 +37,7 @@ Deve conter o `itemType`, `afinidades`, `racas`, `classe` e `ordem`, sempre sepa
 
 **Regras de Efeitos e Modificadores:**
 *   **Mudanças de atributos:** "O Herói Inimigo recebe -X de Espírito/Ataque/Defesa/Vida Máxima" ou "Seu Herói recebe +X de Espírito/Ataque/Defesa/Vida Máxima".
-*   **Contadores (Marcadores/Tokens):** "ganha X Marcador(es) [Tipo]" ou "recebe X Marcador(es) [Tipo]" / "perde X Marcador(es) [Tipo]" (ex: `Poeira`, `Veneno`, `Pólvora`, `Combustão`), podendo atingir o Herói ativo aliado, o Herói inimigo ativo, ambos simultaneamente, ou Heróis fora de combate (direto ou por escolha).
+*   **Contadores (Marcadores/Tokens):** "ganha X Marcador(es) [Tipo]" / "recebe X Marcador(es) [Tipo]" / "perde X Marcador(es) [Tipo]" / "Consome X Marcador(es) de [Tipo]" (tipos ativos: `Combustão`, `Seda`), podendo atingir o Herói ativo aliado, o Herói inimigo ativo, ambos simultaneamente, ou Heróis fora de combate (direto ou por escolha) em qualquer etapa do turno.
 *   **Dano:** "O Herói Inimigo Sofre X de Dano Direto/Mágico/Físico".
 *   **Tempo (Gatilhos):** Podem existir os prefixos `Início da Partida:`, `Início do Combate:` e `Final do Combate:`.
 *   **Duração:** Os efeitos podem ser permanentes ou conter o sufixo `até o Final do Combate.`.

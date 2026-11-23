@@ -1,5 +1,8 @@
 package com.alkateca.lendasdapoeira.engine;
 
+import com.alkateca.lendasdapoeira.counters.CounterConsumptionMode;
+import com.alkateca.lendasdapoeira.counters.CounterRule;
+import com.alkateca.lendasdapoeira.counters.CounterRuleRegistry;
 import com.alkateca.lendasdapoeira.entity.Card;
 import com.alkateca.lendasdapoeira.entity.HeroCard;
 import com.alkateca.lendasdapoeira.entity.Player;
@@ -73,6 +76,18 @@ public class GameEngine {
     private final Map<UUID, Integer> turnPreparationCardLimitModifiers = new HashMap<>();
     private boolean physicalCombatResolvedInCurrentTurn = false;
     private boolean discardPhaseEffectsTriggeredThisTurn = false;
+    private CounterRuleRegistry counterRuleRegistry = CounterRuleRegistry.createDefault();
+
+    public CounterRuleRegistry getCounterRuleRegistry() {
+        if (this.counterRuleRegistry == null) {
+            this.counterRuleRegistry = CounterRuleRegistry.createDefault();
+        }
+        return this.counterRuleRegistry;
+    }
+
+    public void registerCounterRule(CounterRule rule) {
+        getCounterRuleRegistry().register(rule);
+    }
 
     public int getMaxPreparationCardsForPlayer(UUID playerId) {
         if (playerId == null) return DEFAULT_MAX_PREPARATION_CARDS;
@@ -544,6 +559,7 @@ public class GameEngine {
         // 1. Muda para RESOLUTION para revelar as cartas nos 4 slots centrais
         changePhase(TurnPhase.RESOLUTION);
 
+        triggerPhaseEffects(TurnPhase.RESOLUTION);
         enqueueInitialResolutionCards();
 
         // 2. Resolve todos os efeitos da pilha
@@ -814,10 +830,10 @@ public class GameEngine {
         HeroCard p2Hero = getActiveHero(player2, activeP2HeroId);
 
         if (p1Hero != null && Boolean.TRUE.equals(p1Hero.getEstaVivo())) {
-            p1Hero.onPhaseChange(phase, resolutionQueue);
+            enqueueEligibleBoardEffects(p1Hero, phase, true);
         }
         if (p2Hero != null && Boolean.TRUE.equals(p2Hero.getEstaVivo())) {
-            p2Hero.onPhaseChange(phase, resolutionQueue);
+            enqueueEligibleBoardEffects(p2Hero, phase, true);
         }
 
         for (HeroCard hero : collectLivingHeroes()) {
@@ -826,22 +842,20 @@ public class GameEngine {
                 continue;
             }
             boolean isInBattle = hero.getZoneId() == ZoneId.BATTLE;
-            if (isInBattle) {
-                hero.onPhaseChange(phase, resolutionQueue);
-                continue;
-            }
-            if (hero.getEffects() != null) {
-                hero.getEffects().stream()
-                        .filter(eff -> eff.predicate(hero, phase) && (isOutOfCombatPhase || eff.canTriggerFromBench()))
-                        .forEach(eff -> resolutionQueue.enqueue(eff, hero));
-            }
+            enqueueEligibleBoardEffects(hero, phase, isInBattle || isOutOfCombatPhase);
         }
 
+        Set<UUID> triggeredBoardCardIds = new HashSet<>();
         for (Card attachedCard : collectAllDeckCards()) {
             if (attachedCard == null
                     || attachedCard.getZoneId() != ZoneId.ATTACHED
                     || attachedCard.getAttachedToCardId() == null
                     || attachedCard.getEffects() == null) {
+                continue;
+            }
+            if (phase == TurnPhase.RESOLUTION
+                    && (resolvedCardsInCurrentCombat.contains(attachedCard)
+                    || (attachedCard.getUuid() != null && invokedCardIdsInCurrentCombat.contains(attachedCard.getUuid())))) {
                 continue;
             }
             HeroCard hostHero = findHeroById(attachedCard.getAttachedToCardId());
@@ -855,8 +869,12 @@ public class GameEngine {
             boolean repeatEncore = attachedCard.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ESCUDO
                     && hasShieldEncoreAura(attachedCard.getOwnerId());
 
+            if (attachedCard.getUuid() != null) {
+                triggeredBoardCardIds.add(attachedCard.getUuid());
+            }
+
             attachedCard.getEffects().stream()
-                    .filter(eff -> eff.predicate(attachedCard, phase) && (hostInBattle || isOutOfCombatPhase || eff.canTriggerFromBench()))
+                    .filter(eff -> shouldTriggerBoardEffectInPhase(eff, attachedCard, phase, hostInBattle || isOutOfCombatPhase))
                     .forEach(eff -> {
                         resolutionQueue.enqueue(eff, attachedCard);
                         if (repeatEncore && isEncoreRepeatableEffect(eff)) {
@@ -864,6 +882,54 @@ public class GameEngine {
                         }
                     });
         }
+
+        if (gameState != null && (phase == TurnPhase.COMBAT_START || phase == TurnPhase.COMBAT || phase == TurnPhase.COMBAT_END)) {
+            List<Card> resolveCards = new ArrayList<>();
+            if (gameState.getPlayer1PlayedCards() != null) {
+                resolveCards.addAll(gameState.getPlayer1PlayedCards());
+            }
+            if (gameState.getPlayer2PlayedCards() != null) {
+                resolveCards.addAll(gameState.getPlayer2PlayedCards());
+            }
+            for (Card resolveCard : resolveCards) {
+                if (resolveCard == null
+                        || resolveCard.getZoneId() != ZoneId.RESOLVE
+                        || resolveCard.getEffects() == null) {
+                    continue;
+                }
+                if (resolveCard.getUuid() != null && !triggeredBoardCardIds.add(resolveCard.getUuid())) {
+                    continue;
+                }
+                resolveCard.getEffects().stream()
+                        .filter(eff -> eff.predicate(resolveCard, phase) && eff.canTriggerFromResolveZone(phase))
+                        .forEach(eff -> resolutionQueue.enqueue(eff, resolveCard));
+            }
+        }
+
+        getCounterRuleRegistry().onTurnPhase(this, phase);
+    }
+
+    private void enqueueEligibleBoardEffects(Card boardCard, TurnPhase phase, boolean activeOrOutOfCombat) {
+        if (boardCard == null || boardCard.getEffects() == null) {
+            return;
+        }
+        boardCard.getEffects().stream()
+                .filter(eff -> shouldTriggerBoardEffectInPhase(eff, boardCard, phase, activeOrOutOfCombat))
+                .forEach(eff -> resolutionQueue.enqueue(eff, boardCard));
+    }
+
+    private boolean shouldTriggerBoardEffectInPhase(
+            com.alkateca.lendasdapoeira.effects.Effect eff,
+            Card sourceCard,
+            TurnPhase phase,
+            boolean activeOrOutOfCombat) {
+        if (eff == null || sourceCard == null || !eff.predicate(sourceCard, phase)) {
+            return false;
+        }
+        if (phase == TurnPhase.RESOLUTION && !eff.canTriggerOnResolutionPhaseEntry()) {
+            return false;
+        }
+        return activeOrOutOfCombat || eff.canTriggerFromBench();
     }
 
     // 3. ADICIONAR estes métodos públicos no GameEngine.java para gerenciar Desanexar e Duração:
@@ -955,6 +1021,45 @@ public class GameEngine {
                     + " consumido(s) de " + targetCard.getCardName() + ".");
         }
         return existing;
+    }
+
+    /**
+     * Consome contadores de um tipo específico sobre a carta conforme a estratégia {@link CounterConsumptionMode}.
+     */
+    public int consumeCounters(Card targetCard, CounterType counterType, CounterConsumptionMode mode, int requestedAmount) {
+        if (targetCard == null || counterType == null) {
+            return 0;
+        }
+        CounterConsumptionMode effectiveMode = mode != null ? mode : CounterConsumptionMode.CONSUME_ALL;
+        return switch (effectiveMode) {
+            case CONSUME_ALL -> consumeAllCounters(targetCard, counterType);
+            case CONSUME_UP_TO -> {
+                if (requestedAmount <= 0) {
+                    yield 0;
+                }
+                int existing = getCounterCount(targetCard, counterType);
+                int toConsume = Math.min(existing, requestedAmount);
+                if (toConsume > 0) {
+                    removeCounter(targetCard, counterType, toConsume);
+                    System.out.println("-> " + toConsume + " marcador(es) de " + counterType.getDisplayName()
+                            + " consumido(s) de " + targetCard.getCardName() + ".");
+                }
+                yield toConsume;
+            }
+            case CONSUME_EXACT -> {
+                if (requestedAmount <= 0) {
+                    yield 0;
+                }
+                int existing = getCounterCount(targetCard, counterType);
+                if (existing < requestedAmount) {
+                    yield 0;
+                }
+                removeCounter(targetCard, counterType, requestedAmount);
+                System.out.println("-> " + requestedAmount + " marcador(es) de " + counterType.getDisplayName()
+                        + " consumido(s) de " + targetCard.getCardName() + ".");
+                yield requestedAmount;
+            }
+        };
     }
 
     /**
@@ -1556,6 +1661,7 @@ public class GameEngine {
             attachItemsAlreadyInvokedInCombatStart(gameState.getPlayer2PlayedCards());
 
             changePhase(TurnPhase.RESOLUTION);
+            triggerPhaseEffects(TurnPhase.RESOLUTION);
             enqueueInitialResolutionCards();
         }
 
@@ -1822,7 +1928,7 @@ public class GameEngine {
         List<com.alkateca.lendasdapoeira.effects.Effect> heroOnPlayEffects = new ArrayList<>();
         if (ownerHero != null && ownerHero.getEffects() != null) {
             for (com.alkateca.lendasdapoeira.effects.Effect eff : ownerHero.getEffects()) {
-                if (eff.predicate(ownerHero, TurnPhase.RESOLUTION)) {
+                if (eff.predicate(ownerHero, TurnPhase.RESOLUTION) && !eff.canTriggerOnResolutionPhaseEntry()) {
                     heroOnPlayEffects.add(eff);
                 }
             }
@@ -1838,7 +1944,9 @@ public class GameEngine {
                         && (ownerHero == null || !h.getUuid().equals(ownerHero.getUuid()))
                         && h.getEffects() != null) {
                     for (com.alkateca.lendasdapoeira.effects.Effect eff : h.getEffects()) {
-                        if (eff.canTriggerFromBench() && eff.predicate(h, TurnPhase.RESOLUTION)) {
+                        if (eff.canTriggerFromBench()
+                                && eff.predicate(h, TurnPhase.RESOLUTION)
+                                && !eff.canTriggerOnResolutionPhaseEntry()) {
                             benchOwnerHeroes.add(h);
                             benchHeroOnPlayEffects.add(eff);
                         }
@@ -2058,9 +2166,14 @@ public class GameEngine {
     }
 
     public int calculatePhysicalDamage(HeroCard attacker, HeroCard defender, int basePhysicalDamage) {
+        return calculatePhysicalDamage(attacker, defender, basePhysicalDamage, null);
+    }
+
+    public int calculatePhysicalDamage(HeroCard attacker, HeroCard defender, int basePhysicalDamage, Card sourceCard) {
         if (defender == null) return 0;
         int bonusDamage = attacker != null ? attacker.getDanoBonus() : 0;
-        int rawDamage = basePhysicalDamage + bonusDamage;
+        int counterBonus = getCounterRuleRegistry().resolvePhysicalDamageBonus(this, attacker, defender, basePhysicalDamage, sourceCard);
+        int rawDamage = basePhysicalDamage + bonusDamage + counterBonus;
         int totalMitigation = defender.getDefesa() + defender.getReducaoDano();
         int finalDamage = Math.max(0, (rawDamage - totalMitigation) + defender.getVulnerabilidade());
         if (finalDamage > 0) {
@@ -2079,18 +2192,6 @@ public class GameEngine {
                 && sourceCard.getAfinidades().contains(Afinidade.FOGO);
     }
 
-    private int consumeCombustionBonusIfApplicable(HeroCard defender, Card sourceCard) {
-        if (defender == null || !isFireSpell(sourceCard)) {
-            return 0;
-        }
-        int combustionValue = consumeAllCounters(defender, CounterType.COMBUSTAO);
-        if (combustionValue > 0) {
-            System.out.println("-> Combustão detonada por magia de fogo (" + sourceCard.getCardName()
-                    + "): +" + combustionValue + " de dano mágico e marcadores zerados em " + defender.getCardName() + "!");
-        }
-        return combustionValue;
-    }
-
     public int calculateMagicDamage(HeroCard attacker, HeroCard defender, int baseMagicDamage) {
         return calculateMagicDamage(attacker, defender, baseMagicDamage, null);
     }
@@ -2098,8 +2199,8 @@ public class GameEngine {
     public int calculateMagicDamage(HeroCard attacker, HeroCard defender, int baseMagicDamage, Card sourceCard) {
         if (defender == null) return 0;
         int bonusDamage = attacker != null ? attacker.getDanoBonus() : 0;
-        int combustionBonus = consumeCombustionBonusIfApplicable(defender, sourceCard);
-        int rawMagic = baseMagicDamage + bonusDamage + combustionBonus;
+        int counterBonus = getCounterRuleRegistry().resolveMagicDamageBonus(this, attacker, defender, baseMagicDamage, sourceCard);
+        int rawMagic = baseMagicDamage + bonusDamage + counterBonus;
         int magicMitigation = defender.getEspirito();
         int finalDamage = Math.max(0, (rawMagic - magicMitigation) + defender.getVulnerabilidade());
         if (finalDamage > 0) {
@@ -2112,9 +2213,14 @@ public class GameEngine {
     }
 
     public int calculateDirectDamage(HeroCard attacker, HeroCard defender, int baseDirectDamage) {
+        return calculateDirectDamage(attacker, defender, baseDirectDamage, null);
+    }
+
+    public int calculateDirectDamage(HeroCard attacker, HeroCard defender, int baseDirectDamage, Card sourceCard) {
         if (defender == null) return 0;
         int bonusDamage = attacker != null ? attacker.getDanoBonus() : 0;
-        int rawDirect = baseDirectDamage + bonusDamage + defender.getVulnerabilidade();
+        int counterBonus = getCounterRuleRegistry().resolveDirectDamageBonus(this, attacker, defender, baseDirectDamage, sourceCard);
+        int rawDirect = baseDirectDamage + bonusDamage + counterBonus + defender.getVulnerabilidade();
         int finalDamage = Math.max(0, rawDirect);
         if (finalDamage > 0) {
             finalDamage += getEnemyBonusDamageTakenFromAuras(defender);

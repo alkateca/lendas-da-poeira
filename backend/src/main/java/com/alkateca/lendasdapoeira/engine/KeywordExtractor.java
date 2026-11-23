@@ -12,6 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class KeywordExtractor {
 
@@ -36,7 +37,6 @@ public class KeywordExtractor {
         TERM_PATTERNS.put("DANO_BONUS", "dano bonus");
         TERM_PATTERNS.put("REDUCAO_DE_DANO", "reducao de dano");
         TERM_PATTERNS.put("VULNERABILIDADE", "vulnerabilidade");
-        TERM_PATTERNS.put("COMBUSTAO", "combustao");
         TERM_PATTERNS.put("EMPUNHADURA", "empunhadura");
 
         // Estados de Jogo e Zonas
@@ -68,8 +68,11 @@ public class KeywordExtractor {
             if (hero.getReducaoDano() > 0) result.add("REDUCAO_DE_DANO");
             if (hero.getVulnerabilidade() > 0) result.add("VULNERABILIDADE");
         }
-        if (card.hasCounter(CounterType.COMBUSTAO)) {
-            result.add("COMBUSTAO");
+
+        for (CounterType counterType : CounterType.values()) {
+            if (card.hasCounter(counterType)) {
+                result.add(counterType.name());
+            }
         }
 
         String rawDesc = card.getDescricao();
@@ -84,9 +87,21 @@ public class KeywordExtractor {
                     }
                 }
             }
+            for (CounterType counterType : CounterType.values()) {
+                String normalizedLabel = normalize(counterType.getDisplayName());
+                if (!normalizedLabel.isBlank() && containsWholeWord(normalized, normalizedLabel)) {
+                    result.add(counterType.name());
+                }
+            }
         }
 
         return new ArrayList<>(result);
+    }
+
+    private static boolean containsWholeWord(String normalizedText, String normalizedWord) {
+        return Pattern.compile("\\b" + Pattern.quote(normalizedWord) + "\\b")
+                .matcher(normalizedText)
+                .find();
     }
 
     private static String normalize(String input) {
