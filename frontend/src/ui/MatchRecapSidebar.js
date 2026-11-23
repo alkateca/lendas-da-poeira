@@ -323,6 +323,12 @@ export default class MatchRecapSidebar {
                 lines: counterChanges.length > 0 ? counterChanges : [trigger.logMessage || 'Marcadores atualizados.'],
                 accent: '#facc15'
             });
+        } else if (eventType === 'CHOICE_RESOLVED' && (counterChanges.length > 0 || hpChanges.length > 0)) {
+            this.appendNode({
+                title: '🎯 Alvo Selecionado:',
+                lines: [...hpChanges, ...counterChanges],
+                accent: '#facc15'
+            });
         } else if (eventType === 'PHYSICAL_COMBAT_EXCHANGE') {
             this.appendNode({
                 title: '⚔️ Troca de Dano Físico:',

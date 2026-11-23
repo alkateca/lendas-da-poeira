@@ -109,8 +109,9 @@ public class StartOfCombatPhysicalDamageEffect implements Effect {
 ```
 
 ## 7. Manipulação de Contadores em Efeitos (`CounterType`)
-Para efeitos que adicionam, removem, consomem ou consultam contadores em cartas/heróis, utilize obrigatoriamente os métodos centralizados do `GameEngine` (ou a implementação reutilizável `ModifyHeroCounterEffect`):
+Para efeitos que adicionam, removem, consomem ou consultam contadores (tokens/marcadores) em cartas/heróis, utilize obrigatoriamente os métodos centralizados do `GameEngine` (ou a implementação reutilizável `ModifyHeroCounterEffect`):
 *   `gameEngine.addCounter(targetCard, CounterType.POEIRA, amount)`
 *   `gameEngine.removeCounter(targetCard, CounterType.VENENO, amount)`
 *   `gameEngine.consumeAllCounters(targetCard, CounterType.POLVORA)`
 *   `gameEngine.getCounterCount(targetCard, CounterType.POEIRA)`
+*   `ModifyHeroCounterEffect` suporta múltiplas fases (`TurnPhase` em `GAME_START`, `CHOICE`, `PREPARATION`, `COMBAT_START`, `RESOLUTION`, `COMBAT`, `COMBAT_END`, `DISCARD`), disparo da bancada (`triggerFromBench`), múltiplos escopos simultâneos e alvos `CounterTargetScope`: `ACTIVE_ALLY_HERO`, `ACTIVE_ENEMY_HERO`, `BOTH_ACTIVE_HEROES`, `OUT_OF_COMBAT_ALLY_HEROES`, `OUT_OF_COMBAT_ENEMY_HEROES`, `ALL_OUT_OF_COMBAT_HEROES`, `ALL_ALLY_HEROES`, `ALL_ENEMY_HEROES`, `ALL_LIVING_HEROES`, `SELF_OR_ATTACHED_HERO` e escolhas interativas via `PendingChoice` (`CHOOSE_ALLY_HERO`, `CHOOSE_ENEMY_HERO`, `CHOOSE_ANY_HERO`, `CHOOSE_OUT_OF_COMBAT_ALLY_HERO`, `CHOOSE_OUT_OF_COMBAT_ENEMY_HERO`, `CHOOSE_OUT_OF_COMBAT_ANY_HERO`).

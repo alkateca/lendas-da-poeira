@@ -322,4 +322,413 @@ class CardCounterSystemTest {
                 "Magia de Fogo deve zerar os contadores de Combustão após somar o dano.");
         assertFalse(heroP2Battle.getCounters().containsKey(CounterType.COMBUSTAO));
     }
+
+    @Test
+    @DisplayName("7. BOTH_ACTIVE_HEROES e múltiplos escopos anexam tokens simultaneamente no Herói atual aliado e no Herói inimigo atual")
+    void shouldAttachCountersToBothCurrentPlayerHeroAndCurrentEnemyHeroSimultaneously() {
+        // Arrange
+        HeroCard heroP2Bench = createHero(player2.getUuid(), "Sentinela no Banco", 1, 3, 2, 12);
+        heroP2Bench.setZoneId(ZoneId.BENCH);
+        player2.getCurrentDeck().getHeroList().add(heroP2Bench);
+        heroP1Bench.setZoneId(ZoneId.BENCH);
+
+        Card dualSpell = new Card();
+        dualSpell.setUuid(UUID.randomUUID());
+        dualSpell.setOwnerId(player1.getUuid());
+        dualSpell.setCardName("Convergência da Poeira");
+        dualSpell.setCardType(CardType.SPELL);
+        dualSpell.setColor(Colors.BLUE);
+        dualSpell.setZoneId(ZoneId.RESOLVE);
+        dualSpell.setEffects(new ArrayList<>(List.of(
+                new ModifyHeroCounterEffect(
+                        TurnPhase.RESOLUTION,
+                        ModifyHeroCounterEffect.CounterTargetScope.BOTH_ACTIVE_HEROES,
+                        CounterType.POEIRA,
+                        3
+                ),
+                new ModifyHeroCounterEffect(
+                        TurnPhase.RESOLUTION,
+                        List.of(
+                                ModifyHeroCounterEffect.CounterTargetScope.ACTIVE_ALLY_HERO,
+                                ModifyHeroCounterEffect.CounterTargetScope.ACTIVE_ENEMY_HERO
+                        ),
+                        CounterType.POLVORA,
+                        2
+                )
+        )));
+
+        engine.setTurnPhase(TurnPhase.RESOLUTION);
+
+        // Act
+        dualSpell.onPhaseChange(TurnPhase.RESOLUTION, engine.getResolutionQueue());
+        engine.getResolutionQueue().resolveAll(engine);
+
+        // Assert: apenas os dois Heróis em combate recebem ambos os tokens
+        assertEquals(3, engine.getCounterCount(heroP1Battle, CounterType.POEIRA));
+        assertEquals(3, engine.getCounterCount(heroP2Battle, CounterType.POEIRA));
+        assertEquals(2, engine.getCounterCount(heroP1Battle, CounterType.POLVORA));
+        assertEquals(2, engine.getCounterCount(heroP2Battle, CounterType.POLVORA));
+
+        // Heróis fora de combate permanecem sem contadores
+        assertEquals(0, engine.getCounterCount(heroP1Bench, CounterType.POEIRA));
+        assertEquals(0, engine.getCounterCount(heroP2Bench, CounterType.POEIRA));
+
+        MatchSnapshotDTO snap = SnapshotFactory.createSnapshotForViewer(engine, player1.getUuid(), null, null, "TEST");
+        MatchSnapshotDTO.HeroSnapshotDTO allyBattleDto = snap.getLocalPlayer().getHeroes().stream()
+                .filter(h -> h.getUuid().equals(heroP1Battle.getUuid())).findFirst().orElseThrow();
+        MatchSnapshotDTO.HeroSnapshotDTO enemyBattleDto = snap.getOpponentPlayer().getHeroes().stream()
+                .filter(h -> h.getUuid().equals(heroP2Battle.getUuid())).findFirst().orElseThrow();
+        assertEquals(2, allyBattleDto.getCounters().size());
+        assertEquals(2, enemyBattleDto.getCounters().size());
+    }
+
+    @Test
+    @DisplayName("8. Escopos diretos de fora de combate atingem apenas Heróis vivos na bancada (BENCH)")
+    void shouldAttachCountersDirectlyToOutOfCombatHeroesOnly() {
+        // Arrange
+        heroP1Bench.setZoneId(ZoneId.BENCH);
+        HeroCard heroP1BenchDead = createHero(player1.getUuid(), "Aliado Caído", 1, 2, 1, 0);
+        heroP1BenchDead.setZoneId(ZoneId.BENCH);
+        heroP1BenchDead.setEstaVivo(false);
+        player1.getCurrentDeck().getHeroList().add(heroP1BenchDead);
+
+        HeroCard heroP2Bench1 = createHero(player2.getUuid(), "Inimigo Banco 1", 1, 3, 2, 12);
+        heroP2Bench1.setZoneId(ZoneId.BENCH);
+        HeroCard heroP2Bench2 = createHero(player2.getUuid(), "Inimigo Banco 2", 2, 4, 1, 14);
+        heroP2Bench2.setZoneId(ZoneId.BENCH);
+        player2.getCurrentDeck().getHeroList().addAll(List.of(heroP2Bench1, heroP2Bench2));
+
+        Card benchAction = new Card();
+        benchAction.setUuid(UUID.randomUUID());
+        benchAction.setOwnerId(player1.getUuid());
+        benchAction.setCardName("Névoa de Retaguarda");
+        benchAction.setCardType(CardType.ACTION);
+        benchAction.setZoneId(ZoneId.RESOLVE);
+        benchAction.setEffects(new ArrayList<>(List.of(
+                new ModifyHeroCounterEffect(
+                        TurnPhase.RESOLUTION,
+                        ModifyHeroCounterEffect.CounterTargetScope.OUT_OF_COMBAT_ALLY_HEROES,
+                        CounterType.POEIRA,
+                        2
+                ),
+                new ModifyHeroCounterEffect(
+                        TurnPhase.RESOLUTION,
+                        ModifyHeroCounterEffect.CounterTargetScope.OUT_OF_COMBAT_ENEMY_HEROES,
+                        CounterType.VENENO,
+                        3
+                ),
+                new ModifyHeroCounterEffect(
+                        TurnPhase.RESOLUTION,
+                        ModifyHeroCounterEffect.CounterTargetScope.ALL_OUT_OF_COMBAT_HEROES,
+                        CounterType.COMBUSTAO,
+                        1
+                )
+        )));
+
+        engine.setTurnPhase(TurnPhase.RESOLUTION);
+
+        // Act
+        benchAction.onPhaseChange(TurnPhase.RESOLUTION, engine.getResolutionQueue());
+        engine.getResolutionQueue().resolveAll(engine);
+
+        // Assert: Heróis em combate não são afetados
+        assertEquals(0, heroP1Battle.getTotalCounters());
+        assertEquals(0, heroP2Battle.getTotalCounters());
+        assertEquals(0, heroP1BenchDead.getTotalCounters());
+
+        // Assert: Aliados vivos fora de combate recebem POEIRA + COMBUSTAO
+        assertEquals(2, engine.getCounterCount(heroP1Bench, CounterType.POEIRA));
+        assertEquals(1, engine.getCounterCount(heroP1Bench, CounterType.COMBUSTAO));
+        assertEquals(0, engine.getCounterCount(heroP1Bench, CounterType.VENENO));
+
+        // Assert: Inimigos vivos fora de combate recebem VENENO + COMBUSTAO
+        assertEquals(3, engine.getCounterCount(heroP2Bench1, CounterType.VENENO));
+        assertEquals(1, engine.getCounterCount(heroP2Bench1, CounterType.COMBUSTAO));
+        assertEquals(3, engine.getCounterCount(heroP2Bench2, CounterType.VENENO));
+        assertEquals(1, engine.getCounterCount(heroP2Bench2, CounterType.COMBUSTAO));
+    }
+
+    @Test
+    @DisplayName("9. Escolha interativa via PendingChoice anexa tokens em Herói fora de combate escolhido")
+    void shouldAllowInteractivePendingChoiceTargetingOutOfCombatHeroes() {
+        // Arrange
+        heroP1Bench.setZoneId(ZoneId.BENCH);
+        HeroCard heroP2Bench1 = createHero(player2.getUuid(), "Alvo Banco 1", 1, 3, 2, 12);
+        heroP2Bench1.setZoneId(ZoneId.BENCH);
+        HeroCard heroP2Bench2 = createHero(player2.getUuid(), "Alvo Banco 2", 2, 4, 1, 14);
+        heroP2Bench2.setZoneId(ZoneId.BENCH);
+        player2.getCurrentDeck().getHeroList().addAll(List.of(heroP2Bench1, heroP2Bench2));
+
+        Card targetedSpell = new Card();
+        targetedSpell.setUuid(UUID.randomUUID());
+        targetedSpell.setOwnerId(player1.getUuid());
+        targetedSpell.setCardName("Selo à Distância");
+        targetedSpell.setCardType(CardType.SPELL);
+        targetedSpell.setZoneId(ZoneId.RESOLVE);
+        targetedSpell.setEffects(new ArrayList<>(List.of(
+                new ModifyHeroCounterEffect(
+                        TurnPhase.RESOLUTION,
+                        ModifyHeroCounterEffect.CounterTargetScope.CHOOSE_OUT_OF_COMBAT_ENEMY_HERO,
+                        CounterType.POLVORA,
+                        4
+                )
+        )));
+
+        engine.setTurnPhase(TurnPhase.RESOLUTION);
+
+        // Act 1: Executa na fila até pausar aguardando escolha
+        targetedSpell.onPhaseChange(TurnPhase.RESOLUTION, engine.getResolutionQueue());
+        engine.getResolutionQueue().resolveAll(engine);
+
+        assertTrue(engine.isWaitingForPlayerChoice(), "Deve pausar esperando escolha do Herói fora de combate.");
+        MatchSnapshotDTO.PendingChoiceDTO pending = engine.getGameState().getPendingChoice();
+        assertEquals(player1.getUuid(), pending.getChoosingPlayerId());
+        assertEquals("ENEMY_HERO", pending.getTargetType());
+        assertEquals(2, pending.getValidTargetUuids().size());
+        assertFalse(pending.getValidTargetUuids().contains(heroP2Battle.getUuid()),
+                "Herói inimigo em combate não deve aparecer como alvo de CHOOSE_OUT_OF_COMBAT_ENEMY_HERO.");
+        assertTrue(pending.getValidTargetUuids().contains(heroP2Bench1.getUuid()));
+        assertTrue(pending.getValidTargetUuids().contains(heroP2Bench2.getUuid()));
+
+        // Act 2: Jogador escolhe heroP2Bench2
+        engine.submitPlayerChoice(player1.getUuid(), heroP2Bench2.getUuid());
+
+        // Assert
+        assertFalse(engine.isWaitingForPlayerChoice());
+        assertEquals(4, engine.getCounterCount(heroP2Bench2, CounterType.POLVORA));
+        assertEquals(0, engine.getCounterCount(heroP2Bench1, CounterType.POLVORA));
+        assertEquals(0, engine.getCounterCount(heroP2Battle, CounterType.POLVORA));
+    }
+
+    @Test
+    @DisplayName("10. Heróis fora de combate e cartas anexadas a eles disparam contadores quando canTriggerFromBench = true")
+    void shouldTriggerCounterEffectsFromBenchHeroesAndCardsAttachedToOutOfCombatHeroes() {
+        // Arrange: Herói aliado na BENCH com triggerFromBench = true aplica Poeira no aliado ativo e inimigo ativo
+        heroP1Bench.setZoneId(ZoneId.BENCH);
+        heroP1Bench.setEffects(new ArrayList<>(List.of(
+                new ModifyHeroCounterEffect(
+                        TurnPhase.COMBAT_START,
+                        ModifyHeroCounterEffect.CounterTargetScope.BOTH_ACTIVE_HEROES,
+                        CounterType.POEIRA,
+                        1,
+                        true
+                )
+        )));
+
+        // Carta anexada a um Herói inimigo fora de combate (BENCH) aplica Veneno no portador (SELF_OR_ATTACHED_HERO) no COMBAT_END
+        HeroCard heroP2Bench = createHero(player2.getUuid(), "Alvo Marcado", 2, 3, 2, 14);
+        heroP2Bench.setZoneId(ZoneId.BENCH);
+        player2.getCurrentDeck().getHeroList().add(heroP2Bench);
+
+        Card attachedCurse = new Card();
+        attachedCurse.setUuid(UUID.randomUUID());
+        attachedCurse.setOwnerId(player1.getUuid());
+        attachedCurse.setCardName("Parasita de Poeira");
+        attachedCurse.setCardType(CardType.ITEM);
+        attachedCurse.setZoneId(ZoneId.ATTACHED);
+        attachedCurse.setAttachedToCardId(heroP2Bench.getUuid());
+        attachedCurse.setEffects(new ArrayList<>(List.of(
+                new ModifyHeroCounterEffect(
+                        TurnPhase.COMBAT_END,
+                        ModifyHeroCounterEffect.CounterTargetScope.SELF_OR_ATTACHED_HERO,
+                        CounterType.VENENO,
+                        2,
+                        true
+                )
+        )));
+        player1.getCurrentDeck().getCardList().add(attachedCurse);
+
+        // Act: Executa cadeia completa de combate (PREPARATION -> COMBAT_START -> RESOLUTION -> COMBAT -> COMBAT_END -> DISCARD)
+        engine.submitPreparationCards(player1.getUuid(), List.of());
+        engine.submitPreparationCards(player2.getUuid(), List.of());
+
+        // Assert
+        assertEquals(1, engine.getCounterCount(heroP1Battle, CounterType.POEIRA),
+                "Herói aliado no banco com triggerFromBench deve aplicar contador no aliado ativo em COMBAT_START.");
+        assertEquals(1, engine.getCounterCount(heroP2Battle, CounterType.POEIRA),
+                "Herói aliado no banco com triggerFromBench deve aplicar contador no inimigo ativo em COMBAT_START.");
+        assertEquals(2, engine.getCounterCount(heroP2Bench, CounterType.VENENO),
+                "Carta anexada a Herói inimigo fora de combate deve disparar no COMBAT_END.");
+    }
+
+    @Test
+    @DisplayName("11. Sistema de tokens executa em todas as etapas do turno (GAME_START, CHOICE, PREPARATION, COMBAT_START, RESOLUTION, COMBAT, COMBAT_END e DISCARD)")
+    void shouldTriggerCountersAcrossAllTurnPhasesIncludingChoicePreparationCombatAndDiscardWithoutDoubleFiring() {
+        // Arrange: Novo motor com partida completa iniciando em startGame()
+        Player p1 = new Player();
+        p1.setUuid(UUID.randomUUID());
+        p1.setName("P1 Completo");
+        Player p2 = new Player();
+        p2.setUuid(UUID.randomUUID());
+        p2.setName("P2 Completo");
+
+        HeroCard p1Main = createHero(p1.getUuid(), "Mestre de Turnos", 3, 4, 2, 20);
+        HeroCard p1Bench = createHero(p1.getUuid(), "Suporte de Banco", 2, 3, 2, 16);
+        HeroCard p2Main = createHero(p2.getUuid(), "Oponente Principal", 2, 3, 2, 20);
+        HeroCard p2Bench = createHero(p2.getUuid(), "Oponente Banco", 1, 2, 2, 16);
+
+        // Efeitos em TODAS as 8 etapas ativas do TurnPhase:
+        p1Main.setEffects(new ArrayList<>(List.of(
+                // 1. GAME_START: P1 escolhe um Herói inimigo para receber +1 POEIRA (pausa startGame até escolha)
+                new ModifyHeroCounterEffect(
+                        TurnPhase.GAME_START,
+                        ModifyHeroCounterEffect.CounterTargetScope.CHOOSE_ENEMY_HERO,
+                        CounterType.POEIRA,
+                        1,
+                        true
+                ),
+                // 2. CHOICE: todos os Heróis vivos recebem +1 POEIRA ao entrar na escolha
+                new ModifyHeroCounterEffect(
+                        TurnPhase.CHOICE,
+                        ModifyHeroCounterEffect.CounterTargetScope.ALL_LIVING_HEROES,
+                        CounterType.POEIRA,
+                        1,
+                        true
+                ),
+                // 3. PREPARATION: ambos os Heróis em combate recebem +1 POLVORA
+                new ModifyHeroCounterEffect(
+                        TurnPhase.PREPARATION,
+                        ModifyHeroCounterEffect.CounterTargetScope.BOTH_ACTIVE_HEROES,
+                        CounterType.POLVORA,
+                        1
+                ),
+                // 4. COMBAT_START: Herói inimigo ativo recebe +1 COMBUSTAO
+                new ModifyHeroCounterEffect(
+                        TurnPhase.COMBAT_START,
+                        ModifyHeroCounterEffect.CounterTargetScope.ACTIVE_ENEMY_HERO,
+                        CounterType.COMBUSTAO,
+                        1
+                ),
+                // 6. COMBAT: Herói inimigo fora de combate (escolhido via PendingChoice) recebe +2 VENENO
+                new ModifyHeroCounterEffect(
+                        TurnPhase.COMBAT,
+                        ModifyHeroCounterEffect.CounterTargetScope.CHOOSE_OUT_OF_COMBAT_ENEMY_HERO,
+                        CounterType.VENENO,
+                        2
+                ),
+                // 7. COMBAT_END: Heróis aliados fora de combate recebem +1 COMBUSTAO
+                new ModifyHeroCounterEffect(
+                        TurnPhase.COMBAT_END,
+                        ModifyHeroCounterEffect.CounterTargetScope.OUT_OF_COMBAT_ALLY_HEROES,
+                        CounterType.COMBUSTAO,
+                        1
+                ),
+                // 8. DISCARD: todos os aliados vivos recebem +1 VENENO (deve disparar exatamente 1x por fase DISCARD!)
+                new ModifyHeroCounterEffect(
+                        TurnPhase.DISCARD,
+                        ModifyHeroCounterEffect.CounterTargetScope.ALL_ALLY_HEROES,
+                        CounterType.VENENO,
+                        1,
+                        true
+                )
+        )));
+
+        // 5. RESOLUTION: carta jogada adiciona +2 POLVORA em p1Bench (fora de combate)
+        Card resolutionCard = new Card();
+        resolutionCard.setUuid(UUID.randomUUID());
+        resolutionCard.setOwnerId(p1.getUuid());
+        resolutionCard.setCardName("Carga de Bancada");
+        resolutionCard.setCardType(CardType.ACTION);
+        resolutionCard.setColor(Colors.NEUTRAL);
+        resolutionCard.setZoneId(ZoneId.DECK);
+        resolutionCard.setEffects(new ArrayList<>(List.of(
+                new ModifyHeroCounterEffect(
+                        TurnPhase.RESOLUTION,
+                        ModifyHeroCounterEffect.CounterTargetScope.OUT_OF_COMBAT_ALLY_HEROES,
+                        CounterType.POLVORA,
+                        2
+                )
+        )));
+
+        List<Card> p1Cards = new ArrayList<>();
+        p1Cards.add(resolutionCard);
+        for (int i = 0; i < 6; i++) {
+            Card filler = new Card();
+            filler.setUuid(UUID.randomUUID());
+            filler.setOwnerId(p1.getUuid());
+            filler.setCardName("Ação Neutra P1 " + i);
+            filler.setCardType(CardType.ACTION);
+            filler.setColor(Colors.NEUTRAL);
+            filler.setZoneId(ZoneId.DECK);
+            p1Cards.add(filler);
+        }
+
+        List<Card> p2Cards = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            Card filler = new Card();
+            filler.setUuid(UUID.randomUUID());
+            filler.setOwnerId(p2.getUuid());
+            filler.setCardName("Ação Neutra P2 " + i);
+            filler.setCardType(CardType.ACTION);
+            filler.setColor(Colors.NEUTRAL);
+            filler.setZoneId(ZoneId.DECK);
+            p2Cards.add(filler);
+        }
+
+        p1.setCurrentDeck(new Deck("D1", p1Cards, new ArrayList<>(List.of(p1Main, p1Bench))));
+        p2.setCurrentDeck(new Deck("D2", p2Cards, new ArrayList<>(List.of(p2Main, p2Bench))));
+
+        GameEngine fullEngine = new GameEngine(p1, p2);
+
+        // Act 1: startGame pausa em GAME_START aguardando escolha de CHOOSE_ENEMY_HERO
+        fullEngine.startGame();
+        assertEquals(TurnPhase.GAME_START, fullEngine.getTurnPhase());
+        assertTrue(fullEngine.isWaitingForPlayerChoice());
+
+        // Completa escolha de GAME_START -> deve finalizar GAME_START, entrar em CHOICE e disparar TurnPhase.CHOICE
+        fullEngine.submitPlayerChoice(p1.getUuid(), p2Main.getUuid());
+        assertEquals(TurnPhase.CHOICE, fullEngine.getTurnPhase());
+        assertEquals(2, fullEngine.getCounterCount(p2Main, CounterType.POEIRA), "GAME_START (+1) + CHOICE (+1) = 2 POEIRA em p2Main.");
+        assertEquals(1, fullEngine.getCounterCount(p1Main, CounterType.POEIRA), "CHOICE (+1 POEIRA).");
+        assertEquals(1, fullEngine.getCounterCount(p1Bench, CounterType.POEIRA), "CHOICE (+1 POEIRA).");
+        assertEquals(1, fullEngine.getCounterCount(p2Bench, CounterType.POEIRA), "CHOICE (+1 POEIRA).");
+
+        // Act 2: Força iniciativa de P1 para escolher os Heróis e entrar em PREPARATION
+        fullEngine.setActivePlayerId(p1.getUuid());
+        fullEngine.getGameState().setActiveTurnPlayerId(p1.getUuid());
+        fullEngine.submitHeroChoice(p1.getUuid(), p1Main.getUuid(), p2Main.getUuid());
+
+        assertEquals(TurnPhase.PREPARATION, fullEngine.getTurnPhase());
+        assertEquals(1, fullEngine.getCounterCount(p1Main, CounterType.POLVORA), "PREPARATION (+1 POLVORA em p1Main).");
+        assertEquals(1, fullEngine.getCounterCount(p2Main, CounterType.POLVORA), "PREPARATION (+1 POLVORA em p2Main).");
+
+        // Garante que resolutionCard está na mão de P1 para ser jogada
+        resolutionCard.setZoneId(ZoneId.HAND);
+
+        // Act 3: Ambos confirmam preparação -> roda COMBAT_START, RESOLUTION e pausa em COMBAT para escolher inimigo fora de combate!
+        fullEngine.submitPreparationCards(p1.getUuid(), List.of(resolutionCard.getUuid()));
+        fullEngine.submitPreparationCards(p2.getUuid(), List.of());
+
+        assertEquals(TurnPhase.COMBAT, fullEngine.getTurnPhase(), "Deve pausar em COMBAT aguardando PendingChoice da etapa COMBAT.");
+        assertTrue(fullEngine.isWaitingForPlayerChoice());
+        assertEquals(1, fullEngine.getCounterCount(p2Main, CounterType.COMBUSTAO), "COMBAT_START (+1 COMBUSTAO em p2Main).");
+        assertEquals(2, fullEngine.getCounterCount(p1Bench, CounterType.POLVORA), "RESOLUTION (+2 POLVORA em p1Bench fora de combate).");
+
+        // Troca física em COMBAT deve ter ocorrido exatamente uma vez:
+        // p1Main (4 ATK) vs p2Main (2 DEF) -> 2 dano em p2Main (20 -> 18)
+        // p2Main (3 ATK) vs p1Main (2 DEF) -> 1 dano em p1Main (20 -> 19)
+        assertEquals(18, p2Main.getVidaAtual());
+        assertEquals(19, p1Main.getVidaAtual());
+
+        // Act 4: Jogador resolve escolha da etapa COMBAT (escolhe p2Bench) -> retoma COMBAT (sem repetir dano físico!), executa COMBAT_END e entra em DISCARD!
+        fullEngine.submitPlayerChoice(p1.getUuid(), p2Bench.getUuid());
+
+        assertEquals(TurnPhase.DISCARD, fullEngine.getTurnPhase());
+        assertEquals(18, p2Main.getVidaAtual(), "Troca física de COMBAT não pode ser repetida após retomar PendingChoice.");
+        assertEquals(19, p1Main.getVidaAtual(), "Troca física de COMBAT não pode ser repetida após retomar PendingChoice.");
+        assertEquals(2, fullEngine.getCounterCount(p2Bench, CounterType.VENENO), "COMBAT (+2 VENENO em p2Bench).");
+        assertEquals(1, fullEngine.getCounterCount(p1Bench, CounterType.COMBUSTAO), "COMBAT_END (+1 COMBUSTAO em p1Bench).");
+        assertEquals(1, fullEngine.getCounterCount(p1Main, CounterType.VENENO), "DISCARD deve aplicar +1 VENENO exatamente uma vez ao entrar na fase.");
+        assertEquals(1, fullEngine.getCounterCount(p1Bench, CounterType.VENENO), "DISCARD deve aplicar +1 VENENO exatamente uma vez em p1Bench.");
+
+        // Act 5: Ambos confirmam DISCARD -> não deve duplicar o efeito de entrada da fase DISCARD e deve avançar para novo Turno (CHOICE)
+        fullEngine.submitDiscard(p1.getUuid(), List.of());
+        assertEquals(1, fullEngine.getCounterCount(p1Main, CounterType.VENENO), "Confirmar DISCARD (P1) não deve duplicar o gatilho de TurnPhase.DISCARD.");
+
+        fullEngine.submitDiscard(p2.getUuid(), List.of());
+        assertEquals(TurnPhase.CHOICE, fullEngine.getTurnPhase(), "Após ambos confirmarem DISCARD, inicia novo turno em CHOICE.");
+        assertEquals(1, fullEngine.getCounterCount(p1Main, CounterType.VENENO), "Confirmar DISCARD (P2) não deve duplicar o gatilho de TurnPhase.DISCARD.");
+        // Novo Turno CHOICE disparou novamente (+1 POEIRA): p1Main passou de 1 -> 2
+        assertEquals(2, fullEngine.getCounterCount(p1Main, CounterType.POEIRA), "Entrada no Turno 2 (CHOICE) deve disparar efeito de CHOICE novamente.");
+    }
 }

@@ -1956,6 +1956,7 @@ export default class MatchScene extends Phaser.Scene {
             const cardMode = useCompactGrid ? 'COMPACT' : 'MEDIUM';
             const cardDim = useCompactGrid ? BOARD_LAYOUT.COMPACT_CARD : BOARD_LAYOUT.MEDIUM_CARD;
 
+            const oppHeroUuids = new Set((opponentPlayer.heroes || []).map(h => h?.uuid).filter(Boolean));
             matchingTargets.forEach((itemDto, index) => {
                 const col = index % cols;
                 const row = Math.floor(index / cols);
@@ -1963,8 +1964,9 @@ export default class MatchScene extends Phaser.Scene {
                 const y = startY + row * rowSpacing;
 
                 const isHero = itemDto.vidaMaxima !== undefined;
+                const isOppHero = isHero && oppHeroUuids.has(itemDto.uuid);
                 const cardView = isHero
-                    ? new HeroCardPrefab(this, x, y, itemDto, false)
+                    ? new HeroCardPrefab(this, x, y, itemDto, isOppHero)
                     : new PlayableCardPrefab(this, x, y, { ...itemDto, faceUp: true }, false, cardMode, 0);
 
                 if (isHero && useCompactGrid) {
@@ -2424,6 +2426,7 @@ export default class MatchScene extends Phaser.Scene {
         const prepCount = this.selectionManager.playedCardSlotMap.size;
 
         const labels = {
+            GAME_START: 'INÍCIO DA PARTIDA...',
             CHOICE: isMyInitiative ? 'CONFIRMAR HERÓIS' : 'OPONENTE ESCOLHENDO...',
             PREPARATION: prepCount === 0
                 ? 'PASSAR PREPARAÇÃO (0/2)'
@@ -2438,7 +2441,7 @@ export default class MatchScene extends Phaser.Scene {
             GAME_OVER: 'FIM DE JOGO!'
         };
 
-        const isAutomaticPhase = ['COMBAT_START', 'RESOLUTION', 'COMBAT', 'COMBAT_END', 'GAME_OVER'].includes(phase);
+        const isAutomaticPhase = ['GAME_START', 'COMBAT_START', 'RESOLUTION', 'COMBAT', 'COMBAT_END', 'GAME_OVER'].includes(phase);
         const canClick = !isAutomaticPhase && this.selectionManager.canConfirmAction(phase, isMyInitiative);
 
         this.mainButtonLabel.setText(labels[phase] || 'EM COMBATE');
@@ -2623,7 +2626,7 @@ export default class MatchScene extends Phaser.Scene {
             this.currentSnapshot.pendingChoice &&
             String(this.currentSnapshot.pendingChoice.choosingPlayerId) !== String(this.localPlayerId)
         );
-        const isAutomaticPhase = ['COMBAT_START', 'RESOLUTION', 'COMBAT', 'COMBAT_END'].includes(phase);
+        const isAutomaticPhase = ['GAME_START', 'COMBAT_START', 'RESOLUTION', 'COMBAT', 'COMBAT_END'].includes(phase);
 
         const shouldPoll =
             force ||
