@@ -6,6 +6,7 @@ export const BOARD_LAYOUT = {
     COMPACT_CARD: { width: 121, height: 156 }, // Carta parada na mão (só imagem + título)
     MEDIUM_CARD:  { width: 150, height: 200 }, // Heróis no banco + Carta da mão em Hover Rápido (com texto)
     LARGE_CARD:   { width: 308, height: 418 }, // Carta em Hover Longo (surge sobre o Botão Principal)
+    COUNTER_CARD: { width: 38,  height: 44  }, // Mini-carta de contador alocada sob o Herói
 
     COLORS: {
         BG_DARK: 0x181c24,          // Cinza-azulado médio-escuro (em vez de preto absoluto)

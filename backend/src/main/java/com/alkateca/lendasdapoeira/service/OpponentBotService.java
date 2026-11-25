@@ -30,6 +30,18 @@ public class OpponentBotService {
         Player humanPlayer = engine.getPlayer1();
         UUID botId = botPlayer.getUuid();
 
+        if (engine.isWaitingForPlayerChoice()) {
+            var pending = engine.getGameState().getPendingChoice();
+            if (pending != null && botId.equals(pending.getChoosingPlayerId())) {
+                List<UUID> validTargets = pending.getValidTargetUuids();
+                UUID chosenTarget = (validTargets != null && !validTargets.isEmpty())
+                        ? validTargets.get(0)
+                        : null;
+                engine.submitPlayerChoice(botId, chosenTarget);
+            }
+            return;
+        }
+
         // 1. Se estiver na fase CHOICE e a iniciativa for do Bot, ele escolhe os Heróis e avança para PREPARATION
         if (engine.getTurnPhase() == TurnPhase.CHOICE
                 && botId.equals(engine.getGameState().getActiveTurnPlayerId())) {

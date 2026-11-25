@@ -2,12 +2,14 @@ import Phaser from 'phaser';
 import { BOARD_LAYOUT, getCardVisualTheme } from '../config/BoardCoordinates.js';
 import HeroCardPrefab from '../prefabs/HeroCardPrefab.js';
 import PlayableCardPrefab from '../prefabs/PlayableCardPrefab.js';
+import CounterCardPrefab from '../prefabs/CounterCardPrefab.js';
 import SnapshotPlayerManager from '../managers/SnapshotPlayerManager.js';
 import SelectionManager from '../managers/SelectionManager.js';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 import PhantomUIKit from '../ui/PhantomUIKit.js';
 import MatchRecapSidebar from '../ui/MatchRecapSidebar.js';
 import { formatCardDescriptionWithKeywords } from '../config/keywordsConfig.js';
+import { normalizeCountersList, computeCounterLayoutPositions } from '../config/counterConfig.js';
 import { API_BASE_URL } from '../config/apiConfig.js';
 
 export default class MatchScene extends Phaser.Scene {
@@ -861,6 +863,7 @@ export default class MatchScene extends Phaser.Scene {
         });
 
         this.largePreviewContainer = this.add.container(x, y).setDepth(190).setVisible(false);
+        this.lpCountersLayer = this.add.container(0, 0);
 
         // Container dedicado para exibir as cartas anexadas lado a lado à direita do Herói no hover
         this.attachedPreviewContainer = this.add.container(0, 0).setDepth(191).setVisible(false);
@@ -974,6 +977,7 @@ export default class MatchScene extends Phaser.Scene {
         this.lpPhaseNodes.forEach(n => lpPhaseElements.push(n.bg, n.txt));
 
         this.largePreviewContainer.add([
+            this.lpCountersLayer,
             this.lpShadow,
             this.lpArtBox,
             this.lpArtLabel,
@@ -1243,6 +1247,19 @@ export default class MatchScene extends Phaser.Scene {
             this.lpArtLabel.setVisible(true);
         }
 
+        if (this.lpCountersLayer) {
+            this.lpCountersLayer.removeAll(true);
+            const activeCounters = normalizeCountersList(cardOrHeroDto);
+            if (activeCounters.length > 0) {
+                const positions = computeCounterLayoutPositions(activeCounters.length, width, height);
+                activeCounters.forEach((counterItem, idx) => {
+                    const pt = positions[idx];
+                    const node = new CounterCardPrefab(this, pt.x, pt.y, counterItem, pt.scale);
+                    this.lpCountersLayer.add(node);
+                });
+            }
+        }
+
         this.largePreviewContainer.setVisible(true);
         this.tweens.killTweensOf(this.largePreviewContainer);
 
@@ -1343,6 +1360,9 @@ export default class MatchScene extends Phaser.Scene {
         this.hoveredPreviewState = null;
         if (this.largePreviewContainer) {
             this.largePreviewContainer.setVisible(false);
+        }
+        if (this.lpCountersLayer) {
+            this.lpCountersLayer.removeAll(true);
         }
         if (this.attachedPreviewContainer) {
             this.attachedPreviewContainer.removeAll(true);
@@ -1716,7 +1736,7 @@ export default class MatchScene extends Phaser.Scene {
             this.handleCardLiberatedEvent(snapshot.triggerContext);
         } else if (eventType === 'HERO_EVOLVED') {
             this.handleHeroEvolvedEvent(snapshot.triggerContext);
-        } else if (eventType === 'EFFECT_RESOLVED' && snapshot.triggerContext?.sourceCardUuid) {
+        } else if ((eventType === 'EFFECT_RESOLVED' || eventType === 'COUNTER_UPDATED') && snapshot.triggerContext?.sourceCardUuid) {
             this.highlightSourceCard(snapshot.triggerContext.sourceCardUuid);
         }
 
@@ -1936,6 +1956,7 @@ export default class MatchScene extends Phaser.Scene {
             const cardMode = useCompactGrid ? 'COMPACT' : 'MEDIUM';
             const cardDim = useCompactGrid ? BOARD_LAYOUT.COMPACT_CARD : BOARD_LAYOUT.MEDIUM_CARD;
 
+            const oppHeroUuids = new Set((opponentPlayer.heroes || []).map(h => h?.uuid).filter(Boolean));
             matchingTargets.forEach((itemDto, index) => {
                 const col = index % cols;
                 const row = Math.floor(index / cols);
@@ -1943,8 +1964,9 @@ export default class MatchScene extends Phaser.Scene {
                 const y = startY + row * rowSpacing;
 
                 const isHero = itemDto.vidaMaxima !== undefined;
+                const isOppHero = isHero && oppHeroUuids.has(itemDto.uuid);
                 const cardView = isHero
-                    ? new HeroCardPrefab(this, x, y, itemDto, false)
+                    ? new HeroCardPrefab(this, x, y, itemDto, isOppHero)
                     : new PlayableCardPrefab(this, x, y, { ...itemDto, faceUp: true }, false, cardMode, 0);
 
                 if (isHero && useCompactGrid) {
@@ -2404,6 +2426,7 @@ export default class MatchScene extends Phaser.Scene {
         const prepCount = this.selectionManager.playedCardSlotMap.size;
 
         const labels = {
+            GAME_START: 'INÍCIO DA PARTIDA...',
             CHOICE: isMyInitiative ? 'CONFIRMAR HERÓIS' : 'OPONENTE ESCOLHENDO...',
             PREPARATION: prepCount === 0
                 ? 'PASSAR PREPARAÇÃO (0/2)'
@@ -2418,7 +2441,7 @@ export default class MatchScene extends Phaser.Scene {
             GAME_OVER: 'FIM DE JOGO!'
         };
 
-        const isAutomaticPhase = ['COMBAT_START', 'RESOLUTION', 'COMBAT', 'COMBAT_END', 'GAME_OVER'].includes(phase);
+        const isAutomaticPhase = ['GAME_START', 'COMBAT_START', 'RESOLUTION', 'COMBAT', 'COMBAT_END', 'GAME_OVER'].includes(phase);
         const canClick = !isAutomaticPhase && this.selectionManager.canConfirmAction(phase, isMyInitiative);
 
         this.mainButtonLabel.setText(labels[phase] || 'EM COMBATE');
@@ -2603,7 +2626,7 @@ export default class MatchScene extends Phaser.Scene {
             this.currentSnapshot.pendingChoice &&
             String(this.currentSnapshot.pendingChoice.choosingPlayerId) !== String(this.localPlayerId)
         );
-        const isAutomaticPhase = ['COMBAT_START', 'RESOLUTION', 'COMBAT', 'COMBAT_END'].includes(phase);
+        const isAutomaticPhase = ['GAME_START', 'COMBAT_START', 'RESOLUTION', 'COMBAT', 'COMBAT_END'].includes(phase);
 
         const shouldPoll =
             force ||

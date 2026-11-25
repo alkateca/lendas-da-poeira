@@ -2,6 +2,7 @@ package com.alkateca.lendasdapoeira.engine;
 
 import com.alkateca.lendasdapoeira.entity.Card;
 import com.alkateca.lendasdapoeira.entity.HeroCard;
+import com.alkateca.lendasdapoeira.enums.CounterType;
 import com.alkateca.lendasdapoeira.enums.ItemType;
 
 import java.text.Normalizer;
@@ -11,6 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class KeywordExtractor {
 
@@ -67,6 +69,12 @@ public class KeywordExtractor {
             if (hero.getVulnerabilidade() > 0) result.add("VULNERABILIDADE");
         }
 
+        for (CounterType counterType : CounterType.values()) {
+            if (card.hasCounter(counterType)) {
+                result.add(counterType.name());
+            }
+        }
+
         String rawDesc = card.getDescricao();
         if (rawDesc != null && !rawDesc.isBlank()) {
             String normalized = normalize(rawDesc);
@@ -79,9 +87,21 @@ public class KeywordExtractor {
                     }
                 }
             }
+            for (CounterType counterType : CounterType.values()) {
+                String normalizedLabel = normalize(counterType.getDisplayName());
+                if (!normalizedLabel.isBlank() && containsWholeWord(normalized, normalizedLabel)) {
+                    result.add(counterType.name());
+                }
+            }
         }
 
         return new ArrayList<>(result);
+    }
+
+    private static boolean containsWholeWord(String normalizedText, String normalizedWord) {
+        return Pattern.compile("\\b" + Pattern.quote(normalizedWord) + "\\b")
+                .matcher(normalizedText)
+                .find();
     }
 
     private static String normalize(String input) {

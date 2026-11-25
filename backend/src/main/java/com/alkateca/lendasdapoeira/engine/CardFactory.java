@@ -17,10 +17,12 @@ import java.util.Arrays;
 
 import com.alkateca.lendasdapoeira.enums.CardType;
 import com.alkateca.lendasdapoeira.enums.Classe;
+import com.alkateca.lendasdapoeira.enums.CounterType;
 import com.alkateca.lendasdapoeira.enums.ItemType;
 import com.alkateca.lendasdapoeira.entity.Card;
 import com.alkateca.lendasdapoeira.enums.Ordem;
 import com.alkateca.lendasdapoeira.enums.Raca;
+import com.alkateca.lendasdapoeira.enums.TurnPhase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -557,6 +559,14 @@ public class CardFactory {
             case "Campo de Força de Cristal":
                 effects.add(new EquipGlobalBuffEffect(1, 0, 2));
                 effects.add(new StartOfCombatAlliesBuffAttackEffect(1));
+                break;
+            case "Resíduo Incendiário":
+                effects.add(new ModifyHeroCounterEffect(
+                        TurnPhase.RESOLUTION,
+                        ModifyHeroCounterEffect.CounterTargetScope.ACTIVE_ENEMY_HERO,
+                        CounterType.COMBUSTAO,
+                        5
+                ));
                 break;
 
             // ==========================================

@@ -72,6 +72,12 @@ public class MatchSnapshotDTO {
         private Integer missionTarget;
         private String previousHeroName;
         private String evolvedHeroName;
+
+        // Metadados de alteração de contadores em cartas
+        private String counterType;
+        private String counterDisplayName;
+        private Integer counterDelta;
+        private Integer counterQuantity;
     }
 
     @Data
@@ -119,6 +125,19 @@ public class MatchSnapshotDTO {
         private boolean evolved;
         private List<String> keywords = new ArrayList<>();
         private List<CardSnapshotDTO> attachedCards = new ArrayList<>();
+        private List<CardCounterDTO> counters = new ArrayList<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CardCounterDTO {
+        private String counterType;
+        private String displayName;
+        private String iconKey;
+        private String accentColor;
+        private String description;
+        private int quantity;
     }
 
     @Data
@@ -150,6 +169,7 @@ public class MatchSnapshotDTO {
         private int bonusAtaque;
         private int bonusDefesa;
         private List<String> activePhaseKeys = new ArrayList<>();
+        private List<CardCounterDTO> counters = new ArrayList<>();
     }
 
     public static CardSnapshotDTO toCardDTO(com.alkateca.lendasdapoeira.entity.Card card) {

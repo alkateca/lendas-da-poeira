@@ -4,6 +4,7 @@ import {
     resolveCardKeywords,
     searchGlossaryKeywords
 } from '../config/keywordsConfig.js';
+import { normalizeCountersList, formatCounterQuantity } from '../config/counterConfig.js';
 
 export default class PhantomUIKit {
     /**
@@ -187,8 +188,11 @@ export default class PhantomUIKit {
      */
     static createKeywordTooltipsContainer(scene, cardDto, x, y) {
         const keywords = resolveCardKeywords(cardDto);
+        const activeCounters = normalizeCountersList(cardDto);
+        const activeCountersByType = new Map(activeCounters.map(c => [c.counterType, c]));
+        const renderedCounterTypes = new Set();
         const root = scene.add.container(x, y).setDepth(260);
-        if (keywords.length === 0) return root;
+        if (keywords.length === 0 && activeCounters.length === 0) return root;
 
         const boxW = 250;
         const gapY = 8;
@@ -196,6 +200,11 @@ export default class PhantomUIKit {
 
         keywords.slice(0, 4).forEach((kw) => {
             const accentInt = Phaser.Display.Color.HexStringToColor(kw.badgeColor).color;
+            const matchingCounter = activeCountersByType.get(kw.id);
+            if (matchingCounter) renderedCounterTypes.add(kw.id);
+            const titleLabel = matchingCounter
+                ? `${kw.label.toUpperCase()} (${formatCounterQuantity(matchingCounter.quantity)})`
+                : kw.label.toUpperCase();
 
             const descObj = scene.add.text(-boxW / 2 + 12, 0, kw.description, {
                 fontFamily: 'IoskeleyMono, monospace',
@@ -213,7 +222,7 @@ export default class PhantomUIKit {
                 .setStrokeStyle(2, 0xf8fafc);
             const sideBar = scene.add.rectangle(-boxW / 2 + 3, 0, 6, boxH, accentInt, 1);
 
-            const title = scene.add.text(-boxW / 2 + 14, -boxH / 2 + 8, kw.label.toUpperCase(), {
+            const title = scene.add.text(-boxW / 2 + 14, -boxH / 2 + 8, titleLabel, {
                 fontFamily: 'IoskeleyMono, monospace',
                 fontSize: '12.5px',
                 color: kw.badgeColor,
@@ -221,6 +230,54 @@ export default class PhantomUIKit {
             }).setResolution(2);
 
             const catTag = scene.add.text(boxW / 2 - 10, -boxH / 2 + 9, kw.category, {
+                fontFamily: 'IoskeleyMono, monospace',
+                fontSize: '9px',
+                color: '#94a3b8',
+                fontStyle: 'bold'
+            }).setOrigin(1, 0).setResolution(2);
+
+            descObj.setPosition(-boxW / 2 + 14, -boxH / 2 + 28);
+
+            itemContainer.add([shadow, bg, sideBar, title, catTag, descObj]);
+            root.add(itemContainer);
+
+            currentY += boxH + gapY;
+        });
+
+        activeCounters
+            .filter(cnt => !renderedCounterTypes.has(cnt.counterType))
+            .slice(0, 4)
+            .forEach((cnt) => {
+            const accentInt = Phaser.Display.Color.HexStringToColor(cnt.accentColor || '#38bdf8').color;
+            const descObj = scene.add.text(-boxW / 2 + 12, 0, cnt.description, {
+                fontFamily: 'IoskeleyMono, monospace',
+                fontSize: '11px',
+                color: '#e2e8f0',
+                wordWrap: { width: boxW - 24 },
+                lineSpacing: 2
+            }).setResolution(2);
+
+            const boxH = Math.max(62, descObj.height + 36);
+            const itemContainer = scene.add.container(0, currentY + boxH / 2);
+
+            const shadow = scene.add.rectangle(5, 5, boxW, boxH, accentInt, 0.85);
+            const bg = scene.add.rectangle(0, 0, boxW, boxH, 0x07090e, 0.96)
+                .setStrokeStyle(2, 0xf8fafc);
+            const sideBar = scene.add.rectangle(-boxW / 2 + 3, 0, 6, boxH, accentInt, 1);
+
+            const title = scene.add.text(
+                -boxW / 2 + 14,
+                -boxH / 2 + 8,
+                `${cnt.displayName.toUpperCase()} (${formatCounterQuantity(cnt.quantity)})`,
+                {
+                    fontFamily: 'IoskeleyMono, monospace',
+                    fontSize: '12.5px',
+                    color: cnt.accentColor || '#38bdf8',
+                    fontStyle: 'bold'
+                }
+            ).setResolution(2);
+
+            const catTag = scene.add.text(boxW / 2 - 10, -boxH / 2 + 9, 'CONTADOR', {
                 fontFamily: 'IoskeleyMono, monospace',
                 fontSize: '9px',
                 color: '#94a3b8',

@@ -1,5 +1,6 @@
 package com.alkateca.lendasdapoeira.DTO;
 
+import com.alkateca.lendasdapoeira.engine.MatchSnapshotDTO;
 import lombok.Data;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,4 +38,5 @@ public class CardDTO {
     private String description;
     private Boolean active;
     private List<String> keywords = new ArrayList<>();
+    private List<MatchSnapshotDTO.CardCounterDTO> counters = new ArrayList<>();
 }

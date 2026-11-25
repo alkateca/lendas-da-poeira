@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import { BOARD_LAYOUT, getCardVisualTheme } from '../config/BoardCoordinates.js';
 import PlayableCardPrefab from './PlayableCardPrefab.js';
+import CounterCardPrefab from './CounterCardPrefab.js';
 import { resolveCardKeywords, formatCardDescriptionWithKeywords } from '../config/keywordsConfig.js';
+import { normalizeCountersList, computeCounterLayoutPositions, resolveCounterVisualMeta } from '../config/counterConfig.js';
 
 export default class HeroCardPrefab extends Phaser.GameObjects.Container {
     constructor(scene, x, y, heroDto, isOpponent) {
@@ -118,7 +120,12 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.traitsText.setVisible(false);
         this.descText.setVisible(false);
 
-        // 6. Camadas de Cartas Anexadas (Traseira em repouso / Frontal em Hover)
+        // 6. Camadas de Cartas Anexadas e Contadores (Traseira em repouso / Frontal em Hover)
+        this.counterBackLayer = scene.add.container(0, 0);
+        this.counterCardNodes = [];
+        this.knownCountersByType = new Map();
+        this.hasInitializedCounters = false;
+
         this.attachedBackLayer = scene.add.container(0, 0);
         this.attachedFrontLayer = scene.add.container(0, 0);
         this.attachedCardNodes = [];
@@ -156,6 +163,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.deadOverlayText = scene.add.text(0, -height * 0.12, '💀', { fontSize: '30px' }).setOrigin(0.5).setVisible(false);
 
         this.add([
+            this.counterBackLayer,  // Mini-cartas de contadores sob a base/caixa de regras do Herói
             this.attachedBackLayer, // Fica ATRÁS do Herói em repouso
             this.shadow,
             this.bg,
@@ -420,9 +428,20 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.modVulnText.setText(`${vuln}`);
 
         this.syncAttachedCardsVisuals(newHeroDto.attachedCards || []);
+        const counterDeltas = this.syncCountersVisuals(newHeroDto.counters || []);
 
         const diffs = [];
         const vfxToTrigger = new Set();
+
+        counterDeltas.forEach((deltaInfo) => {
+            if (deltaInfo.delta !== 0) {
+                const sign = deltaInfo.delta > 0 ? '+' : '';
+                diffs.push({
+                    text: `${sign}${deltaInfo.delta} ${deltaInfo.displayName.toUpperCase()}`,
+                    color: deltaInfo.accentColor || '#facc15'
+                });
+            }
+        });
 
         const triggerCtx = this.scene.currentSnapshot?.triggerContext || {};
         const eventType = triggerCtx.eventType || '';
@@ -609,6 +628,73 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         }
 
         this.knownAttachedUuids = currentUuids;
+    }
+
+    /**
+     * Renderiza as mini-cartas de contadores (imagem + x(número)) alocadas sob a carta do Herói,
+     * próximas à caixa de regras inferior, tanto no Banco (BENCH) quanto na Área Ativa (BATTLE).
+     */
+    syncCountersVisuals(counters = []) {
+        if (!this.counterBackLayer) return [];
+        this.counterBackLayer.removeAll(true);
+        this.counterCardNodes = [];
+
+        const activeCounters = normalizeCountersList({ counters });
+        const nextKnown = new Map();
+        const deltas = [];
+
+        activeCounters.forEach((c) => {
+            nextKnown.set(c.counterType, c.quantity);
+            if (this.hasInitializedCounters) {
+                const prevQty = this.knownCountersByType.get(c.counterType) || 0;
+                const delta = c.quantity - prevQty;
+                if (delta !== 0) {
+                    deltas.push({ ...c, delta });
+                }
+            }
+        });
+
+        if (this.hasInitializedCounters) {
+            this.knownCountersByType.forEach((prevQty, prevType) => {
+                if (!nextKnown.has(prevType) && prevQty > 0) {
+                    const meta = resolveCounterVisualMeta({ counterType: prevType });
+                    deltas.push({
+                        counterType: prevType,
+                        displayName: meta.displayName,
+                        accentColor: meta.accentColor || '#94a3b8',
+                        quantity: 0,
+                        delta: -prevQty
+                    });
+                }
+            });
+        }
+
+        if (activeCounters.length > 0) {
+            const positions = computeCounterLayoutPositions(activeCounters.length, this.cardW, this.cardH);
+            activeCounters.forEach((counterItem, idx) => {
+                const pt = positions[idx];
+                const node = new CounterCardPrefab(
+                    this.scene,
+                    pt.x,
+                    pt.y,
+                    counterItem,
+                    pt.scale
+                );
+                this.counterBackLayer.add(node);
+                this.counterCardNodes.push(node);
+
+                if (this.hasInitializedCounters) {
+                    const prevQty = this.knownCountersByType.get(counterItem.counterType) || 0;
+                    if (counterItem.quantity !== prevQty) {
+                        node.playPulse();
+                    }
+                }
+            });
+        }
+
+        this.knownCountersByType = nextKnown;
+        this.hasInitializedCounters = true;
+        return deltas;
     }
 
     showFloatingNumber(text, color) {

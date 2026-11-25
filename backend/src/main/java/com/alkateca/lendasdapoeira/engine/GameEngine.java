@@ -1,8 +1,14 @@
 package com.alkateca.lendasdapoeira.engine;
 
+import com.alkateca.lendasdapoeira.counters.CounterConsumptionMode;
+import com.alkateca.lendasdapoeira.counters.CounterRule;
+import com.alkateca.lendasdapoeira.counters.CounterRuleRegistry;
 import com.alkateca.lendasdapoeira.entity.Card;
 import com.alkateca.lendasdapoeira.entity.HeroCard;
 import com.alkateca.lendasdapoeira.entity.Player;
+import com.alkateca.lendasdapoeira.enums.Afinidade;
+import com.alkateca.lendasdapoeira.enums.CardType;
+import com.alkateca.lendasdapoeira.enums.CounterType;
 import com.alkateca.lendasdapoeira.enums.TurnPhase;
 import com.alkateca.lendasdapoeira.enums.ZoneId;
 import lombok.*;
@@ -68,6 +74,20 @@ public class GameEngine {
     private final Map<UUID, Integer> extraCardsDrawnInCurrentTurn = new HashMap<>();
     private final Set<UUID> heroesWhoDealtPhysicalOrMagicDamageInCurrentCombat = new HashSet<>();
     private final Map<UUID, Integer> turnPreparationCardLimitModifiers = new HashMap<>();
+    private boolean physicalCombatResolvedInCurrentTurn = false;
+    private boolean discardPhaseEffectsTriggeredThisTurn = false;
+    private CounterRuleRegistry counterRuleRegistry = CounterRuleRegistry.createDefault();
+
+    public CounterRuleRegistry getCounterRuleRegistry() {
+        if (this.counterRuleRegistry == null) {
+            this.counterRuleRegistry = CounterRuleRegistry.createDefault();
+        }
+        return this.counterRuleRegistry;
+    }
+
+    public void registerCounterRule(CounterRule rule) {
+        getCounterRuleRegistry().register(rule);
+    }
 
     public int getMaxPreparationCardsForPlayer(UUID playerId) {
         if (playerId == null) return DEFAULT_MAX_PREPARATION_CARDS;
@@ -254,6 +274,7 @@ public class GameEngine {
         this.extraCardsDrawnInCurrentTurn.clear();
         this.heroesWhoDealtPhysicalOrMagicDamageInCurrentCombat.clear();
         this.turnPreparationCardLimitModifiers.clear();
+        this.physicalCombatResolvedInCurrentTurn = false;
     }
 
     // =========================================================================
@@ -481,18 +502,23 @@ public class GameEngine {
             heroCard.setZoneId(ZoneId.BENCH);
         }
 
+        this.physicalCombatResolvedInCurrentTurn = false;
+        this.discardPhaseEffectsTriggeredThisTurn = false;
+
         this.turnPhase = TurnPhase.GAME_START;
         if (this.gameState != null) {
             this.gameState.setTurnPhase(TurnPhase.GAME_START);
         }
-        for (Card heroCard : player1.getCurrentDeck().getHeroList()) {
-            heroCard.onPhaseChange(TurnPhase.GAME_START, resolutionQueue);
-        }
-        for (Card heroCard : player2.getCurrentDeck().getHeroList()) {
-            heroCard.onPhaseChange(TurnPhase.GAME_START, resolutionQueue);
-        }
+        triggerPhaseEffects(TurnPhase.GAME_START);
         resolutionQueue.resolveAll(this);
+        if (isWaitingForPlayerChoice()) {
+            return;
+        }
 
+        finalizeGameStartAndEnterChoice();
+    }
+
+    private void finalizeGameStartAndEnterChoice() {
         // Finaliza o destino de itens invocados no GAME_START (ex: Naelis -> Rapieira de Cristal)
         moveResolvedCardsToDestination(gameState.getPlayer1PlayedCards());
         moveResolvedCardsToDestination(gameState.getPlayer2PlayedCards());
@@ -501,12 +527,18 @@ public class GameEngine {
         resolvedCardsInCurrentCombat.clear();
         invokedCardIdsInCurrentCombat.clear();
 
+        enterChoicePhase();
+    }
+
+    private void enterChoicePhase() {
         changePhase(TurnPhase.CHOICE);
+        triggerPhaseEffects(TurnPhase.CHOICE);
+        resolutionQueue.resolveAll(this);
     }
 
     public void choice() {
         changePhase(TurnPhase.PREPARATION);
-        triggerActiveHeroesEffects(TurnPhase.PREPARATION);
+        triggerPhaseEffects(TurnPhase.PREPARATION);
         resolutionQueue.resolveAll(this);
     }
 
@@ -515,8 +547,11 @@ public class GameEngine {
     }
 
     public void combatStart(){
-        triggerActiveHeroesEffects(TurnPhase.COMBAT_START);
+        triggerPhaseEffects(TurnPhase.COMBAT_START);
         resolutionQueue.resolveAll(this);
+        if (isWaitingForPlayerChoice()) {
+            return;
+        }
         changePhase(TurnPhase.RESOLUTION);
     }
 
@@ -524,10 +559,14 @@ public class GameEngine {
         // 1. Muda para RESOLUTION para revelar as cartas nos 4 slots centrais
         changePhase(TurnPhase.RESOLUTION);
 
+        triggerPhaseEffects(TurnPhase.RESOLUTION);
         enqueueInitialResolutionCards();
 
         // 2. Resolve todos os efeitos da pilha
         resolutionQueue.resolveAll(this);
+        if (isWaitingForPlayerChoice()) {
+            return;
+        }
 
         // 3. Apenas Magias, Ações e Teurgias saem da mesa agora (indo para Descarte ou Exílio)
         // Os Itens (Armas/Joias) continuam visíveis na mesa durante o Combate Físico (COMBAT)!
@@ -584,6 +623,9 @@ public class GameEngine {
     }
 
     public void discard() {
+        this.discardPhaseEffectsTriggeredThisTurn = false;
+        this.physicalCombatResolvedInCurrentTurn = false;
+
         refillHandToFive(player1);
         refillHandToFive(player2);
 
@@ -596,7 +638,7 @@ public class GameEngine {
         this.turnsElapsed++;
         trackMissionProgress(player1.getUuid(), "SURVIVE_TURNS", 1);
         trackMissionProgress(player2.getUuid(), "SURVIVE_TURNS", 1);
-        changePhase(TurnPhase.CHOICE);
+        enterChoicePhase();
     }
 
     /**
@@ -722,9 +764,48 @@ public class GameEngine {
         }
     }
 
-    // 2. SUBSTITUIR triggerActiveHeroesEffects no GameEngine.java:
-    // Garante que apenas os itens/cartas anexados aos Heróis ATIVOS na batalha disparem COMBAT_START e COMBAT_END!
+    private List<HeroCard> collectLivingHeroes() {
+        List<HeroCard> living = new ArrayList<>();
+        collectLivingHeroesFromPlayer(player1, living);
+        collectLivingHeroesFromPlayer(player2, living);
+        return living;
+    }
+
+    private void collectLivingHeroesFromPlayer(Player player, List<HeroCard> out) {
+        if (player == null || player.getCurrentDeck() == null || player.getCurrentDeck().getHeroList() == null) {
+            return;
+        }
+        for (Card c : player.getCurrentDeck().getHeroList()) {
+            if (c instanceof HeroCard hero && Boolean.TRUE.equals(hero.getEstaVivo())) {
+                out.add(hero);
+            }
+        }
+    }
+
+    private List<Card> collectAllDeckCards() {
+        List<Card> allCards = new ArrayList<>();
+        if (player1 != null && player1.getCurrentDeck() != null && player1.getCurrentDeck().getCardList() != null) {
+            allCards.addAll(player1.getCurrentDeck().getCardList());
+        }
+        if (player2 != null && player2.getCurrentDeck() != null && player2.getCurrentDeck().getCardList() != null) {
+            allCards.addAll(player2.getCurrentDeck().getCardList());
+        }
+        return allCards;
+    }
+
     private void triggerActiveHeroesEffects(TurnPhase phase) {
+        triggerPhaseEffects(phase);
+    }
+
+    /**
+     * Enfileira todos os efeitos aplicáveis à fase informada, cobrindo Heróis ativos em BATTLE,
+     * Heróis fora de combate (BENCH) e cartas anexadas (ZoneId.ATTACHED) tanto a Heróis em combate quanto no banco.
+     */
+    private void triggerPhaseEffects(TurnPhase phase) {
+        if (phase == null || player1 == null || player2 == null) {
+            return;
+        }
+
         if (phase == TurnPhase.COMBAT_START && !scheduledNextCombatStartActions.isEmpty()) {
             Map<UUID, List<Runnable>> pending = new HashMap<>(scheduledNextCombatStartActions);
             scheduledNextCombatStartActions.clear();
@@ -737,52 +818,118 @@ public class GameEngine {
             }
         }
 
-        HeroCard p1Hero = getActiveHero(player1, gameState.getActiveHeroPlayer1Id());
-        HeroCard p2Hero = getActiveHero(player2, gameState.getActiveHeroPlayer2Id());
+        UUID activeP1HeroId = gameState != null ? gameState.getActiveHeroPlayer1Id() : null;
+        UUID activeP2HeroId = gameState != null ? gameState.getActiveHeroPlayer2Id() : null;
+        boolean hasCombatPair = activeP1HeroId != null || activeP2HeroId != null;
+        boolean isOutOfCombatPhase = !hasCombatPair
+                || phase == TurnPhase.GAME_START
+                || phase == TurnPhase.CHOICE
+                || phase == TurnPhase.DISCARD;
 
-        if (p1Hero != null && Boolean.TRUE.equals(p1Hero.getEstaVivo())) p1Hero.onPhaseChange(phase, resolutionQueue);
-        if (p2Hero != null && Boolean.TRUE.equals(p2Hero.getEstaVivo())) p2Hero.onPhaseChange(phase, resolutionQueue);
+        HeroCard p1Hero = getActiveHero(player1, activeP1HeroId);
+        HeroCard p2Hero = getActiveHero(player2, activeP2HeroId);
 
-        if (phase == TurnPhase.COMBAT_START || phase == TurnPhase.COMBAT_END) {
-            List<Card> allHeroes = new ArrayList<>();
-            allHeroes.addAll(player1.getCurrentDeck().getHeroList());
-            allHeroes.addAll(player2.getCurrentDeck().getHeroList());
+        if (p1Hero != null && Boolean.TRUE.equals(p1Hero.getEstaVivo())) {
+            enqueueEligibleBoardEffects(p1Hero, phase, true);
+        }
+        if (p2Hero != null && Boolean.TRUE.equals(p2Hero.getEstaVivo())) {
+            enqueueEligibleBoardEffects(p2Hero, phase, true);
+        }
 
-            for (Card hCard : allHeroes) {
-                if (hCard instanceof HeroCard && hCard.getZoneId() == ZoneId.BENCH && Boolean.TRUE.equals(((HeroCard) hCard).getEstaVivo())) {
-                    if (hCard.getEffects() != null) {
-                        hCard.getEffects().stream()
-                                .filter(eff -> eff.canTriggerFromBench() && eff.predicate(hCard, phase))
-                                .forEach(eff -> resolutionQueue.enqueue(eff, hCard));
-                    }
+        for (HeroCard hero : collectLivingHeroes()) {
+            boolean isTrackedActive = hero.getUuid().equals(activeP1HeroId) || hero.getUuid().equals(activeP2HeroId);
+            if (isTrackedActive) {
+                continue;
+            }
+            boolean isInBattle = hero.getZoneId() == ZoneId.BATTLE;
+            enqueueEligibleBoardEffects(hero, phase, isInBattle || isOutOfCombatPhase);
+        }
+
+        Set<UUID> triggeredBoardCardIds = new HashSet<>();
+        for (Card attachedCard : collectAllDeckCards()) {
+            if (attachedCard == null
+                    || attachedCard.getZoneId() != ZoneId.ATTACHED
+                    || attachedCard.getAttachedToCardId() == null
+                    || attachedCard.getEffects() == null) {
+                continue;
+            }
+            if (phase == TurnPhase.RESOLUTION
+                    && (resolvedCardsInCurrentCombat.contains(attachedCard)
+                    || (attachedCard.getUuid() != null && invokedCardIdsInCurrentCombat.contains(attachedCard.getUuid())))) {
+                continue;
+            }
+            HeroCard hostHero = findHeroById(attachedCard.getAttachedToCardId());
+            if (hostHero == null || !Boolean.TRUE.equals(hostHero.getEstaVivo())) {
+                continue;
+            }
+            boolean hostInBattle = hostHero.getUuid().equals(activeP1HeroId)
+                    || hostHero.getUuid().equals(activeP2HeroId)
+                    || hostHero.getZoneId() == ZoneId.BATTLE;
+
+            boolean repeatEncore = attachedCard.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ESCUDO
+                    && hasShieldEncoreAura(attachedCard.getOwnerId());
+
+            if (attachedCard.getUuid() != null) {
+                triggeredBoardCardIds.add(attachedCard.getUuid());
+            }
+
+            attachedCard.getEffects().stream()
+                    .filter(eff -> shouldTriggerBoardEffectInPhase(eff, attachedCard, phase, hostInBattle || isOutOfCombatPhase))
+                    .forEach(eff -> {
+                        resolutionQueue.enqueue(eff, attachedCard);
+                        if (repeatEncore && isEncoreRepeatableEffect(eff)) {
+                            resolutionQueue.enqueue(eff, attachedCard);
+                        }
+                    });
+        }
+
+        if (gameState != null && (phase == TurnPhase.COMBAT_START || phase == TurnPhase.COMBAT || phase == TurnPhase.COMBAT_END)) {
+            List<Card> resolveCards = new ArrayList<>();
+            if (gameState.getPlayer1PlayedCards() != null) {
+                resolveCards.addAll(gameState.getPlayer1PlayedCards());
+            }
+            if (gameState.getPlayer2PlayedCards() != null) {
+                resolveCards.addAll(gameState.getPlayer2PlayedCards());
+            }
+            for (Card resolveCard : resolveCards) {
+                if (resolveCard == null
+                        || resolveCard.getZoneId() != ZoneId.RESOLVE
+                        || resolveCard.getEffects() == null) {
+                    continue;
                 }
+                if (resolveCard.getUuid() != null && !triggeredBoardCardIds.add(resolveCard.getUuid())) {
+                    continue;
+                }
+                resolveCard.getEffects().stream()
+                        .filter(eff -> eff.predicate(resolveCard, phase) && eff.canTriggerFromResolveZone(phase))
+                        .forEach(eff -> resolutionQueue.enqueue(eff, resolveCard));
             }
         }
 
-        List<Card> allCards = new ArrayList<>();
-        allCards.addAll(player1.getCurrentDeck().getCardList());
-        allCards.addAll(player2.getCurrentDeck().getCardList());
+        getCounterRuleRegistry().onTurnPhase(this, phase);
+    }
 
-        UUID activeP1HeroId = gameState.getActiveHeroPlayer1Id();
-        UUID activeP2HeroId = gameState.getActiveHeroPlayer2Id();
+    private void enqueueEligibleBoardEffects(Card boardCard, TurnPhase phase, boolean activeOrOutOfCombat) {
+        if (boardCard == null || boardCard.getEffects() == null) {
+            return;
+        }
+        boardCard.getEffects().stream()
+                .filter(eff -> shouldTriggerBoardEffectInPhase(eff, boardCard, phase, activeOrOutOfCombat))
+                .forEach(eff -> resolutionQueue.enqueue(eff, boardCard));
+    }
 
-        allCards.stream()
-                .filter(c -> c.getZoneId() == ZoneId.ATTACHED
-                        && c.getAttachedToCardId() != null
-                        && (c.getAttachedToCardId().equals(activeP1HeroId) || c.getAttachedToCardId().equals(activeP2HeroId))
-                        && c.getEffects() != null)
-                .forEach(attachedCard -> {
-                    boolean repeatEncore = attachedCard.getItemType() == com.alkateca.lendasdapoeira.enums.ItemType.ESCUDO
-                            && hasShieldEncoreAura(attachedCard.getOwnerId());
-                    attachedCard.getEffects().stream()
-                            .filter(eff -> eff.predicate(attachedCard, phase))
-                            .forEach(eff -> {
-                                resolutionQueue.enqueue(eff, attachedCard);
-                                if (repeatEncore && isEncoreRepeatableEffect(eff)) {
-                                    resolutionQueue.enqueue(eff, attachedCard);
-                                }
-                            });
-                });
+    private boolean shouldTriggerBoardEffectInPhase(
+            com.alkateca.lendasdapoeira.effects.Effect eff,
+            Card sourceCard,
+            TurnPhase phase,
+            boolean activeOrOutOfCombat) {
+        if (eff == null || sourceCard == null || !eff.predicate(sourceCard, phase)) {
+            return false;
+        }
+        if (phase == TurnPhase.RESOLUTION && !eff.canTriggerOnResolutionPhaseEntry()) {
+            return false;
+        }
+        return activeOrOutOfCombat || eff.canTriggerFromBench();
     }
 
     // 3. ADICIONAR estes métodos públicos no GameEngine.java para gerenciar Desanexar e Duração:
@@ -810,6 +957,166 @@ public class GameEngine {
         } else {
             card.setZoneId(destinationZone);
         }
+
+        ZoneId finalZone = card.getZoneId();
+        if (finalZone == ZoneId.DISCARD || finalZone == ZoneId.EXILE || finalZone == ZoneId.DECK || finalZone == ZoneId.HAND) {
+            card.clearCounters();
+        }
+    }
+
+    /**
+     * Consulta a quantidade atual de contadores de um tipo específico sobre uma carta.
+     */
+    public int getCounterCount(Card targetCard, CounterType counterType) {
+        if (targetCard == null || counterType == null) {
+            return 0;
+        }
+        return targetCard.getCounterCount(counterType);
+    }
+
+    /**
+     * Adiciona uma quantidade positiva de contadores sobre uma carta e retorna o novo total.
+     */
+    public int addCounter(Card targetCard, CounterType counterType, int amount) {
+        if (targetCard == null || counterType == null || amount <= 0) {
+            return getCounterCount(targetCard, counterType);
+        }
+        if (targetCard instanceof HeroCard hero && !Boolean.TRUE.equals(hero.getEstaVivo())) {
+            return getCounterCount(targetCard, counterType);
+        }
+        int updated = targetCard.addCounter(counterType, amount);
+        System.out.println("-> " + targetCard.getCardName() + " recebeu +" + amount
+                + " marcador(es) de " + counterType.getDisplayName() + " (Total: " + updated + ")");
+        return updated;
+    }
+
+    /**
+     * Remove até {@code amount} contadores de um tipo sobre a carta. Se atingir 0, o marcador é removido.
+     */
+    public int removeCounter(Card targetCard, CounterType counterType, int amount) {
+        if (targetCard == null || counterType == null || amount <= 0) {
+            return getCounterCount(targetCard, counterType);
+        }
+        int before = targetCard.getCounterCount(counterType);
+        int updated = targetCard.removeCounter(counterType, amount);
+        int removed = Math.max(0, before - updated);
+        if (removed > 0) {
+            System.out.println("-> " + targetCard.getCardName() + " perdeu " + removed
+                    + " marcador(es) de " + counterType.getDisplayName() + " (Restante: " + updated + ")");
+        }
+        return updated;
+    }
+
+    /**
+     * Consome todos os contadores de um tipo específico sobre a carta e retorna a quantidade consumida.
+     */
+    public int consumeAllCounters(Card targetCard, CounterType counterType) {
+        if (targetCard == null || counterType == null) {
+            return 0;
+        }
+        int existing = targetCard.getCounterCount(counterType);
+        if (existing > 0) {
+            targetCard.removeCounter(counterType, existing);
+            System.out.println("-> " + existing + " marcador(es) de " + counterType.getDisplayName()
+                    + " consumido(s) de " + targetCard.getCardName() + ".");
+        }
+        return existing;
+    }
+
+    /**
+     * Consome contadores de um tipo específico sobre a carta conforme a estratégia {@link CounterConsumptionMode}.
+     */
+    public int consumeCounters(Card targetCard, CounterType counterType, CounterConsumptionMode mode, int requestedAmount) {
+        if (targetCard == null || counterType == null) {
+            return 0;
+        }
+        CounterConsumptionMode effectiveMode = mode != null ? mode : CounterConsumptionMode.CONSUME_ALL;
+        return switch (effectiveMode) {
+            case CONSUME_ALL -> consumeAllCounters(targetCard, counterType);
+            case CONSUME_UP_TO -> {
+                if (requestedAmount <= 0) {
+                    yield 0;
+                }
+                int existing = getCounterCount(targetCard, counterType);
+                int toConsume = Math.min(existing, requestedAmount);
+                if (toConsume > 0) {
+                    removeCounter(targetCard, counterType, toConsume);
+                    System.out.println("-> " + toConsume + " marcador(es) de " + counterType.getDisplayName()
+                            + " consumido(s) de " + targetCard.getCardName() + ".");
+                }
+                yield toConsume;
+            }
+            case CONSUME_EXACT -> {
+                if (requestedAmount <= 0) {
+                    yield 0;
+                }
+                int existing = getCounterCount(targetCard, counterType);
+                if (existing < requestedAmount) {
+                    yield 0;
+                }
+                removeCounter(targetCard, counterType, requestedAmount);
+                System.out.println("-> " + requestedAmount + " marcador(es) de " + counterType.getDisplayName()
+                        + " consumido(s) de " + targetCard.getCardName() + ".");
+                yield requestedAmount;
+            }
+        };
+    }
+
+    /**
+     * Define diretamente a quantidade de um contador sobre a carta (valores <= 0 removem o marcador).
+     */
+    public void setCounterCount(Card targetCard, CounterType counterType, int amount) {
+        if (targetCard == null || counterType == null) {
+            return;
+        }
+        targetCard.setCounterCount(counterType, amount);
+    }
+
+    /**
+     * Remove todos os contadores de uma carta.
+     */
+    public void clearCounters(Card targetCard) {
+        if (targetCard != null) {
+            targetCard.clearCounters();
+        }
+    }
+
+    /**
+     * Captura explicitamente um snapshot de alteração de contador para a timeline do Front-End.
+     */
+    public void captureCounterSnapshot(
+            Card sourceCard,
+            Card targetCard,
+            CounterType counterType,
+            int delta,
+            int newQuantity,
+            String customLogMessage) {
+
+        MatchSnapshotDTO snapshot = SnapshotFactory.createSnapshot(
+                this,
+                sourceCard != null ? sourceCard : targetCard,
+                null,
+                "COUNTER_UPDATED"
+        );
+        MatchSnapshotDTO.TriggerContextDTO trigger = snapshot.getTriggerContext();
+        if (targetCard != null) {
+            trigger.setTargetHeroId(targetCard.getUuid());
+            trigger.setOwnerPlayerId(targetCard.getOwnerId());
+        }
+        if (counterType != null) {
+            trigger.setCounterType(counterType.name());
+            trigger.setCounterDisplayName(counterType.getDisplayName());
+        }
+        trigger.setCounterDelta(delta);
+        trigger.setCounterQuantity(Math.max(0, newQuantity));
+        if (customLogMessage != null && !customLogMessage.isBlank()) {
+            trigger.setLogMessage(customLogMessage);
+        } else if (targetCard != null && counterType != null) {
+            String sign = delta >= 0 ? "+" : "";
+            trigger.setLogMessage("💠 " + targetCard.getCardName() + ": " + sign + delta + " "
+                    + counterType.getDisplayName() + " (x" + Math.max(0, newQuantity) + ")");
+        }
+        this.snapshotHistory.add(snapshot);
     }
 
     /**
@@ -1122,9 +1429,11 @@ public class GameEngine {
     }
 
     private HeroCard getActiveHero(Player player, UUID heroId) {
-        if (heroId == null) return null;
+        if (player == null || heroId == null || player.getCurrentDeck() == null || player.getCurrentDeck().getHeroList() == null) {
+            return null;
+        }
         return (HeroCard) player.getCurrentDeck().getHeroList().stream()
-                .filter(h -> h.getUuid().equals(heroId))
+                .filter(h -> h != null && h.getUuid().equals(heroId))
                 .findFirst()
                 .orElse(null);
     }
@@ -1145,6 +1454,9 @@ public class GameEngine {
     public void submitHeroChoice(UUID playerId, UUID ownHeroId, UUID enemyHeroId) {
         if (this.turnPhase != TurnPhase.CHOICE) {
             throw new IllegalStateException("Ação inválida fora da fase CHOICE.");
+        }
+        if (isWaitingForPlayerChoice()) {
+            throw new IllegalStateException("Não é possível confirmar os Heróis enquanto há uma escolha pendente.");
         }
         Player activePlayer = getValidatedParticipant(playerId);
         if (!playerId.equals(this.gameState.getActiveTurnPlayerId())) {
@@ -1317,13 +1629,27 @@ public class GameEngine {
      * Executa em cadeia todas as fases automáticas gerando uma foto por efeito e por fase
      */
     public void runAutomatedCombatChain() {
+        this.physicalCombatResolvedInCurrentTurn = false;
+        this.discardPhaseEffectsTriggeredThisTurn = false;
         preparation(); // Muda para TurnPhase.COMBAT_START
-        triggerActiveHeroesEffects(TurnPhase.COMBAT_START);
+        triggerPhaseEffects(TurnPhase.COMBAT_START);
         resumeCombatChainFromCurrentPhase();
     }
 
 
     public void resumeCombatChainFromCurrentPhase() {
+        if (this.turnPhase == TurnPhase.GAME_START) {
+            resolutionQueue.resolveAll(this);
+            if (isWaitingForPlayerChoice()) return;
+            finalizeGameStartAndEnterChoice();
+            return;
+        }
+
+        if (this.turnPhase == TurnPhase.CHOICE || this.turnPhase == TurnPhase.PREPARATION) {
+            resolutionQueue.resolveAll(this);
+            return;
+        }
+
         // 1. Se estava em COMBAT_START, termina a fila de COMBAT_START (incluindo cartas invocadas no início do combate)
         if (this.turnPhase == TurnPhase.COMBAT_START) {
             resolutionQueue.resolveAll(this);
@@ -1335,6 +1661,7 @@ public class GameEngine {
             attachItemsAlreadyInvokedInCombatStart(gameState.getPlayer2PlayedCards());
 
             changePhase(TurnPhase.RESOLUTION);
+            triggerPhaseEffects(TurnPhase.RESOLUTION);
             enqueueInitialResolutionCards();
         }
 
@@ -1351,10 +1678,11 @@ public class GameEngine {
             changePhase(TurnPhase.COMBAT);
         }
 
-        // 3. Matemática do Combate Físico
+        // 3. Matemática do Combate Físico e eventuais efeitos de TurnPhase.COMBAT
         if (this.turnPhase == TurnPhase.COMBAT) {
-            combat(); // Calcula dano físico e muda para TurnPhase.COMBAT_END
-            triggerActiveHeroesEffects(TurnPhase.COMBAT_END);
+            combat(); // Calcula dano físico + resolve efeitos COMBAT e muda para TurnPhase.COMBAT_END
+            if (isWaitingForPlayerChoice()) return;
+            triggerPhaseEffects(TurnPhase.COMBAT_END);
         }
 
         // 4. Se está em COMBAT_END, resolve os efeitos de fim de combate, anexa os itens nos heróis ainda em BATTLE e depois retorna-os à BENCH
@@ -1373,23 +1701,44 @@ public class GameEngine {
 
             processAttachedCardsDuration();
             runCombatEndCleanup();
-            evaluateHeroesDeathAndReturnToBench(player1);
-            evaluateHeroesDeathAndReturnToBench(player2);
+            finishCombatEndCleanupAndAdvance();
+        }
 
-            gameState.setActiveHeroPlayer1Id(null);
-            gameState.setActiveHeroPlayer2Id(null);
-
-            checkBoardRefresh(player1);
-            checkBoardRefresh(player2);
-
-            captureSnapshot(null, null, "COMBAT_END_CLEANUP");
-
-            if (checkGameOver()) {
-                changePhase(TurnPhase.GAME_OVER);
-            } else {
-                changePhase(TurnPhase.DISCARD);
+        if (this.turnPhase == TurnPhase.DISCARD) {
+            resolutionQueue.resolveAll(this);
+            if (isWaitingForPlayerChoice()) return;
+            if (this.isPlayer1Ready && this.isPlayer2Ready) {
+                this.isPlayer1Ready = false;
+                this.isPlayer2Ready = false;
+                discard();
             }
         }
+    }
+
+    private void finishCombatEndCleanupAndAdvance() {
+        evaluateHeroesDeathAndReturnToBench(player1);
+        evaluateHeroesDeathAndReturnToBench(player2);
+
+        gameState.setActiveHeroPlayer1Id(null);
+        gameState.setActiveHeroPlayer2Id(null);
+
+        checkBoardRefresh(player1);
+        checkBoardRefresh(player2);
+
+        captureSnapshot(null, null, "COMBAT_END_CLEANUP");
+
+        if (checkGameOver()) {
+            changePhase(TurnPhase.GAME_OVER);
+        } else {
+            enterDiscardPhase();
+        }
+    }
+
+    private void enterDiscardPhase() {
+        changePhase(TurnPhase.DISCARD);
+        this.discardPhaseEffectsTriggeredThisTurn = true;
+        triggerPhaseEffects(TurnPhase.DISCARD);
+        resolutionQueue.resolveAll(this);
     }
 
     /**
@@ -1579,8 +1928,29 @@ public class GameEngine {
         List<com.alkateca.lendasdapoeira.effects.Effect> heroOnPlayEffects = new ArrayList<>();
         if (ownerHero != null && ownerHero.getEffects() != null) {
             for (com.alkateca.lendasdapoeira.effects.Effect eff : ownerHero.getEffects()) {
-                if (eff.predicate(ownerHero, TurnPhase.RESOLUTION)) {
+                if (eff.predicate(ownerHero, TurnPhase.RESOLUTION) && !eff.canTriggerOnResolutionPhaseEntry()) {
                     heroOnPlayEffects.add(eff);
+                }
+            }
+        }
+
+        Player cardOwner = isP1 ? player1 : player2;
+        List<HeroCard> benchOwnerHeroes = new ArrayList<>();
+        List<com.alkateca.lendasdapoeira.effects.Effect> benchHeroOnPlayEffects = new ArrayList<>();
+        if (cardOwner != null && cardOwner.getCurrentDeck() != null && cardOwner.getCurrentDeck().getHeroList() != null) {
+            for (HeroCard h : cardOwner.getCurrentDeck().getHeroList()) {
+                if (h != null
+                        && Boolean.TRUE.equals(h.getEstaVivo())
+                        && (ownerHero == null || !h.getUuid().equals(ownerHero.getUuid()))
+                        && h.getEffects() != null) {
+                    for (com.alkateca.lendasdapoeira.effects.Effect eff : h.getEffects()) {
+                        if (eff.canTriggerFromBench()
+                                && eff.predicate(h, TurnPhase.RESOLUTION)
+                                && !eff.canTriggerOnResolutionPhaseEntry()) {
+                            benchOwnerHeroes.add(h);
+                            benchHeroOnPlayEffects.add(eff);
+                        }
+                    }
                 }
             }
         }
@@ -1593,7 +1963,13 @@ public class GameEngine {
             for (com.alkateca.lendasdapoeira.effects.Effect eff : heroOnPlayEffects) {
                 resolutionQueue.enqueue(eff, ownerHero);
             }
+            for (int i = 0; i < benchHeroOnPlayEffects.size(); i++) {
+                resolutionQueue.enqueue(benchHeroOnPlayEffects.get(i), benchOwnerHeroes.get(i));
+            }
         } else {
+            for (int i = benchHeroOnPlayEffects.size() - 1; i >= 0; i--) {
+                resolutionQueue.enqueueFirst(benchHeroOnPlayEffects.get(i), benchOwnerHeroes.get(i));
+            }
             for (int i = heroOnPlayEffects.size() - 1; i >= 0; i--) {
                 resolutionQueue.enqueueFirst(heroOnPlayEffects.get(i), ownerHero);
             }
@@ -1772,9 +2148,7 @@ public class GameEngine {
                     && Boolean.TRUE.equals(hero.getEstaVivo())
                     && hero.getVidaAtual() < 0
                     && hasEnemyDeadBelowZeroAura(hero)) {
-                hero.setEstaVivo(false);
-                hero.setEstaAtivo(false);
-                detachAllCardsFromHero(hero.getUuid(), ZoneId.DISCARD);
+                markHeroDefeated(hero);
                 newlyDeadAllies++;
                 if (player1 != null && player2 != null && player.getUuid() != null) {
                     UUID killerPlayerId = player.getUuid().equals(player1.getUuid())
@@ -1792,9 +2166,14 @@ public class GameEngine {
     }
 
     public int calculatePhysicalDamage(HeroCard attacker, HeroCard defender, int basePhysicalDamage) {
+        return calculatePhysicalDamage(attacker, defender, basePhysicalDamage, null);
+    }
+
+    public int calculatePhysicalDamage(HeroCard attacker, HeroCard defender, int basePhysicalDamage, Card sourceCard) {
         if (defender == null) return 0;
         int bonusDamage = attacker != null ? attacker.getDanoBonus() : 0;
-        int rawDamage = basePhysicalDamage + bonusDamage;
+        int counterBonus = getCounterRuleRegistry().resolvePhysicalDamageBonus(this, attacker, defender, basePhysicalDamage, sourceCard);
+        int rawDamage = basePhysicalDamage + bonusDamage + counterBonus;
         int totalMitigation = defender.getDefesa() + defender.getReducaoDano();
         int finalDamage = Math.max(0, (rawDamage - totalMitigation) + defender.getVulnerabilidade());
         if (finalDamage > 0) {
@@ -1806,10 +2185,22 @@ public class GameEngine {
         return finalDamage;
     }
 
+    public boolean isFireSpell(Card sourceCard) {
+        return sourceCard != null
+                && sourceCard.getCardType() == CardType.SPELL
+                && sourceCard.getAfinidades() != null
+                && sourceCard.getAfinidades().contains(Afinidade.FOGO);
+    }
+
     public int calculateMagicDamage(HeroCard attacker, HeroCard defender, int baseMagicDamage) {
+        return calculateMagicDamage(attacker, defender, baseMagicDamage, null);
+    }
+
+    public int calculateMagicDamage(HeroCard attacker, HeroCard defender, int baseMagicDamage, Card sourceCard) {
         if (defender == null) return 0;
         int bonusDamage = attacker != null ? attacker.getDanoBonus() : 0;
-        int rawMagic = baseMagicDamage + bonusDamage;
+        int counterBonus = getCounterRuleRegistry().resolveMagicDamageBonus(this, attacker, defender, baseMagicDamage, sourceCard);
+        int rawMagic = baseMagicDamage + bonusDamage + counterBonus;
         int magicMitigation = defender.getEspirito();
         int finalDamage = Math.max(0, (rawMagic - magicMitigation) + defender.getVulnerabilidade());
         if (finalDamage > 0) {
@@ -1822,9 +2213,14 @@ public class GameEngine {
     }
 
     public int calculateDirectDamage(HeroCard attacker, HeroCard defender, int baseDirectDamage) {
+        return calculateDirectDamage(attacker, defender, baseDirectDamage, null);
+    }
+
+    public int calculateDirectDamage(HeroCard attacker, HeroCard defender, int baseDirectDamage, Card sourceCard) {
         if (defender == null) return 0;
         int bonusDamage = attacker != null ? attacker.getDanoBonus() : 0;
-        int rawDirect = baseDirectDamage + bonusDamage + defender.getVulnerabilidade();
+        int counterBonus = getCounterRuleRegistry().resolveDirectDamageBonus(this, attacker, defender, baseDirectDamage, sourceCard);
+        int rawDirect = baseDirectDamage + bonusDamage + counterBonus + defender.getVulnerabilidade();
         int finalDamage = Math.max(0, rawDirect);
         if (finalDamage > 0) {
             finalDamage += getEnemyBonusDamageTakenFromAuras(defender);
@@ -1843,28 +2239,39 @@ public class GameEngine {
     }
 
     /**
-     * 3. Matemática do Combate Físico (TurnPhase.COMBAT)
+     * 3. Matemática do Combate Físico e efeitos da etapa TurnPhase.COMBAT
      */
     public void combat() {
-        HeroCard p1Hero = getActiveHero(player1, gameState.getActiveHeroPlayer1Id());
-        HeroCard p2Hero = getActiveHero(player2, gameState.getActiveHeroPlayer2Id());
+        if (!this.physicalCombatResolvedInCurrentTurn) {
+            HeroCard p1Hero = getActiveHero(player1, gameState.getActiveHeroPlayer1Id());
+            HeroCard p2Hero = getActiveHero(player2, gameState.getActiveHeroPlayer2Id());
 
-        if (p1Hero != null && p2Hero != null) {
-            int p1Attacks = hasDoubleAttackInCurrentCombat(p1Hero.getUuid()) ? 2 : 1;
-            int p2Attacks = hasDoubleAttackInCurrentCombat(p2Hero.getUuid()) ? 2 : 1;
+            if (p1Hero != null && p2Hero != null) {
+                int p1Attacks = hasDoubleAttackInCurrentCombat(p1Hero.getUuid()) ? 2 : 1;
+                int p2Attacks = hasDoubleAttackInCurrentCombat(p2Hero.getUuid()) ? 2 : 1;
 
-            int damageToP2 = calculateBasicAttackDamage(p1Hero, p2Hero) * p1Attacks;
-            int damageToP1 = calculateBasicAttackDamage(p2Hero, p1Hero) * p2Attacks;
+                int damageToP2 = calculateBasicAttackDamage(p1Hero, p2Hero) * p1Attacks;
+                int damageToP1 = calculateBasicAttackDamage(p2Hero, p1Hero) * p2Attacks;
 
-            // A vida pode ficar abaixo de 0 durante o combate (game_architecture.md)
-            p2Hero.setVidaAtual(p2Hero.getVidaAtual() - damageToP2);
-            p1Hero.setVidaAtual(p1Hero.getVidaAtual() - damageToP1);
-            evaluateInstantDeathByAura();
+                // A vida pode ficar abaixo de 0 durante o combate (game_architecture.md)
+                p2Hero.setVidaAtual(p2Hero.getVidaAtual() - damageToP2);
+                p1Hero.setVidaAtual(p1Hero.getVidaAtual() - damageToP1);
+                evaluateInstantDeathByAura();
 
-            // Tira a foto do impacto do combate físico antes de ir para COMBAT_END
-            captureSnapshot(p1Hero, null, "PHYSICAL_COMBAT_EXCHANGE");
+                // Tira a foto do impacto do combate físico antes de eventuais efeitos de COMBAT / COMBAT_END
+                captureSnapshot(p1Hero, null, "PHYSICAL_COMBAT_EXCHANGE");
+            }
+
+            this.physicalCombatResolvedInCurrentTurn = true;
+            triggerPhaseEffects(TurnPhase.COMBAT);
         }
 
+        resolutionQueue.resolveAll(this);
+        if (isWaitingForPlayerChoice()) {
+            return;
+        }
+
+        this.physicalCombatResolvedInCurrentTurn = false;
         changePhase(TurnPhase.COMBAT_END);
     }
 
@@ -1872,8 +2279,11 @@ public class GameEngine {
      * 4. Final do Combate e Verificação Estrita de Morte (TurnPhase.COMBAT_END)
      */
     public void combatEnd() {
-        triggerActiveHeroesEffects(TurnPhase.COMBAT_END);
+        triggerPhaseEffects(TurnPhase.COMBAT_END);
         resolutionQueue.resolveAll(this);
+        if (isWaitingForPlayerChoice()) {
+            return;
+        }
 
         processAttachedCardsDuration();
         runCombatEndCleanup();
@@ -1884,24 +2294,7 @@ public class GameEngine {
         gameState.getPlayer1PlayedCards().clear();
         gameState.getPlayer2PlayedCards().clear();
 
-        // Regra 4 de game_architecture.md: Ao final de COMBAT_END, contabiliza se algum Herói morreu (vidaAtual <= 0)
-        evaluateHeroesDeathAndReturnToBench(player1);
-        evaluateHeroesDeathAndReturnToBench(player2);
-
-        gameState.setActiveHeroPlayer1Id(null);
-        gameState.setActiveHeroPlayer2Id(null);
-
-        checkBoardRefresh(player1);
-        checkBoardRefresh(player2);
-
-        // Foto após atualizar estaVivo = false e retornar os Heróis para a BENCH
-        captureSnapshot(null, null, "COMBAT_END_CLEANUP");
-
-        if (checkGameOver()) {
-            changePhase(TurnPhase.GAME_OVER);
-        } else {
-            changePhase(TurnPhase.DISCARD);
-        }
+        finishCombatEndCleanupAndAdvance();
     }
 
     private void refillHandToFive(Player player) {
@@ -1940,11 +2333,7 @@ public class GameEngine {
                 }
                 if (hero.getVidaAtual() <= 0) {
                     boolean wasAlive = Boolean.TRUE.equals(hero.getEstaVivo());
-                    hero.setEstaVivo(false);
-                    hero.setEstaAtivo(false);
-
-                    // Regra: Quando o personagem morre, todas as cartas anexadas a ele são descartadas!
-                    detachAllCardsFromHero(hero.getUuid(), ZoneId.DISCARD);
+                    markHeroDefeated(hero);
 
                     if (wasAlive) {
                         newlyDeadAllies++;
@@ -1960,6 +2349,15 @@ public class GameEngine {
         if (newlyDeadAllies > 0) {
             trackMissionProgress(player.getUuid(), "ALLY_HEROES_DEAD", newlyDeadAllies);
         }
+    }
+
+    private void markHeroDefeated(HeroCard hero) {
+        if (hero == null) return;
+        hero.setEstaVivo(false);
+        hero.setEstaAtivo(false);
+        // Quando um Herói é derrotado, seus anexos são descartados e seus contadores em campo são limpos
+        detachAllCardsFromHero(hero.getUuid(), ZoneId.DISCARD);
+        hero.clearCounters();
     }
 
     /**
@@ -2010,6 +2408,9 @@ public class GameEngine {
         if (this.turnPhase != TurnPhase.DISCARD) {
             throw new IllegalStateException("Ação inválida fora da fase DISCARD.");
         }
+        if (isWaitingForPlayerChoice()) {
+            throw new IllegalStateException("Não é possível confirmar o descarte enquanto há uma escolha pendente.");
+        }
 
         Player player = getValidatedParticipant(playerId);
         boolean isP1 = playerId.equals(player1.getUuid());
@@ -2054,7 +2455,12 @@ public class GameEngine {
             for (Card card : validatedCardsToDiscard) {
                 card.setZoneId(ZoneId.DISCARD);
             }
-            triggerDiscardPhaseEffects();
+            if (!this.discardPhaseEffectsTriggeredThisTurn) {
+                this.discardPhaseEffectsTriggeredThisTurn = true;
+                triggerPhaseEffects(TurnPhase.DISCARD);
+            } else if (!validatedCardsToDiscard.isEmpty()) {
+                triggerReactiveCardDiscardEffects();
+            }
             resolutionQueue.resolveAll(this);
         }
 
@@ -2066,28 +2472,20 @@ public class GameEngine {
 
         captureSnapshot(null, null, "PLAYER_DISCARD_CONFIRMED");
 
-        // Quando AMBOS confirmam o descarte, compra até 5 cartas, inverte a iniciativa e segue a partida!
-        if (this.isPlayer1Ready && this.isPlayer2Ready) {
+        // Quando AMBOS confirmam o descarte e não há escolha pendente, compra até 5 cartas, inverte a iniciativa e segue a partida!
+        if (this.isPlayer1Ready && this.isPlayer2Ready && !isWaitingForPlayerChoice()) {
             this.isPlayer1Ready = false;
             this.isPlayer2Ready = false;
             discard();
         }
     }
 
-    private void triggerDiscardPhaseEffects() {
-        List<HeroCard> allHeroes = new ArrayList<>();
-        if (player1 != null && player1.getCurrentDeck() != null && player1.getCurrentDeck().getHeroList() != null) {
-            allHeroes.addAll(player1.getCurrentDeck().getHeroList());
-        }
-        if (player2 != null && player2.getCurrentDeck() != null && player2.getCurrentDeck().getHeroList() != null) {
-            allHeroes.addAll(player2.getCurrentDeck().getHeroList());
-        }
-
-        for (HeroCard hero : allHeroes) {
-            if (hero != null && Boolean.TRUE.equals(hero.getEstaVivo()) && hero.getEffects() != null) {
+    private void triggerReactiveCardDiscardEffects() {
+        for (HeroCard hero : collectLivingHeroes()) {
+            if (hero.getEffects() != null) {
                 for (com.alkateca.lendasdapoeira.effects.Effect eff : hero.getEffects()) {
-                    if (eff.predicate(hero, TurnPhase.DISCARD)
-                            && (hero.getZoneId() == ZoneId.BATTLE || eff.canTriggerFromBench())) {
+                    if (eff instanceof com.alkateca.lendasdapoeira.effects.combat.AuraOnDiscardCardBuffAlliesEffect
+                            && eff.predicate(hero, TurnPhase.DISCARD)) {
                         resolutionQueue.enqueue(eff, hero);
                     }
                 }

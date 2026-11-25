@@ -2,6 +2,7 @@ package com.alkateca.lendasdapoeira.engine;
 
 import com.alkateca.lendasdapoeira.entity.Card;
 import com.alkateca.lendasdapoeira.entity.HeroCard;
+import com.alkateca.lendasdapoeira.enums.CounterType;
 import com.alkateca.lendasdapoeira.enums.ItemType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,5 +59,35 @@ class KeywordExtractorTest {
         // Não deve duplicar
         long count = keywords.stream().filter(k -> k.equals("INVOCAR")).count();
         org.junit.jupiter.api.Assertions.assertEquals(1, count);
+    }
+
+    @Test
+    @DisplayName("Deve extrair COMBUSTAO pela descrição da carta e pelos contadores ativos no Herói")
+    void testExtractCombustaoKeyword() {
+        Card spell = new Card();
+        spell.setCardName("Resíduo Incendiário");
+        spell.setDescricao("Afinidade Cristal\nO Herói Inimigo recebe 5 Marcadores de Combustão.");
+        assertTrue(KeywordExtractor.extract(spell).contains("COMBUSTAO"));
+
+        HeroCard heroWithCounters = new HeroCard();
+        heroWithCounters.addCounter(CounterType.COMBUSTAO, 5);
+        assertTrue(KeywordExtractor.extract(heroWithCounters).contains("COMBUSTAO"));
+    }
+
+    @Test
+    @DisplayName("Deve extrair SEDA pela descrição da carta e pelos contadores ativos sem falsos positivos")
+    void testExtractSedaKeyword() {
+        Card spell = new Card();
+        spell.setCardName("Tecelagem Protetora");
+        spell.setDescricao("Consuma todos os Marcadores de Seda: Seu Herói recebe +2 de Defesa por marcador.");
+        assertTrue(KeywordExtractor.extract(spell).contains("SEDA"));
+
+        HeroCard heroWithSeda = new HeroCard();
+        heroWithSeda.addCounter(CounterType.SEDA, 3);
+        assertTrue(KeywordExtractor.extract(heroWithSeda).contains("SEDA"));
+
+        Card unrelatedCard = new Card();
+        unrelatedCard.setDescricao("Um sedativo místico adormece o alvo.");
+        assertFalse(KeywordExtractor.extract(unrelatedCard).contains("SEDA"));
     }
 }

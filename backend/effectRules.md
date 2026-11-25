@@ -107,3 +107,14 @@ public class StartOfCombatPhysicalDamageEffect implements Effect {
     }
 }
 ```
+
+## 7. Manipulação e Consumo de Contadores em Efeitos (`CounterType`)
+Para efeitos que adicionam, removem, consomem ou consultam contadores (tokens/marcadores) em cartas/heróis, utilize obrigatoriamente os métodos centralizados do `GameEngine` (ou as implementações reutilizáveis `ModifyHeroCounterEffect` e `ConsumeCounterAndApplyEffect` apoiadas por `HeroTargetScopeResolver`):
+*   `gameEngine.addCounter(targetCard, CounterType.SEDA, amount)`
+*   `gameEngine.removeCounter(targetCard, CounterType.COMBUSTAO, amount)`
+*   `gameEngine.consumeAllCounters(targetCard, CounterType.SEDA)`
+*   `gameEngine.consumeCounters(targetCard, CounterType.SEDA, CounterConsumptionMode.CONSUME_UP_TO, maxAmount)`
+*   `gameEngine.getCounterCount(targetCard, CounterType.COMBUSTAO)`
+*   `ModifyHeroCounterEffect` suporta todas as etapas do turno (`GAME_START`, `CHOICE`, `PREPARATION`, `COMBAT_START`, `RESOLUTION`, `COMBAT`, `COMBAT_END`, `DISCARD`) tanto para Heróis quanto para cartas (`RESOLVE` e `ATTACHED`), disparo da bancada (`triggerFromBench`), múltiplos escopos simultâneos e alvos `CounterTargetScope`: `ACTIVE_ALLY_HERO`, `ACTIVE_ENEMY_HERO`, `BOTH_ACTIVE_HEROES`, `OUT_OF_COMBAT_ALLY_HEROES`, `OUT_OF_COMBAT_ENEMY_HEROES`, `ALL_OUT_OF_COMBAT_HEROES`, `ALL_ALLY_HEROES`, `ALL_ENEMY_HEROES`, `ALL_LIVING_HEROES`, `SELF_OR_ATTACHED_HERO` e escolhas interativas via `PendingChoice` (`CHOOSE_ALLY_HERO`, `CHOOSE_ENEMY_HERO`, `CHOOSE_ANY_HERO`, `CHOOSE_OUT_OF_COMBAT_ALLY_HERO`, `CHOOSE_OUT_OF_COMBAT_ENEMY_HERO`, `CHOOSE_OUT_OF_COMBAT_ANY_HERO`).
+*   `ConsumeCounterAndApplyEffect` permite que qualquer carta ou Herói consuma tokens (ex.: `CounterType.SEDA`) via `CounterConsumptionMode` (`CONSUME_ALL`, `CONSUME_UP_TO`, `CONSUME_EXACT`) e amplie efeitos compostos (`statBuffAction` para Ataque/Defesa/Espírito/Dano Bônus/Redução de Dano temporários ou permanentes, `healAction`, `damageAction` ou lambdas `CounterEffectAction`).
+*   Novas regras passivas/reativas de tokens devem implementar `com.alkateca.lendasdapoeira.counters.CounterRule` e ser registradas no `CounterRuleRegistry` sem acoplar regras específicas ao `GameEngine`.

@@ -72,7 +72,7 @@ public class EndOfCombatHealAndMagicDamagePerTwoEnemyPlayedCardsEffect implement
 
         if (enemyHero != null) {
             int rawMagicDamage = magicDamagePerPair * pairs;
-            int totalDamage = gameEngine.calculateMagicDamage(myHero, enemyHero, rawMagicDamage);
+            int totalDamage = gameEngine.calculateMagicDamage(myHero, enemyHero, rawMagicDamage, sourceCard);
             enemyHero.setVidaAtual(enemyHero.getVidaAtual() - totalDamage);
             gameEngine.evaluateInstantDeathByAura();
             System.out.println("-> " + enemyHero.getCardName() + " sofreu " + totalDamage +
