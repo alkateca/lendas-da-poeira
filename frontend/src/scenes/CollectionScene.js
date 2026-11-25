@@ -1,6 +1,16 @@
 import Phaser from 'phaser';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
 import PhantomUIKit from '../ui/PhantomUIKit.js';
+import { BOARD_LAYOUT } from '../config/BoardCoordinates.js';
+import HeroCardPrefab from '../prefabs/HeroCardPrefab.js';
+import PlayableCardPrefab from '../prefabs/PlayableCardPrefab.js';
+import {
+    preloadAllCardArts,
+    ensureCatalogLoaded,
+    resolveFullCardOrHeroData,
+    attachStandardCardPreviewToScene,
+    applyCrtPipelineToScene
+} from '../config/cardArtConfig.js';
 import { API_BASE_URL } from '../config/apiConfig.js';
 
 export default class CollectionScene extends Phaser.Scene {
@@ -26,22 +36,11 @@ export default class CollectionScene extends Phaser.Scene {
 
     preload() {
         this.load.setPath('assets');
-        if (!this.textures.exists('card_frame_hero')) {
-            this.load.svg('card_frame_hero', 'images/ui/card_frame_hero.svg', { width: 280, height: 380 });
-        }
-        if (!this.textures.exists('card_frame_playable')) {
-            this.load.svg('card_frame_playable', 'images/ui/card_frame_playable.svg', { width: 280, height: 380 });
-        }
-        if (!this.textures.exists('card_frame_item')) {
-            this.load.svg('card_frame_item', 'images/ui/card_frame_item.svg', { width: 280, height: 380 });
-        }
+        preloadAllCardArts(this);
     }
 
     create() {
-        if (this.renderer.pipelines) {
-            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
-            this.cameras.main.setPostPipeline('CRTPostFX');
-        }
+        applyCrtPipelineToScene(this, CRTPostFXPipeline);
 
         this.drawBackground();
         this.createTopBar();
@@ -50,8 +49,14 @@ export default class CollectionScene extends Phaser.Scene {
         this.gridContainer = this.add.container(0, 0);
         this.createPaginationControls();
         this.createSellConfirmationModal();
+        attachStandardCardPreviewToScene(this, PlayableCardPrefab);
 
         this.renderCollectionGrid();
+        ensureCatalogLoaded().then(() => {
+            if (this.sys && this.sys.isActive()) {
+                this.renderCollectionGrid();
+            }
+        });
     }
 
     getGoldBalance() {
@@ -188,6 +193,7 @@ export default class CollectionScene extends Phaser.Scene {
     }
 
     renderCollectionGrid() {
+        if (this.hideLargeCardPreview) this.hideLargeCardPreview();
         this.gridContainer.removeAll(true);
         const allItems = this.getOwnedEntriesList();
         const totalPages = Math.max(1, Math.ceil(allItems.length / this.itemsPerPage));
@@ -220,49 +226,70 @@ export default class CollectionScene extends Phaser.Scene {
 
     createCollectionCardTile(x, y, item) {
         const tile = this.add.container(x, y);
-        const w = 360;
-        const h = 300;
+        const cardScale = 1.24;
+        const scaledW = BOARD_LAYOUT.MEDIUM_CARD.width * cardScale;
+        const scaledH = BOARD_LAYOUT.MEDIUM_CARD.height * cardScale;
 
-        const bg = this.add.rectangle(0, 0, w, h, 0xfaf8f5, 1).setStrokeStyle(3, 0x090d16);
-        const header = this.add.rectangle(0, -h / 2 + 34, w - 6, 62, 0x090d16);
+        const fullDto = resolveFullCardOrHeroData(item.cardName, item.isHero);
+        const scaleWrapper = this.add.container(0, -28).setScale(cardScale);
 
-        const title = this.add.text(0, -h / 2 + 34, item.cardName, {
+        let cardModel;
+        if (item.isHero) {
+            cardModel = new HeroCardPrefab(
+                this,
+                0,
+                0,
+                {
+                    ...fullDto,
+                    vidaAtual: fullDto.vidaMaxima ?? fullDto.vidaAtual ?? 15,
+                    estaVivo: true,
+                    estaAtivo: true
+                },
+                false
+            );
+            cardModel.setShowFullText(true);
+            this.input.setDraggable(cardModel, false);
+        } else {
+            cardModel = new PlayableCardPrefab(
+                this,
+                0,
+                0,
+                { ...fullDto, faceUp: true },
+                false,
+                'MEDIUM',
+                0
+            );
+            cardModel.setShowFullText(true);
+        }
+
+        cardModel.on('pointerover', () => {
+            this.gridContainer.bringToTop(tile);
+        });
+
+        scaleWrapper.add(cardModel);
+
+        const qtyBadge = this.add.rectangle(0, scaledH / 2 - 8, scaledW + 24, 26, 0x090d16)
+            .setStrokeStyle(1.5, 0xffe600);
+        const qtyTxt = this.add.text(0, scaledH / 2 - 8, `NA COLEÇÃO: ${item.count}x`, {
             fontFamily: 'IoskeleyMono, monospace',
-            fontSize: '15px',
+            fontSize: '12px',
             color: '#ffe600',
-            fontStyle: 'bold',
-            align: 'center',
-            wordWrap: { width: w - 24 }
-        }).setOrigin(0.5).setResolution(2);
-
-        const typeBadge = this.add.text(0, -25, item.isHero ? '🛡️ HERÓI' : '🃏 CARTA DE COMBATE', {
-            fontFamily: 'IoskeleyMono, monospace',
-            fontSize: '14px',
-            color: '#334155',
             fontStyle: 'bold'
         }).setOrigin(0.5).setResolution(2);
 
-        const qtyBadge = this.add.rectangle(0, 25, 220, 40, 0xe6dec8).setStrokeStyle(2, 0x090d16);
-        const qtyTxt = this.add.text(0, 25, `NA COLEÇÃO: ${item.count}x`, {
-            fontFamily: 'IoskeleyMono, monospace',
-            fontSize: '16px',
-            color: '#090d16',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setResolution(2);
-
-        const sellBtnBg = this.add.rectangle(0, 100, 300, 50, 0x16a34a)
-            .setStrokeStyle(3, 0x090d16)
+        const sellBtnBg = this.add.rectangle(0, scaledH / 2 + 24, scaledW + 24, 34, 0x16a34a)
+            .setStrokeStyle(2, 0xffffff)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => this.openSellModal(item));
 
-        const sellBtnTxt = this.add.text(0, 100, '💰 VENDER CARTA', {
+        const sellBtnTxt = this.add.text(0, scaledH / 2 + 24, '💰 VENDER CARTA', {
             fontFamily: 'IoskeleyMono, monospace',
-            fontSize: '16px',
+            fontSize: '13px',
             color: '#ffffff',
             fontStyle: 'bold'
         }).setOrigin(0.5).setResolution(2);
 
-        tile.add([bg, header, title, typeBadge, qtyBadge, qtyTxt, sellBtnBg, sellBtnTxt]);
+        tile.add([scaleWrapper, qtyBadge, qtyTxt, sellBtnBg, sellBtnTxt]);
         this.gridContainer.add(tile);
     }
 

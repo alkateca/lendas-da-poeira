@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { BOARD_LAYOUT, getCardVisualTheme } from '../config/BoardCoordinates.js';
+import { resolveCardArtTextureKey, toCamelCaseKey, toSnakeCaseKey } from '../config/cardArtConfig.js';
 
 export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
     constructor(scene, x, y, cardDto, isDraggable = false, initialMode = 'COMPACT', homeAngle = 0) {
@@ -222,30 +223,16 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         return { esp, atq, def, emp, cleanDesc: rawDesc };
     }
 
+    toSnakeCaseKey(str) {
+        return toSnakeCaseKey(str);
+    }
+
     toCamelCaseKey(str) {
-        if (!str || str === 'Carta Oculta') return null;
-        const camel = str
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-zA-Z0-9 ]/g, '')
-            .split(' ')
-            .filter(Boolean)
-            .map((w, i) => i === 0 ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-            .join('');
-        const aliases = {
-            brocheDeCristal: 'brocheCristal',
-            dragaoDeCristal: 'dragaoCristal'
-        };
-        return aliases[camel] || camel;
+        return toCamelCaseKey(str);
     }
 
     resolveArtTextureKey(cardDto) {
-        if (!cardDto || cardDto.faceUp === false) return null;
-        if (cardDto.imagem && this.scene.textures.exists(cardDto.imagem)) return cardDto.imagem;
-        if (cardDto.cardName && this.scene.textures.exists(cardDto.cardName)) return cardDto.cardName;
-        const camelKey = this.toCamelCaseKey(cardDto.cardName);
-        if (camelKey && this.scene.textures.exists(camelKey)) return camelKey;
-        if (cardDto.uuid && this.scene.textures.exists(cardDto.uuid)) return cardDto.uuid;
-        return null;
+        return resolveCardArtTextureKey(this.scene, cardDto);
     }
 
     applySizeLayout(mode) {
@@ -381,7 +368,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
 
             if (this.isDraggableCard) {
                 this.applySizeLayout('MEDIUM');
-                const isAllocatedInResolve = this.scene.selectionManager.playedCardSlotMap.has(this.uuid);
+                const isAllocatedInResolve = Boolean(this.scene?.selectionManager?.playedCardSlotMap?.has(this.uuid));
                 const hoverY = isAllocatedInResolve ? this.y : (this.homePos.y - 54);
 
                 this.scene.tweens.killTweensOf(this);
@@ -407,7 +394,7 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
 
             this.clearLongHoverTimer();
             this.longHoverTimer = this.scene.time.delayedCall(160, () => {
-                if (!this.isDragging && this.isHovered) {
+                if (!this.isDragging && this.isHovered && this.scene?.showLargeCardPreview) {
                     this.scene.showLargeCardPreview(this.cardData, false);
                 }
             });
@@ -416,14 +403,14 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         this.on('pointerout', () => {
             this.isHovered = false;
             this.clearLongHoverTimer();
-            this.scene.hideLargeCardPreview();
+            this.scene?.hideLargeCardPreview?.();
             if (this.isDragging) return;
 
             this.setDepth(15);
             this.shadow.setPosition(5, 7).setFillStyle(0x090d16, 0.75);
 
             if (this.isDraggableCard) {
-                const isAllocatedInResolve = this.scene.selectionManager.playedCardSlotMap.has(this.uuid);
+                const isAllocatedInResolve = Boolean(this.scene?.selectionManager?.playedCardSlotMap?.has(this.uuid));
                 if (isAllocatedInResolve) {
                     this.applySizeLayout('MEDIUM');
                     this.scene.tweens.killTweensOf(this);
@@ -466,8 +453,8 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
         this.on('dragstart', () => {
             this.isHovered = false;
             this.clearLongHoverTimer();
-            this.scene.hideLargeCardPreview();
-            if (!this.scene.canDragHandCard()) return;
+            this.scene?.hideLargeCardPreview?.();
+            if (!this.scene?.canDragHandCard?.()) return;
             this.isDragging = true;
             this.dragStartPos = { x: this.x, y: this.y };
             this.prevDragX = this.x;
@@ -476,30 +463,30 @@ export default class PlayableCardPrefab extends Phaser.GameObjects.Container {
             this.setAngle(0);
             this.setScale(1.08);
             this.setDepth(130);
-            this.scene.highlightValidDropZonesForHandCard(true);
+            this.scene?.highlightValidDropZonesForHandCard?.(true);
         });
 
         this.on('drag', (pointer, dragX, dragY) => {
-            if (!this.scene.canDragHandCard()) return;
+            if (!this.scene?.canDragHandCard?.()) return;
             const vx = dragX - this.prevDragX;
             this.prevDragX = dragX;
             this.setAngle(Phaser.Math.Clamp(vx * 0.75, -16, 16));
             this.x = dragX;
             this.y = dragY;
-            this.scene.checkMagneticHoverOnSlots(this);
+            this.scene?.checkMagneticHoverOnSlots?.(this);
         });
 
         this.on('dragend', () => {
-            if (!this.scene.canDragHandCard()) return;
+            if (!this.scene?.canDragHandCard?.()) return;
             this.isDragging = false;
             this.shadow.setPosition(5, 7).setFillStyle(0x090d16, 0.75);
-            this.scene.highlightValidDropZonesForHandCard(false);
+            this.scene?.highlightValidDropZonesForHandCard?.(false);
 
             const dragDist = Phaser.Math.Distance.Between(this.dragStartPos.x, this.dragStartPos.y, this.x, this.y);
             if (dragDist < 12) {
-                this.scene.handleHandCardClickSnap(this);
+                this.scene?.handleHandCardClickSnap?.(this);
             } else {
-                this.scene.handleHandCardDrop(this);
+                this.scene?.handleHandCardDrop?.(this);
             }
         });
     }

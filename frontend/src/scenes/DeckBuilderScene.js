@@ -7,6 +7,7 @@ import HeroCardPrefab from '../prefabs/HeroCardPrefab.js';
 import PlayableCardPrefab from '../prefabs/PlayableCardPrefab.js';
 import { formatCardDescriptionWithKeywords } from '../config/keywordsConfig.js';
 import { API_BASE_URL } from '../config/apiConfig.js';
+import { preloadAllCardArts, resolveCardArtTextureKey, applyCrtPipelineToScene } from '../config/cardArtConfig.js';
 
 export default class DeckBuilderScene extends Phaser.Scene {
     constructor() {
@@ -85,70 +86,11 @@ export default class DeckBuilderScene extends Phaser.Scene {
             this.load.svg('ui_arena_crt_radar', 'images/ui/arena_crt_radar.svg', { width: 800, height: 800 });
         }
 
-        const cardKeys = [
-            'ataqueMagico', 'atmosferaPesada', 'autoDefesaMagica', 'banir', 'barreiraDeGelo',
-            'bolaDeFogo', 'brocheCristal', 'convocacao', 'determinacaoCristalina', 'dragaoCristal',
-            'dragast', 'estatica', 'exumacao', 'fragmentoAfiado', 'garraEspectral',
-            'golpesPesados', 'grandeMachadoSombrio', 'homunculoCarniceiro', 'laminaDeCristal',
-            'maestriaComChamas', 'massacreCristalino', 'mirarNaCabeca', 'paraRaios', 'pontoFinal',
-            'quebra', 'quimera', 'quimeraNegra', 'racaoDeEmergencia', 'rapieiraDeCristal',
-            'risadaSarcastica', 'ritosFunebres', 'tristeza', 'vendavalArcano'
-        ];
-        cardKeys.forEach(key => {
-            if (!this.textures.exists(key)) {
-                this.load.image(key, `images/cartas/${key}.png`);
-            }
-        });
-
-        const cardArtFiles = {
-            'Ataque Mágico': 'ataqueMagico.png',
-            'Atmosfera Pesada': 'atmosferaPesada.png',
-            'Auto Defesa Magica': 'autoDefesaMagica.png',
-            'Banir!': 'banir.png',
-            'Barreira de Gelo': 'barreiraDeGelo.png',
-            'Bola de fogo': 'bolaDeFogo.png',
-            'Bola de Fogo': 'bolaDeFogo.png',
-            'Broche de Cristal': 'brocheCristal.png',
-            'Convocação': 'convocacao.png',
-            'Determinação Cristalina': 'determinacaoCristalina.png',
-            'Dragão de Cristal': 'dragaoCristal.png',
-            'Dragast': 'dragast.png',
-            'Estatica': 'estatica.png',
-            'Exumação': 'exumacao.png',
-            'Fragmento Afiado': 'fragmentoAfiado.png',
-            'Garra espectral': 'garraEspectral.png',
-            'Golpes Pesados': 'golpesPesados.png',
-            'Grande Machado Sombrio': 'grandeMachadoSombrio.png',
-            'Homunculo Carniceiro': 'homunculoCarniceiro.png',
-            'Lamina de Cristal': 'laminaDeCristal.png',
-            'Maestria com Chamas': 'maestriaComChamas.png',
-            'Massacre Cristalino': 'massacreCristalino.png',
-            'Mirar na cabeça': 'mirarNaCabeca.png',
-            'Para-raios': 'paraRaios.png',
-            'Ponto Final': 'pontoFinal.png',
-            'Quebra!': 'quebra.png',
-            'Quimera': 'quimera.png',
-            'Quimera Negra': 'quimeraNegra.png',
-            'Ração de emergencia': 'racaoDeEmergencia.png',
-            'Rapieira de Cristal': 'rapieiraDeCristal.png',
-            'Risada Sarcástica': 'risadaSarcastica.png',
-            'Ritos Fúnebres': 'ritosFunebres.png',
-            'Tristeza': 'tristeza.png',
-            'Vendaval Arcano': 'vendavalArcano.png'
-        };
-
-        Object.entries(cardArtFiles).forEach(([cardName, fileName]) => {
-            if (!this.textures.exists(cardName)) {
-                this.load.image(cardName, `images/cartas/${fileName}`);
-            }
-        });
+        preloadAllCardArts(this);
     }
 
     async create() {
-        if (this.renderer.pipelines) {
-            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
-            this.cameras.main.setPostPipeline('CRTPostFX');
-        }
+        applyCrtPipelineToScene(this, CRTPostFXPipeline);
 
         this.drawBackgroundAndFrames();
         this.createTopBar();
@@ -742,6 +684,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 };
 
                 const heroPrefab = new HeroCardPrefab(this, 0, 0, heroDto, false);
+                heroPrefab.setShowFullText(true);
                 this.input.setDraggable(heroPrefab, false);
 
                 heroPrefab.on('pointerover', () => {
@@ -949,6 +892,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 estaAtivo: true
             };
             cardModel = new HeroCardPrefab(this, 0, 0, heroDto, false);
+            cardModel.setShowFullText(true);
             this.input.setDraggable(cardModel, false);
         } else {
             cardModel = new PlayableCardPrefab(
@@ -1055,11 +999,18 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 .on('pointerout', () => this.cancelLongHover());
 
             const colorStripe = this.add.rectangle(4, y, 6, 32, colorHex);
+            const artKey = resolveCardArtTextureKey(this, card);
+            const thumbSprite = artKey
+                ? this.add.image(24, y, artKey).setDisplaySize(26, 26)
+                : null;
+            if (thumbSprite) {
+                thumbSprite.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+            }
             const ownedMax = this.player?.ownedCards?.[card.cardName] ?? (card.unica ? 1 : 3);
             const effectiveMax = Math.min(card.unica ? 1 : 3, ownedMax);
             const uniqueSuffix = card.unica ? ' [ÚNICA]' : '';
-            const txt = this.add.text(16, y, `${count}/${effectiveMax}x  •  ${card.cardName}${uniqueSuffix}`, {
-                fontSize: '12.5px', color: card.unica ? '#fde047' : '#ffffff', fontStyle: 'bold'
+            const txt = this.add.text(44, y, `${count}/${effectiveMax}x  •  ${card.cardName}${uniqueSuffix}`, {
+                fontSize: '12px', color: card.unica ? '#fde047' : '#ffffff', fontStyle: 'bold'
             }).setOrigin(0, 0.5);
 
             const removeBtn = this.add.text(452, y, '[ - ]', {
@@ -1074,7 +1025,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 }
             });
 
-            this.deckListContainer.add([rowBg, colorStripe, txt, removeBtn]);
+            this.deckListContainer.add([rowBg, colorStripe, ...(thumbSprite ? [thumbSprite] : []), txt, removeBtn]);
             rowIdx++;
         });
 
@@ -1522,12 +1473,7 @@ export default class DeckBuilderScene extends Phaser.Scene {
                 .setText(formatCardDescriptionWithKeywords(cardOrHeroDto.descricao || ''));
         }
 
-        const camelKey = PlayableCardPrefab.prototype.toCamelCaseKey(cardOrHeroDto.cardName);
-        const artKey = (cardOrHeroDto.imagem && this.textures.exists(cardOrHeroDto.imagem))
-            ? cardOrHeroDto.imagem
-            : (this.textures.exists(cardOrHeroDto.cardName)
-                ? cardOrHeroDto.cardName
-                : (camelKey && this.textures.exists(camelKey) ? camelKey : null));
+        const artKey = resolveCardArtTextureKey(this, cardOrHeroDto);
 
         if (artKey) {
             if (!this.lpArtSprite) {

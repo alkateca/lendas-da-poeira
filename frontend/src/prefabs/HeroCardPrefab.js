@@ -4,6 +4,7 @@ import PlayableCardPrefab from './PlayableCardPrefab.js';
 import CounterCardPrefab from './CounterCardPrefab.js';
 import { resolveCardKeywords, formatCardDescriptionWithKeywords } from '../config/keywordsConfig.js';
 import { normalizeCountersList, computeCounterLayoutPositions, resolveCounterVisualMeta } from '../config/counterConfig.js';
+import { resolveCardArtTextureKey } from '../config/cardArtConfig.js';
 
 export default class HeroCardPrefab extends Phaser.GameObjects.Container {
     constructor(scene, x, y, heroDto, isOpponent) {
@@ -18,6 +19,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.isDragging = false;
         this.isHovered = false;
         this.longHoverTimer = null;
+        this.showFullText = false;
 
         const { width, height } = BOARD_LAYOUT.MEDIUM_CARD; // 140 x 190
         this.cardW = width;
@@ -190,13 +192,15 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
     }
 
     resolveHeroArtKey(heroDto) {
-        if (!heroDto) return null;
-        if (heroDto.imagem && this.scene.textures.exists(heroDto.imagem)) return heroDto.imagem;
-        if (heroDto.cardName && this.scene.textures.exists(heroDto.cardName)) return heroDto.cardName;
-        const camelKey = PlayableCardPrefab.prototype.toCamelCaseKey(heroDto.cardName);
-        if (camelKey && this.scene.textures.exists(camelKey)) return camelKey;
-        if (heroDto.uuid && this.scene.textures.exists(heroDto.uuid)) return heroDto.uuid;
-        return null;
+        return resolveCardArtTextureKey(this.scene, heroDto);
+    }
+
+    setShowFullText(show) {
+        this.showFullText = Boolean(show);
+        if (this.heroData) {
+            this.traitsText.setText(this.formatHeroTraits(this.heroData)).setVisible(this.showFullText);
+            this.descText.setText(formatCardDescriptionWithKeywords(this.heroData.descricao || '')).setVisible(this.showFullText);
+        }
     }
 
     formatHeroTraits(heroDto) {
@@ -263,7 +267,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
 
             this.clearLongHoverTimer();
             this.longHoverTimer = this.scene.time.delayedCall(180, () => {
-                if (!this.isDragging && this.isHovered) {
+                if (!this.isDragging && this.isHovered && this.scene?.showLargeCardPreview) {
                     this.scene.showLargeCardPreview(this.heroData, true);
                 }
             });
@@ -272,7 +276,7 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.on('pointerout', () => {
             this.isHovered = false;
             this.clearLongHoverTimer();
-            this.scene.hideLargeCardPreview();
+            this.scene?.hideLargeCardPreview?.();
             if (!this.isDragging) {
                 this.setDepth(10);
                 const posture = this.getTargetPosture();
@@ -290,8 +294,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         this.on('dragstart', () => {
             this.isHovered = false;
             this.clearLongHoverTimer();
-            this.scene.hideLargeCardPreview();
-            if (!this.scene.canDragHero(this)) return;
+            this.scene?.hideLargeCardPreview?.();
+            if (!this.scene?.canDragHero?.(this)) return;
             this.isDragging = true;
             this.dragStartPos = { x: this.x, y: this.y };
             this.prevDragX = this.x;
@@ -299,29 +303,29 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
             this.setAngle(0);
             this.setScale(1.14);
             this.setDepth(100);
-            this.scene.highlightTargetBattleSlot(this.isOpponent, true);
+            this.scene?.highlightTargetBattleSlot?.(this.isOpponent, true);
         });
 
         this.on('drag', (pointer, dragX, dragY) => {
-            if (!this.scene.canDragHero(this)) return;
+            if (!this.scene?.canDragHero?.(this)) return;
             const vx = dragX - this.prevDragX;
             this.prevDragX = dragX;
             this.setAngle(Phaser.Math.Clamp(vx * 0.5, -10, 10));
             this.x = dragX;
             this.y = dragY;
-            this.scene.checkMagneticHoverOnBattleSlot(this);
+            this.scene?.checkMagneticHoverOnBattleSlot?.(this);
         });
 
         this.on('dragend', () => {
-            if (!this.scene.canDragHero(this)) return;
+            if (!this.scene?.canDragHero?.(this)) return;
             this.isDragging = false;
-            this.scene.highlightTargetBattleSlot(this.isOpponent, false);
+            this.scene?.highlightTargetBattleSlot?.(this.isOpponent, false);
 
             const dragDist = Phaser.Math.Distance.Between(this.dragStartPos.x, this.dragStartPos.y, this.x, this.y);
             if (dragDist < 12) {
-                this.scene.handleHeroClickSnap(this);
+                this.scene?.handleHeroClickSnap?.(this);
             } else {
-                this.scene.handleHeroDrop(this);
+                this.scene?.handleHeroDrop?.(this);
             }
         });
     }
@@ -390,8 +394,8 @@ export default class HeroCardPrefab extends Phaser.GameObjects.Container {
         }
 
         this.nameText.setText(newHeroDto.cardName);
-        this.traitsText.setVisible(false);
-        this.descText.setVisible(false);
+        this.traitsText.setText(this.formatHeroTraits(newHeroDto)).setVisible(Boolean(this.showFullText));
+        this.descText.setText(formatCardDescriptionWithKeywords(newHeroDto.descricao || '')).setVisible(Boolean(this.showFullText));
         this.modBonusText.setVisible(false);
         this.modReducaoText.setVisible(false);
         this.modVulnText.setVisible(false);

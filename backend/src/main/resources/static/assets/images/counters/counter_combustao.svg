@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="#ffffff" stroke="#000000" stroke-width="3.5" />
+  <g fill="#ffffff" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Fragmento maior esquerdo -->
+    <polygon points="23,16 33,18 36,28 28,36 17,34 14,24" />
+    <polyline points="23,16 26,26 36,28" fill="none" stroke-width="2" />
+    <line x1="26" y1="26" x2="17" y2="34" stroke-width="2" />
+    <!-- Fragmento médio superior direito -->
+    <polygon points="44,13 52,17 51,27 43,28 39,21" />
+    <polyline points="44,13 45,21 51,27" fill="none" stroke-width="2" />
+    <!-- Fragmento médio inferior direito -->
+    <polygon points="40,33 50,36 52,45 43,51 34,47 34,38" />
+    <polyline points="40,33 42,42 52,45" fill="none" stroke-width="2" />
+    <line x1="42" y1="42" x2="34" y2="47" stroke-width="2" />
+    <!-- Fragmento pequeno inferior esquerdo -->
+    <polygon points="20,40 28,42 29,50 21,52 15,47" />
+    <line x1="20" y1="40" x2="23" y2="47" stroke-width="2" />
+  </g>
+</svg>

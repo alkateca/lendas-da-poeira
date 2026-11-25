@@ -19,7 +19,8 @@
     "keywords": [
       "EMPUNHADURA",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "quimera.png"
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000002",
@@ -38,7 +39,8 @@
     "classe": [],
     "afinidades": [],
     "unica": false,
-    "keywords": []
+    "keywords": [],
+    "imagem": "broche_de_cristal.png"
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000003",
@@ -59,7 +61,8 @@
     "unica": false,
     "keywords": [
       "EMPUNHADURA"
-    ]
+    ],
+    "imagem": "lamina_de_cristal.png"
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000004",
@@ -82,7 +85,8 @@
     "keywords": [
       "FINAL_DO_COMBATE",
       "DANO_MAGICO"
-    ]
+    ],
+    "imagem": "dragao_de_cristal.png"
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000005",
@@ -104,7 +108,8 @@
     "keywords": [
       "FINAL_DO_COMBATE",
       "DANO_DIRETO"
-    ]
+    ],
+    "imagem": "homunculo_carniceiro.png"
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000006",
@@ -126,7 +131,8 @@
     "keywords": [
       "EMPUNHADURA",
       "INICIO_DO_COMBATE"
-    ]
+    ],
+    "imagem": "quimera_negra.png"
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000007",
@@ -148,7 +154,8 @@
     "keywords": [
       "EMPUNHADURA",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "dragast.png"
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000008",
@@ -169,7 +176,8 @@
     "unica": false,
     "keywords": [
       "EMPUNHADURA"
-    ]
+    ],
+    "imagem": "fragmento_afiado.png"
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000009",
@@ -192,7 +200,8 @@
       "EMPUNHADURA",
       "FINAL_DO_COMBATE",
       "DANO_MAGICO"
-    ]
+    ],
+    "imagem": "rapieira_de_cristal.png"
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000010",
@@ -215,7 +224,8 @@
       "FINAL_DO_COMBATE",
       "DANO_MAGICO",
       "DANO_FISICO"
-    ]
+    ],
+    "imagem": "garra_espectral.png"
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000011",
@@ -236,7 +246,8 @@
       "EMPUNHADURA",
       "AO_EQUIPAR",
       "VULNERABILIDADE"
-    ]
+    ],
+    "imagem": "machado_de_gelo.png"
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000012",
@@ -257,7 +268,8 @@
       "EMPUNHADURA",
       "AO_EQUIPAR",
       "VULNERABILIDADE"
-    ]
+    ],
+    "imagem": "grande_machado_sombrio.png"
   },
   {
     "uuid": "20000000-0000-0000-0000-000000000013",
@@ -279,7 +291,8 @@
     "keywords": [
       "EMPUNHADURA",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "artefato_cortante.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000001",
@@ -300,7 +313,8 @@
     "unica": false,
     "keywords": [
       "DANO_MAGICO"
-    ]
+    ],
+    "imagem": "bola_de_fogo.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000002",
@@ -322,7 +336,8 @@
     "keywords": [
       "INVOCAR",
       "EXILAR"
-    ]
+    ],
+    "imagem": "maestria_com_chamas.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000003",
@@ -344,7 +359,8 @@
     "keywords": [
       "DANO_MAGICO",
       "INVOCAR"
-    ]
+    ],
+    "imagem": "estatica.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000004",
@@ -366,7 +382,8 @@
     "keywords": [
       "FINAL_DO_COMBATE",
       "INVOCAR"
-    ]
+    ],
+    "imagem": "para_raios.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000005",
@@ -387,7 +404,8 @@
       "Ar"
     ],
     "unica": false,
-    "keywords": []
+    "keywords": [],
+    "imagem": "atmosfera_pesada.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000006",
@@ -406,7 +424,8 @@
       "Ar"
     ],
     "unica": false,
-    "keywords": []
+    "keywords": [],
+    "imagem": "vendaval_arcano.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000007",
@@ -425,7 +444,8 @@
       "Agua"
     ],
     "unica": false,
-    "keywords": []
+    "keywords": [],
+    "imagem": "quebra.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000008",
@@ -446,7 +466,8 @@
     "unica": false,
     "keywords": [
       "AO_EQUIPAR"
-    ]
+    ],
+    "imagem": "barreira_de_gelo.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000009",
@@ -467,7 +488,8 @@
     "unica": false,
     "keywords": [
       "VULNERABILIDADE"
-    ]
+    ],
+    "imagem": "mordida_glacial.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000010",
@@ -490,7 +512,8 @@
     "unica": false,
     "keywords": [
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "contra_ataque.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000011",
@@ -511,7 +534,8 @@
     "unica": false,
     "keywords": [
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "ataque_magico.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000012",
@@ -532,7 +556,8 @@
     "unica": false,
     "keywords": [
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "golpes_pesados.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000013",
@@ -556,7 +581,8 @@
     "keywords": [
       "INICIO_DO_COMBATE",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "massacre_cristalino.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000014",
@@ -575,7 +601,8 @@
       "Cristal"
     ],
     "unica": false,
-    "keywords": []
+    "keywords": [],
+    "imagem": "ponto_final.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000015",
@@ -596,7 +623,8 @@
     "unica": false,
     "keywords": [
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "auto_defesa_magica.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000016",
@@ -616,7 +644,8 @@
     "keywords": [
       "DANO_MAGICO",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "risada_sarcastica.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000017",
@@ -638,7 +667,8 @@
     "keywords": [
       "AO_EQUIPAR",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "alma_em_chamas.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000018",
@@ -659,7 +689,8 @@
     "unica": false,
     "keywords": [
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "fortaleca_sua_fe.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000019",
@@ -680,7 +711,8 @@
     "unica": false,
     "keywords": [
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "saque_rapido.png"
   },
   {
     "uuid": "30000000-0000-0000-0000-000000000020",
@@ -701,7 +733,8 @@
     "unica": false,
     "keywords": [
       "DANO_DIRETO"
-    ]
+    ],
+    "imagem": "disciplina.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000001",
@@ -718,7 +751,8 @@
     "classe": [],
     "afinidades": [],
     "unica": false,
-    "keywords": []
+    "keywords": [],
+    "imagem": "racao_de_emergencia.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000002",
@@ -740,7 +774,8 @@
     "unica": false,
     "keywords": [
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "determinacao_cristalina.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000003",
@@ -759,7 +794,8 @@
     "unica": false,
     "keywords": [
       "ATIVO"
-    ]
+    ],
+    "imagem": "convocacao.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000004",
@@ -778,7 +814,8 @@
     "unica": false,
     "keywords": [
       "DANO_DIRETO"
-    ]
+    ],
+    "imagem": "mirar_na_cabeca.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000005",
@@ -799,7 +836,8 @@
     "unica": false,
     "keywords": [
       "MORTO"
-    ]
+    ],
+    "imagem": "ritos_funebres.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000006",
@@ -818,7 +856,8 @@
     "classe": [],
     "afinidades": [],
     "unica": false,
-    "keywords": []
+    "keywords": [],
+    "imagem": "exumacao.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000007",
@@ -837,7 +876,8 @@
     "unica": false,
     "keywords": [
       "PRIORIDADE"
-    ]
+    ],
+    "imagem": "banir.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000008",
@@ -859,7 +899,8 @@
     "keywords": [
       "DANO_BONUS",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "impulso_de_poder.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000009",
@@ -878,7 +919,8 @@
     "unica": false,
     "keywords": [
       "EXILAR"
-    ]
+    ],
+    "imagem": "tristeza.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000010",
@@ -897,7 +939,8 @@
     "unica": false,
     "keywords": [
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "luz_da_lua.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000011",
@@ -918,7 +961,8 @@
     "unica": false,
     "keywords": [
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "ordem_divina.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000012",
@@ -937,7 +981,8 @@
     "unica": false,
     "keywords": [
       "EMPUNHADURA"
-    ]
+    ],
+    "imagem": "sica.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000013",
@@ -956,7 +1001,8 @@
     "unica": false,
     "keywords": [
       "EMPUNHADURA"
-    ]
+    ],
+    "imagem": "sino_do_cacador.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000014",
@@ -975,7 +1021,8 @@
     "unica": false,
     "keywords": [
       "EMPUNHADURA"
-    ]
+    ],
+    "imagem": "arpao_terrestre.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000015",
@@ -992,7 +1039,8 @@
     "classe": [],
     "afinidades": [],
     "unica": false,
-    "keywords": []
+    "keywords": [],
+    "imagem": "bomba_de_fumaca.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000016",
@@ -1009,7 +1057,8 @@
     "classe": [],
     "afinidades": [],
     "unica": false,
-    "keywords": []
+    "keywords": [],
+    "imagem": "tesouro_cristalino_dos_cacadores.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000017",
@@ -1026,7 +1075,8 @@
     "classe": [],
     "afinidades": [],
     "unica": false,
-    "keywords": []
+    "keywords": [],
+    "imagem": "afie_suas_laminas.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000018",
@@ -1045,7 +1095,8 @@
     "unica": false,
     "keywords": [
       "EMPUNHADURA"
-    ]
+    ],
+    "imagem": "estilo_secreto_do_cacador.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000019",
@@ -1064,7 +1115,8 @@
     "unica": false,
     "keywords": [
       "DANO_FISICO"
-    ]
+    ],
+    "imagem": "corte_seus_pescocos.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000020",
@@ -1081,7 +1133,8 @@
     "classe": [],
     "afinidades": [],
     "unica": false,
-    "keywords": []
+    "keywords": [],
+    "imagem": "peitoral_de_brasas.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000021",
@@ -1098,7 +1151,8 @@
     "classe": [],
     "afinidades": [],
     "unica": false,
-    "keywords": []
+    "keywords": [],
+    "imagem": "escudo_ardente.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000022",
@@ -1119,7 +1173,8 @@
     "unica": false,
     "keywords": [
       "DANO_MAGICO"
-    ]
+    ],
+    "imagem": "muralha_de_fogo.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000023",
@@ -1138,7 +1193,8 @@
       "Fogo"
     ],
     "unica": false,
-    "keywords": []
+    "keywords": [],
+    "imagem": "cauterizar.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000024",
@@ -1158,7 +1214,8 @@
     "keywords": [
       "FINAL_DO_COMBATE",
       "EXILAR"
-    ]
+    ],
+    "imagem": "estrela_do_amanha.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000025",
@@ -1178,7 +1235,8 @@
     "keywords": [
       "EMPUNHADURA",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "espada_do_carrasco.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000026",
@@ -1198,7 +1256,8 @@
     "keywords": [
       "DANO_DIRETO",
       "ATIVO"
-    ]
+    ],
+    "imagem": "seguindo_ordens.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000027",
@@ -1217,7 +1276,8 @@
     "unica": false,
     "keywords": [
       "FERIDO"
-    ]
+    ],
+    "imagem": "grilhoes_pesados.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000028",
@@ -1237,7 +1297,8 @@
     "keywords": [
       "INICIO_DO_COMBATE",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "manoplas_do_necromante.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000029",
@@ -1258,7 +1319,8 @@
       "DANO_FISICO",
       "FERIDO",
       "DANO_DIRETO"
-    ]
+    ],
+    "imagem": "cheiro_de_sangue.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000030",
@@ -1279,7 +1341,8 @@
       "FERIDO",
       "DANO_DIRETO",
       "VULNERABILIDADE"
-    ]
+    ],
+    "imagem": "arrastar_para_o_cadafalso.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000031",
@@ -1299,7 +1362,8 @@
     "keywords": [
       "FERIDO",
       "DANO_DIRETO"
-    ]
+    ],
+    "imagem": "colheita_dos_condenados.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000032",
@@ -1320,7 +1384,8 @@
       "FERIDO",
       "VULNERABILIDADE",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "sentenca_da_guilhotina.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000033",
@@ -1342,7 +1407,8 @@
       "INICIO_DO_COMBATE",
       "FERIDO",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "cutelo_do_suplicio.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000034",
@@ -1366,7 +1432,8 @@
       "FASE",
       "DANO_DIRETO",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "edito_contra_a_ganancia.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000035",
@@ -1389,7 +1456,8 @@
       "FINAL_DO_COMBATE",
       "DANO_MAGICO",
       "INVOCAR"
-    ]
+    ],
+    "imagem": "retribuicao_dogmatica.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000036",
@@ -1411,7 +1479,8 @@
     "keywords": [
       "DANO_BONUS",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "interdito_sagrado.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000037",
@@ -1435,7 +1504,8 @@
       "DANO_FISICO",
       "DANO_MAGICO",
       "VULNERABILIDADE"
-    ]
+    ],
+    "imagem": "selo_da_confissao.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000038",
@@ -1458,7 +1528,8 @@
       "EMPUNHADURA",
       "INICIO_DO_COMBATE",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "cetro_do_julgamento_perpetuo.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000039",
@@ -1474,7 +1545,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "bolsa_de_armadilhas_do_mestre_cacador.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000040",
@@ -1490,7 +1562,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "rede_de_contencao_de_feras.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000041",
@@ -1506,7 +1579,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "escamas_do_dragao_eterno.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000042",
@@ -1522,7 +1596,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "bastao_do_monge_incandescente.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000043",
@@ -1540,7 +1615,8 @@
     "afinidades": [
       "Fogo"
     ],
-    "unica": false
+    "unica": false,
+    "imagem": "fogo_purificador.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000044",
@@ -1556,7 +1632,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "meditacao_das_cinzas.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000045",
@@ -1572,7 +1649,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "incensario_purificador.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000046",
@@ -1590,7 +1668,8 @@
     "afinidades": [
       "Fogo"
     ],
-    "unica": false
+    "unica": false,
+    "imagem": "manto_das_brasas_vivas.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000047",
@@ -1608,7 +1687,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "baluarte_de_espelhos_do_dragao.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000048",
@@ -1626,7 +1706,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "placas_de_cristal_draconiano.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000049",
@@ -1646,7 +1727,8 @@
     "afinidades": [
       "Cristal"
     ],
-    "unica": false
+    "unica": false,
+    "imagem": "voto_dos_cavaleiros_caidos.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000050",
@@ -1664,7 +1746,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "coracao_de_cristal_puro.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000051",
@@ -1684,7 +1767,8 @@
     "afinidades": [
       "Cristal"
     ],
-    "unica": false
+    "unica": false,
+    "imagem": "danca_das_mil_laminas.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000052",
@@ -1702,7 +1786,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "filacteria_das_areias_negras.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000053",
@@ -1722,7 +1807,8 @@
     "afinidades": [
       "Ar"
     ],
-    "unica": false
+    "unica": false,
+    "imagem": "peste_das_areias_negras.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000054",
@@ -1740,7 +1826,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "amuleto_de_ossos_da_fabrica.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000055",
@@ -1758,7 +1845,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "pilhagem_de_cadaveres.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000056",
@@ -1774,7 +1862,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "manto_de_ferro_do_algoz.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000057",
@@ -1790,7 +1879,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "correntes_do_cadafalso.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000058",
@@ -1808,7 +1898,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "decreto_de_excomunhao.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000059",
@@ -1826,7 +1917,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "liturgia_da_balanca.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000060",
@@ -1844,7 +1936,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "tomo_das_sentencas_antigas.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000061",
@@ -1862,7 +1955,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "bencao_do_rei_imovel.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000062",
@@ -1880,7 +1974,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "veredito_inquisitorial.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000063",
@@ -1898,7 +1993,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "alabarda_cerimonial_do_trono.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000064",
@@ -1916,7 +2012,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "glaive_da_guarda_eterna.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000065",
@@ -1934,7 +2031,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "manto_cerimonial_do_trono.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000066",
@@ -1952,7 +2050,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "fervor_penitencial.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000067",
@@ -1970,7 +2069,8 @@
     ],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "escudo_da_devocao_cega.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000068",
@@ -1986,7 +2086,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "baluarte_da_tundra_ancestral.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000069",
@@ -2002,7 +2103,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "couraca_da_tundra_profunda.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000070",
@@ -2020,7 +2122,8 @@
     "afinidades": [
       "Agua"
     ],
-    "unica": false
+    "unica": false,
+    "imagem": "uivo_da_matilha_gelida.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000071",
@@ -2036,7 +2139,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "chamado_do_domador.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000072",
@@ -2052,7 +2156,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "garras_congeladas.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000073",
@@ -2070,7 +2175,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "nucleo_de_invencoes_do_rei_goblin.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000074",
@@ -2088,7 +2194,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "bateria_de_cristal_de_poeira.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000075",
@@ -2106,7 +2213,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "chave_mecanica_de_precisao.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000076",
@@ -2124,7 +2232,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "engrenagem_de_ressonancia.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000077",
@@ -2144,7 +2253,8 @@
     "afinidades": [
       "Ar"
     ],
-    "unica": false
+    "unica": false,
+    "imagem": "descarga_de_poeira_eletrica.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000078",
@@ -2164,7 +2274,8 @@
     "afinidades": [
       "Ar"
     ],
-    "unica": false
+    "unica": false,
+    "imagem": "circuito_de_sobrecarga.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000079",
@@ -2184,7 +2295,8 @@
     "afinidades": [
       "Cristal"
     ],
-    "unica": false
+    "unica": false,
+    "imagem": "campo_de_forca_de_cristal.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000080",
@@ -2202,7 +2314,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "engenharia_rapida.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000081",
@@ -2220,7 +2333,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "recalibracao_de_energia.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000082",
@@ -2238,7 +2352,8 @@
     "ordem": [],
     "classe": [],
     "afinidades": [],
-    "unica": false
+    "unica": false,
+    "imagem": "conferencia_dos_sabios_goblins.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000083",
@@ -2259,7 +2374,8 @@
       "EMPUNHADURA",
       "AO_EQUIPAR",
       "INICIO_DO_COMBATE"
-    ]
+    ],
+    "imagem": "martelo_bigorna.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000084",
@@ -2279,7 +2395,8 @@
     "keywords": [
       "AO_EQUIPAR",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "escudo_improvisado.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000085",
@@ -2298,7 +2415,8 @@
     "unica": false,
     "keywords": [
       "AO_EQUIPAR"
-    ]
+    ],
+    "imagem": "broquel_explosivo.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000086",
@@ -2317,7 +2435,8 @@
     "unica": false,
     "keywords": [
       "AO_EQUIPAR"
-    ]
+    ],
+    "imagem": "armadura_antichamas.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000087",
@@ -2338,7 +2457,8 @@
     "unica": false,
     "keywords": [
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "polir_o_armamento.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000088",
@@ -2360,7 +2480,8 @@
     "keywords": [
       "FINAL_DO_COMBATE",
       "INICIO_DO_COMBATE"
-    ]
+    ],
+    "imagem": "nao_apresse_um_artista.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000089",
@@ -2377,7 +2498,8 @@
     "classe": [],
     "afinidades": [],
     "unica": false,
-    "keywords": []
+    "keywords": [],
+    "imagem": "coracao_da_forja.png"
   },
   {
     "uuid": "40000000-0000-0000-0000-000000000090",
@@ -2398,6 +2520,7 @@
     "unica": false,
     "keywords": [
       "COMBUSTAO"
-    ]
+    ],
+    "imagem": "residuo_incendiario.png"
   }
 ]

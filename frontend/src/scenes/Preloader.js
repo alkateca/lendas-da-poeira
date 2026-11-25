@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
+import { preloadAllCardArts } from '../config/cardArtConfig.js';
 
 export class Preloader extends Scene
 {
@@ -55,62 +56,7 @@ export class Preloader extends Scene
             }
         });
 
-        const cardKeys = [
-            'ataqueMagico', 'atmosferaPesada', 'autoDefesaMagica', 'banir', 'barreiraDeGelo',
-            'bolaDeFogo', 'brocheCristal', 'convocacao', 'determinacaoCristalina', 'dragaoCristal',
-            'dragast', 'estatica', 'exumacao', 'fragmentoAfiado', 'garraEspectral',
-            'golpesPesados', 'grandeMachadoSombrio', 'homunculoCarniceiro', 'laminaDeCristal',
-            'maestriaComChamas', 'massacreCristalino', 'mirarNaCabeca', 'paraRaios', 'pontoFinal',
-            'quebra', 'quimera', 'quimeraNegra', 'racaoDeEmergencia', 'rapieiraDeCristal',
-            'risadaSarcastica', 'ritosFunebres', 'tristeza', 'vendavalArcano'
-        ];
-        cardKeys.forEach(key => {
-            if (!this.textures.exists(key)) {
-                this.load.image(key, `images/cartas/${key}.png`);
-            }
-        });
-
-        const cardArtFiles = {
-            'Ataque Mágico': 'ataqueMagico.png',
-            'Atmosfera Pesada': 'atmosferaPesada.png',
-            'Auto Defesa Magica': 'autoDefesaMagica.png',
-            'Banir!': 'banir.png',
-            'Barreira de Gelo': 'barreiraDeGelo.png',
-            'Bola de fogo': 'bolaDeFogo.png',
-            'Bola de Fogo': 'bolaDeFogo.png',
-            'Broche de Cristal': 'brocheCristal.png',
-            'Convocação': 'convocacao.png',
-            'Determinação Cristalina': 'determinacaoCristalina.png',
-            'Dragão de Cristal': 'dragaoCristal.png',
-            'Dragast': 'dragast.png',
-            'Estatica': 'estatica.png',
-            'Exumação': 'exumacao.png',
-            'Fragmento Afiado': 'fragmentoAfiado.png',
-            'Garra espectral': 'garraEspectral.png',
-            'Golpes Pesados': 'golpesPesados.png',
-            'Grande Machado Sombrio': 'grandeMachadoSombrio.png',
-            'Homunculo Carniceiro': 'homunculoCarniceiro.png',
-            'Lamina de Cristal': 'laminaDeCristal.png',
-            'Maestria com Chamas': 'maestriaComChamas.png',
-            'Massacre Cristalino': 'massacreCristalino.png',
-            'Mirar na cabeça': 'mirarNaCabeca.png',
-            'Para-raios': 'paraRaios.png',
-            'Ponto Final': 'pontoFinal.png',
-            'Quebra!': 'quebra.png',
-            'Quimera': 'quimera.png',
-            'Quimera Negra': 'quimeraNegra.png',
-            'Ração de emergencia': 'racaoDeEmergencia.png',
-            'Rapieira de Cristal': 'rapieiraDeCristal.png',
-            'Risada Sarcástica': 'risadaSarcastica.png',
-            'Ritos Fúnebres': 'ritosFunebres.png',
-            'Tristeza': 'tristeza.png',
-            'Vendaval Arcano': 'vendavalArcano.png'
-        };
-        Object.entries(cardArtFiles).forEach(([cardName, fileName]) => {
-            if (!this.textures.exists(cardName)) {
-                this.load.image(cardName, `images/cartas/${fileName}`);
-            }
-        });
+        preloadAllCardArts(this);
     }
 
     create ()

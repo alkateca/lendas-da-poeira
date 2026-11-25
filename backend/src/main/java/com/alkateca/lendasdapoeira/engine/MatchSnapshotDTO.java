@@ -101,6 +101,7 @@ public class MatchSnapshotDTO {
     public static class HeroSnapshotDTO {
         private UUID uuid;
         private String cardName;
+        private String imagem;
         private String color;
         private String rarity;
         private String cardSet;
@@ -144,6 +145,7 @@ public class MatchSnapshotDTO {
     public static class CardSnapshotDTO {
         private UUID uuid;
         private String cardName;
+        private String imagem;
         private String cardType;
         private String color;
         private String rarity;

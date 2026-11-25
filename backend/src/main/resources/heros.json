@@ -25,7 +25,8 @@
     "unica": false,
     "keywords": [
       "AURA"
-    ]
+    ],
+    "imagem": "alucinacao_cintlante.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000004",
@@ -59,7 +60,8 @@
     "keywords": [
       "UMA_VEZ_POR_COMBATE",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "esquadrao_goblin.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000005",
@@ -92,7 +94,8 @@
     "unica": false,
     "keywords": [
       "AURA"
-    ]
+    ],
+    "imagem": "rei_goblin.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000006",
@@ -125,7 +128,8 @@
     "unica": false,
     "keywords": [
       "INICIO_DA_PARTIDA"
-    ]
+    ],
+    "imagem": "traidor_goblin.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000007",
@@ -159,7 +163,8 @@
     "unica": false,
     "keywords": [
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "rainha_goblin.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000008",
@@ -193,7 +198,8 @@
     "unica": false,
     "keywords": [
       "INICIO_DO_COMBATE"
-    ]
+    ],
+    "imagem": "quimera_carniceira.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000009",
@@ -227,7 +233,8 @@
     "keywords": [
       "INICIO_DO_COMBATE",
       "INVOCAR"
-    ]
+    ],
+    "imagem": "necromante_das_areias.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000010",
@@ -263,7 +270,8 @@
       "AURA",
       "FINAL_DO_COMBATE",
       "DANO_MAGICO"
-    ]
+    ],
+    "imagem": "isenora_santa_das_laminas.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000011",
@@ -299,7 +307,8 @@
       "INICIO_DO_COMBATE",
       "DANO_MAGICO",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "moyra_aprendiz_da_santa.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000012",
@@ -334,7 +343,8 @@
     "keywords": [
       "INICIO_DA_PARTIDA",
       "INVOCAR"
-    ]
+    ],
+    "imagem": "naelis_grande_artesa_de_cristais.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000013",
@@ -364,7 +374,8 @@
     "unica": false,
     "keywords": [
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "alka_lutador_do_grupo_dos_herois.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000014",
@@ -398,7 +409,8 @@
       "INICIO_DO_COMBATE",
       "FINAL_DO_COMBATE",
       "DANO_DIRETO"
-    ]
+    ],
+    "imagem": "leone_cleriga_do_grupo_dos_herois.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000015",
@@ -433,7 +445,8 @@
     "keywords": [
       "INICIO_DO_COMBATE",
       "INVOCAR"
-    ]
+    ],
+    "imagem": "enamor_o_grande_cavaleiro.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000016",
@@ -471,7 +484,8 @@
       "AURA",
       "MORTO",
       "VIVO"
-    ]
+    ],
+    "imagem": "ageus_constructo_cristalino.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000017",
@@ -505,7 +519,8 @@
     "unica": false,
     "keywords": [
       "UMA_VEZ_POR_COMBATE"
-    ]
+    ],
+    "imagem": "cavaleiro_onear.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000018",
@@ -541,7 +556,8 @@
       "INICIO_DO_COMBATE",
       "FINAL_DO_COMBATE",
       "DANO_MAGICO"
-    ]
+    ],
+    "imagem": "moyra_santa_das_laminas.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000019",
@@ -574,7 +590,8 @@
     "unica": false,
     "keywords": [
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "herois_lendarios_dos_goblin.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000020",
@@ -604,7 +621,8 @@
     "unica": false,
     "keywords": [
       "INICIO_DO_COMBATE"
-    ]
+    ],
+    "imagem": "kael_domador_de_feras.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000021",
@@ -639,7 +657,8 @@
     "keywords": [
       "INICIO_DO_COMBATE",
       "DANO_DIRETO"
-    ]
+    ],
+    "imagem": "behemoth_29a.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000022",
@@ -675,7 +694,8 @@
     "keywords": [
       "INICIO_DO_COMBATE",
       "INVOCAR"
-    ]
+    ],
+    "imagem": "rapinaria_7b3.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000023",
@@ -713,7 +733,8 @@
       "INICIO_DO_COMBATE",
       "FINAL_DO_COMBATE",
       "DANO_DIRETO"
-    ]
+    ],
+    "imagem": "kael_cavaleiro_bestial.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000024",
@@ -749,7 +770,8 @@
       "AURA",
       "MORTO",
       "VULNERABILIDADE"
-    ]
+    ],
+    "imagem": "hati_constructo_gelido.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000025",
@@ -784,7 +806,8 @@
     "keywords": [
       "INICIO_DO_COMBATE",
       "VULNERABILIDADE"
-    ]
+    ],
+    "imagem": "skoll_espreitador_solar.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000026",
@@ -820,7 +843,8 @@
       "INICIO_DA_PARTIDA",
       "INICIO_DO_COMBATE",
       "VULNERABILIDADE"
-    ]
+    ],
+    "imagem": "fenrir_o_grande_devorador.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000027",
@@ -854,7 +878,8 @@
       "AURA",
       "INICIO_DO_COMBATE",
       "INVOCAR"
-    ]
+    ],
+    "imagem": "oraculo_real.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000028",
@@ -886,7 +911,8 @@
     "unica": false,
     "keywords": [
       "INICIO_DO_COMBATE"
-    ]
+    ],
+    "imagem": "portador_da_chama.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000029",
@@ -921,7 +947,8 @@
     "keywords": [
       "EMPUNHADURA",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "constructo_fantasmagorico_guardiao_perpetuo.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000030",
@@ -951,7 +978,8 @@
     "unica": false,
     "keywords": [
       "INICIO_DO_COMBATE"
-    ]
+    ],
+    "imagem": "xia_cacador_de_bestas.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000031",
@@ -981,7 +1009,8 @@
     "unica": false,
     "keywords": [
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "asahum_cacadora_de_bestas.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000032",
@@ -1014,7 +1043,8 @@
     "keywords": [
       "EMPUNHADURA",
       "INICIO_DO_COMBATE"
-    ]
+    ],
+    "imagem": "constructo_de_combate_arsenal_vivo.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000033",
@@ -1050,7 +1080,8 @@
       "DANO_BONUS",
       "INICIO_DO_COMBATE",
       "INVOCAR"
-    ]
+    ],
+    "imagem": "xama_das_cinzas.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000034",
@@ -1085,7 +1116,8 @@
       "FINAL_DO_COMBATE",
       "DANO_MAGICO",
       "INVOCAR"
-    ]
+    ],
+    "imagem": "alix_dragao_flamejante.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000035",
@@ -1120,7 +1152,8 @@
     "keywords": [
       "INICIO_DA_PARTIDA",
       "INICIO_DO_COMBATE"
-    ]
+    ],
+    "imagem": "constructo_das_chamas_sif.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000036",
@@ -1152,7 +1185,8 @@
       "INICIO_DO_COMBATE",
       "INVOCAR",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "chefe_carrasco.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000037",
@@ -1183,7 +1217,8 @@
     "keywords": [
       "AURA",
       "MORTO"
-    ]
+    ],
+    "imagem": "izeref_executor_da_ordem_necrotica.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000038",
@@ -1215,7 +1250,8 @@
     "unica": false,
     "keywords": [
       "AURA"
-    ]
+    ],
+    "imagem": "constructo_carniceiro.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000039",
@@ -1252,7 +1288,8 @@
       "INICIO_DO_COMBATE",
       "VULNERABILIDADE",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "grande_inquisidor_vael_voz_do_trono.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000040",
@@ -1285,7 +1322,8 @@
     "keywords": [
       "FINAL_DO_COMBATE",
       "DANO_MAGICO"
-    ]
+    ],
+    "imagem": "justicar_elyon_balanca_imutavel.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000041",
@@ -1321,7 +1359,8 @@
       "AURA",
       "INVOCAR",
       "INICIO_DO_COMBATE"
-    ]
+    ],
+    "imagem": "constructo_arquivista.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000042",
@@ -1352,7 +1391,8 @@
     "keywords": [
       "AURA",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "alevyr_da_forja.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000043",
@@ -1384,7 +1424,8 @@
     "unica": false,
     "keywords": [
       "AURA"
-    ]
+    ],
+    "imagem": "constructo_da_caldeira.png"
   },
   {
     "uuid": "10000000-0000-0000-0000-000000000044",
@@ -1416,6 +1457,7 @@
       "INICIO_DO_COMBATE",
       "INVOCAR",
       "FINAL_DO_COMBATE"
-    ]
+    ],
+    "imagem": "mestra_da_forja.png"
   }
 ]

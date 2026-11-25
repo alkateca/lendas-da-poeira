@@ -1,5 +1,15 @@
 import Phaser from 'phaser';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
+import { BOARD_LAYOUT } from '../config/BoardCoordinates.js';
+import HeroCardPrefab from '../prefabs/HeroCardPrefab.js';
+import PlayableCardPrefab from '../prefabs/PlayableCardPrefab.js';
+import {
+    preloadAllCardArts,
+    ensureCatalogLoaded,
+    resolveFullCardOrHeroData,
+    attachStandardCardPreviewToScene,
+    applyCrtPipelineToScene
+} from '../config/cardArtConfig.js';
 import { API_BASE_URL } from '../config/apiConfig.js';
 
 export default class ProfileScene extends Phaser.Scene {
@@ -28,19 +38,26 @@ export default class ProfileScene extends Phaser.Scene {
         this.matchScrollY = 0;
     }
 
+    preload() {
+        this.load.setPath('assets');
+        preloadAllCardArts(this);
+    }
+
     async create() {
-        if (this.renderer.pipelines) {
-            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
-            this.cameras.main.setPostPipeline('CRTPostFX');
-        }
+        applyCrtPipelineToScene(this, CRTPostFXPipeline);
 
         this.drawBackgroundAndLayout();
         this.createTopHeader();
         this.createHistoryPanels();
         this.setupScrollingEvents();
+        attachStandardCardPreviewToScene(this, PlayableCardPrefab);
 
         this.renderBothHistories();
-        await this.syncPlayerFromServer();
+        await ensureCatalogLoaded();
+        if (this.sys && this.sys.isActive()) {
+            this.renderBothHistories();
+            await this.syncPlayerFromServer();
+        }
     }
 
     async syncPlayerFromServer() {
@@ -355,31 +372,80 @@ export default class ProfileScene extends Phaser.Scene {
 
             cursorY += rowH + 6;
 
-            // Expansão das cartas sorteadas no Booster
+            // Expansão das cartas sorteadas no Booster (renderizadas com imagem e dados iguais à partida)
             if (isExpanded) {
-                const cards = Array.isArray(entry.boosterCards) ? entry.boosterCards : [];
-                const lines = cards.length > 0
-                    ? cards.map((cName, cIdx) => `  ${cIdx + 1}. ✦ ${cName}`).join('\n')
-                    : '  (Nenhuma carta detalhada neste pacote)';
-                const detailH = Math.max(54, cards.length * 22 + 28);
+                const cards = Array.isArray(entry.boosterCards) ? entry.boosterCards : (Array.isArray(entry.cardsReceived) ? entry.cardsReceived : []);
+                if (cards.length > 0) {
+                    const cardScale = 0.92;
+                    const scaledH = BOARD_LAYOUT.MEDIUM_CARD.height * cardScale;
+                    const detailH = scaledH + 46;
 
-                const detailBg = this.add.rectangle(rowW / 2, cursorY + detailH / 2 - 4, rowW - 16, detailH, 0x0f172a, 0.98)
-                    .setStrokeStyle(1.5, 0xca8a04);
-                const detailHeader = this.add.text(26, cursorY + 6, 'CARTAS QUE VIERAM NO BOOSTER:', {
-                    fontFamily: 'IoskeleyMono, monospace',
-                    fontSize: '11px',
-                    color: '#facc15',
-                    fontStyle: 'bold'
-                }).setOrigin(0, 0).setResolution(2);
-                const detailBody = this.add.text(26, cursorY + 24, lines, {
-                    fontFamily: 'IoskeleyMono, monospace',
-                    fontSize: '12.5px',
-                    color: '#e2e8f0',
-                    lineSpacing: 3
-                }).setOrigin(0, 0).setResolution(2);
+                    const detailBg = this.add.rectangle(rowW / 2, cursorY + detailH / 2 - 4, rowW - 16, detailH, 0x0f172a, 0.98)
+                        .setStrokeStyle(1.5, 0xca8a04);
+                    const detailHeader = this.add.text(26, cursorY + 6, 'CARTAS QUE VIERAM NO BOOSTER (Passe o mouse para ampliar):', {
+                        fontFamily: 'IoskeleyMono, monospace',
+                        fontSize: '11px',
+                        color: '#facc15',
+                        fontStyle: 'bold'
+                    }).setOrigin(0, 0).setResolution(2);
 
-                this.purchaseListContainer.add([detailBg, detailHeader, detailBody]);
-                cursorY += detailH + 8;
+                    this.purchaseListContainer.add([detailBg, detailHeader]);
+
+                    const stepX = 160;
+                    const startX = (rowW / 2) - ((cards.length - 1) * stepX) / 2;
+
+                    cards.forEach((cName, cIdx) => {
+                        const fullDto = resolveFullCardOrHeroData(cName);
+                        const isHero = fullDto.cardType === 'HERO';
+                        const cx = startX + cIdx * stepX;
+                        const cy = cursorY + 26 + scaledH / 2;
+
+                        const wrapper = this.add.container(cx, cy).setScale(cardScale);
+                        let cardModel;
+                        if (isHero) {
+                            cardModel = new HeroCardPrefab(
+                                this,
+                                0,
+                                0,
+                                {
+                                    ...fullDto,
+                                    vidaAtual: fullDto.vidaMaxima ?? fullDto.vidaAtual ?? 15,
+                                    estaVivo: true,
+                                    estaAtivo: true
+                                },
+                                false
+                            );
+                            cardModel.setShowFullText(true);
+                            this.input.setDraggable(cardModel, false);
+                        } else {
+                            cardModel = new PlayableCardPrefab(
+                                this,
+                                0,
+                                0,
+                                { ...fullDto, faceUp: true },
+                                false,
+                                'MEDIUM',
+                                0
+                            );
+                            cardModel.setShowFullText(true);
+                        }
+                        wrapper.add(cardModel);
+                        this.purchaseListContainer.add(wrapper);
+                    });
+
+                    cursorY += detailH + 8;
+                } else {
+                    const detailH = 54;
+                    const detailBg = this.add.rectangle(rowW / 2, cursorY + detailH / 2 - 4, rowW - 16, detailH, 0x0f172a, 0.98)
+                        .setStrokeStyle(1.5, 0xca8a04);
+                    const detailBody = this.add.text(26, cursorY + 16, '(Nenhuma carta detalhada neste pacote)', {
+                        fontFamily: 'IoskeleyMono, monospace',
+                        fontSize: '12.5px',
+                        color: '#e2e8f0'
+                    }).setOrigin(0, 0).setResolution(2);
+                    this.purchaseListContainer.add([detailBg, detailBody]);
+                    cursorY += detailH + 8;
+                }
             }
         });
 
@@ -455,50 +521,65 @@ export default class ProfileScene extends Phaser.Scene {
             this.matchListContainer.add([rowBg, leftBar, matchupTxt, resultBadge]);
             cursorY += rowH + 6;
 
-            // Expansão ao clicar: mostra quem ganhou, pontuação e os heróis usados por cada jogador
+            // Expansão ao clicar: mostra quem ganhou, pontuação e os cards completos dos heróis usados por cada jogador
             if (isExpanded) {
-                const detailH = 104;
+                const pHeroList = Array.isArray(entry.playerHeroes) ? entry.playerHeroes : [];
+                const oHeroList = Array.isArray(entry.opponentHeroes) ? entry.opponentHeroes : [];
+                const hasHeroCards = pHeroList.length > 0 || oHeroList.length > 0;
+                const heroScale = 0.78;
+                const scaledH = BOARD_LAYOUT.MEDIUM_CARD.height * heroScale;
+                const detailH = hasHeroCards ? (scaledH + 74) : 104;
+
                 const detailBg = this.add.rectangle(rowW / 2, cursorY + detailH / 2 - 4, rowW - 16, detailH, 0x0f172a, 0.98)
                     .setStrokeStyle(1.5, accentColor);
 
                 const winnerStr = entry.winnerName || (isWin ? pName : oppName);
                 const pScore = entry.playerScore ?? 0;
                 const oScore = entry.opponentScore ?? 0;
-                const pHeroes = (entry.playerHeroes && entry.playerHeroes.length > 0)
-                    ? entry.playerHeroes.join('  •  ')
-                    : 'Não informado';
-                const oHeroes = (entry.opponentHeroes && entry.opponentHeroes.length > 0)
-                    ? entry.opponentHeroes.join('  •  ')
-                    : 'Não informado';
-
                 const line1 = `🏅 Vencedor: ${winnerStr}     |     📊 Pontuação: ${pName} (${pScore} pts)  ×  ${oppName} (${oScore} pts)`;
-                const line2 = `🛡️ Heróis de ${pName}: ${pHeroes}`;
-                const line3 = `⚔️ Heróis de ${oppName}: ${oHeroes}`;
 
-                const txt1 = this.add.text(26, cursorY + 12, line1, {
+                const txt1 = this.add.text(26, cursorY + 10, line1, {
                     fontFamily: 'IoskeleyMono, monospace',
                     fontSize: '12.5px',
                     color: '#fde047',
                     fontStyle: 'bold'
                 }).setOrigin(0, 0).setResolution(2);
 
-                const txt2 = this.add.text(26, cursorY + 40, line2, {
-                    fontFamily: 'IoskeleyMono, monospace',
-                    fontSize: '12px',
-                    color: '#86efac',
-                    fontStyle: 'bold',
-                    wordWrap: { width: rowW - 48 }
-                }).setOrigin(0, 0).setResolution(2);
+                this.matchListContainer.add([detailBg, txt1]);
 
-                const txt3 = this.add.text(26, cursorY + 68, line3, {
-                    fontFamily: 'IoskeleyMono, monospace',
-                    fontSize: '12px',
-                    color: '#fca5a5',
-                    fontStyle: 'bold',
-                    wordWrap: { width: rowW - 48 }
-                }).setOrigin(0, 0).setResolution(2);
+                if (hasHeroCards) {
+                    const pLabel = this.add.text(215, cursorY + 34, `🛡️ Equipe de ${pName}`, {
+                        fontFamily: 'IoskeleyMono, monospace', fontSize: '11.5px', color: '#86efac', fontStyle: 'bold'
+                    }).setOrigin(0.5, 0).setResolution(2);
+                    const oLabel = this.add.text(635, cursorY + 34, `⚔️ Equipe de ${oppName}`, {
+                        fontFamily: 'IoskeleyMono, monospace', fontSize: '11.5px', color: '#fca5a5', fontStyle: 'bold'
+                    }).setOrigin(0.5, 0).setResolution(2);
+                    this.matchListContainer.add([pLabel, oLabel]);
 
-                this.matchListContainer.add([detailBg, txt1, txt2, txt3]);
+                    const cardY = cursorY + 56 + scaledH / 2;
+                    pHeroList.slice(0, 3).forEach((hName, hIdx) => {
+                        const dto = resolveFullCardOrHeroData(hName, true);
+                        const hx = 95 + hIdx * 120;
+                        const wrap = this.add.container(hx, cardY).setScale(heroScale);
+                        const hPrefab = new HeroCardPrefab(this, 0, 0, { ...dto, vidaAtual: dto.vidaMaxima ?? 15, estaVivo: true, estaAtivo: true }, false);
+                        hPrefab.setShowFullText(true);
+                        this.input.setDraggable(hPrefab, false);
+                        wrap.add(hPrefab);
+                        this.matchListContainer.add(wrap);
+                    });
+
+                    oHeroList.slice(0, 3).forEach((hName, hIdx) => {
+                        const dto = resolveFullCardOrHeroData(hName, true);
+                        const hx = 515 + hIdx * 120;
+                        const wrap = this.add.container(hx, cardY).setScale(heroScale);
+                        const hPrefab = new HeroCardPrefab(this, 0, 0, { ...dto, vidaAtual: dto.vidaMaxima ?? 15, estaVivo: true, estaAtivo: true }, true);
+                        hPrefab.setShowFullText(true);
+                        this.input.setDraggable(hPrefab, false);
+                        wrap.add(hPrefab);
+                        this.matchListContainer.add(wrap);
+                    });
+                }
+
                 cursorY += detailH + 8;
             }
         });

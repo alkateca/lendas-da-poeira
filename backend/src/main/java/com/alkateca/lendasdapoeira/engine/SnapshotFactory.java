@@ -224,6 +224,7 @@ public class SnapshotFactory {
         MatchSnapshotDTO.HeroSnapshotDTO dto = new MatchSnapshotDTO.HeroSnapshotDTO();
         dto.setUuid(hero.getUuid());
         dto.setCardName(hero.getCardName());
+        dto.setImagem(hero.getImagem());
         dto.setColor(hero.getColor() != null ? hero.getColor().name() : "NEUTRAL");
         dto.setRarity(hero.getRarity() != null ? hero.getRarity().name() : null);
         dto.setCardSet(hero.getCardSet() != null ? hero.getCardSet().name() : null);
@@ -279,6 +280,7 @@ public class SnapshotFactory {
         MatchSnapshotDTO.CardSnapshotDTO dto = new MatchSnapshotDTO.CardSnapshotDTO();
         dto.setUuid(card.getUuid());
         dto.setCardName(card.getCardName());
+        dto.setImagem(card.getImagem());
         dto.setCardType(card.getCardType() != null ? card.getCardType().name() : "UNKNOWN");
         dto.setColor(card.getColor() != null ? card.getColor().name() : "NEUTRAL");
         dto.setRarity(card.getRarity() != null ? card.getRarity().name() : null);
@@ -421,6 +423,7 @@ public class SnapshotFactory {
             boolean showFace = isViewerOwner || c.isFaceUp();
             cardCopy.setFaceUp(showFace);
             cardCopy.setCardName(showFace ? c.getCardName() : "Carta Oculta");
+            cardCopy.setImagem(showFace ? c.getImagem() : null);
             cardCopy.setCardType(showFace ? c.getCardType() : "HIDDEN");
             cardCopy.setColor(showFace ? c.getColor() : "NEUTRAL");
             cardCopy.setItemType(showFace ? c.getItemType() : "NENHUM");

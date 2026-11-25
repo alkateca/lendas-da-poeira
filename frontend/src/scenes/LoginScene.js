@@ -22,7 +22,9 @@ export default class LoginScene extends Phaser.Scene {
 
     create() {
         if (this.renderer.pipelines) {
-            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
+            if (!this.renderer.pipelines.has('CRTPostFX')) {
+                this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
+            }
             this.cameras.main.setPostPipeline('CRTPostFX');
         }
 

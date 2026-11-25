@@ -1,7 +1,16 @@
 import Phaser from 'phaser';
 import { BOARD_LAYOUT } from '../config/BoardCoordinates.js';
 import CRTPostFXPipeline from '../fx/CRTPostFXPipeline.js';
+import HeroCardPrefab from '../prefabs/HeroCardPrefab.js';
+import PlayableCardPrefab from '../prefabs/PlayableCardPrefab.js';
 import { API_BASE_URL } from '../config/apiConfig.js';
+import {
+    preloadAllCardArts,
+    ensureCatalogLoaded,
+    resolveFullCardOrHeroData,
+    attachStandardCardPreviewToScene,
+    applyCrtPipelineToScene
+} from '../config/cardArtConfig.js';
 
 export default class ShopScene extends Phaser.Scene {
     constructor() {
@@ -48,13 +57,11 @@ export default class ShopScene extends Phaser.Scene {
         if (!this.textures.exists('ui_p5_crt_button')) {
             this.load.svg('ui_p5_crt_button', 'images/ui/p5_crt_button.svg', { width: 520, height: 84 });
         }
+        preloadAllCardArts(this);
     }
 
     async create() {
-        if (this.renderer.pipelines) {
-            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
-            this.cameras.main.setPostPipeline('CRTPostFX');
-        }
+        applyCrtPipelineToScene(this, CRTPostFXPipeline);
 
         this.drawShopBackground();
         this.createTopBar();
@@ -62,10 +69,14 @@ export default class ShopScene extends Phaser.Scene {
 
         this.productsContainer = this.add.container(0, 0);
         this.createBoosterRevealModal();
+        attachStandardCardPreviewToScene(this, PlayableCardPrefab);
 
+        await ensureCatalogLoaded();
         await this.fetchProductsFromServer();
         await this.fetchMarketListingsFromServer();
-        this.renderProductsGrid();
+        if (this.sys && this.sys.isActive()) {
+            this.renderProductsGrid();
+        }
     }
 
     drawShopBackground() {
@@ -209,6 +220,7 @@ export default class ShopScene extends Phaser.Scene {
     }
 
     renderProductsGrid() {
+        if (this.hideLargeCardPreview) this.hideLargeCardPreview();
         this.productsContainer.removeAll(true);
 
         if (this.activeTab === 'MARKET') {
@@ -248,43 +260,64 @@ export default class ShopScene extends Phaser.Scene {
 
     createListingCard(x, y, listing) {
         const card = this.add.container(x, y);
-        const w = 360;
-        const h = 300;
+        const cardScale = 1.2;
+        const scaledW = BOARD_LAYOUT.MEDIUM_CARD.width * cardScale;
+        const scaledH = BOARD_LAYOUT.MEDIUM_CARD.height * cardScale;
         const isOwnListing = listing.sellerId === this.player.uuid;
         const canAfford = this.getGoldBalance() >= listing.price;
 
-        const bg = this.add.rectangle(0, 0, w, h, 0xfaf8f5, 1).setStrokeStyle(3, 0x090d16);
-        const header = this.add.rectangle(0, -h / 2 + 34, w - 6, 62, 0x090d16);
+        const isHero = Boolean(listing.heroCard);
+        const fullDto = resolveFullCardOrHeroData(listing.cardName, isHero);
+        const scaleWrapper = this.add.container(0, -34).setScale(cardScale);
 
-        const title = this.add.text(0, -h / 2 + 34, listing.cardName, {
-            fontFamily: 'IoskeleyMono, monospace',
-            fontSize: '15px',
-            color: '#ffe600',
-            fontStyle: 'bold',
-            align: 'center',
-            wordWrap: { width: w - 24 }
-        }).setOrigin(0.5).setResolution(2);
+        let cardModel;
+        if (isHero) {
+            cardModel = new HeroCardPrefab(
+                this,
+                0,
+                0,
+                {
+                    ...fullDto,
+                    vidaAtual: fullDto.vidaMaxima ?? fullDto.vidaAtual ?? 15,
+                    estaVivo: true,
+                    estaAtivo: true
+                },
+                false
+            );
+            cardModel.setShowFullText(true);
+            this.input.setDraggable(cardModel, false);
+        } else {
+            cardModel = new PlayableCardPrefab(
+                this,
+                0,
+                0,
+                { ...fullDto, faceUp: true },
+                false,
+                'MEDIUM',
+                0
+            );
+            cardModel.setShowFullText(true);
+        }
 
-        const sellerTxt = this.add.text(0, -35, `Vendedor: ${listing.sellerName || 'Jogador'}`, {
-            fontFamily: 'IoskeleyMono, monospace',
-            fontSize: '13px',
-            color: '#334155',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setResolution(2);
+        cardModel.on('pointerover', () => {
+            this.productsContainer.bringToTop(card);
+        });
+        scaleWrapper.add(cardModel);
 
-        const priceBadge = this.add.rectangle(0, 18, 240, 42, 0xe6dec8).setStrokeStyle(2, 0x090d16);
-        const priceTxt = this.add.text(0, 18, `🪙 ${listing.price} GOLD`, {
+        const priceBadge = this.add.rectangle(0, scaledH / 2 - 14, scaledW + 36, 26, 0x090d16)
+            .setStrokeStyle(1.5, 0xffe600);
+        const priceTxt = this.add.text(0, scaledH / 2 - 14, `🪙 ${listing.price}G • ${listing.sellerName || 'Jogador'}`, {
             fontFamily: 'IoskeleyMono, monospace',
-            fontSize: '17px',
-            color: isOwnListing ? '#090d16' : (canAfford ? '#15803d' : '#dc2626'),
+            fontSize: '11.5px',
+            color: isOwnListing ? '#ffe600' : (canAfford ? '#4ade80' : '#f87171'),
             fontStyle: 'bold'
         }).setOrigin(0.5).setResolution(2);
 
         const btnColor = isOwnListing ? 0xd97706 : (canAfford ? 0x16a34a : 0x64748b);
         const btnLabel = isOwnListing ? '↩ REMOVER ANÚNCIO' : (canAfford ? '⚡ COMPRAR CARTA' : '🔒 SALDO INSUFICIENTE');
 
-        const actionBtnBg = this.add.rectangle(0, 95, 300, 50, btnColor)
-            .setStrokeStyle(3, 0x090d16)
+        const actionBtnBg = this.add.rectangle(0, scaledH / 2 + 18, scaledW + 36, 34, btnColor)
+            .setStrokeStyle(2, 0xffffff)
             .setInteractive({ useHandCursor: isOwnListing || canAfford })
             .on('pointerdown', () => {
                 if (isOwnListing) {
@@ -296,14 +329,14 @@ export default class ShopScene extends Phaser.Scene {
                 }
             });
 
-        const actionBtnTxt = this.add.text(0, 95, btnLabel, {
+        const actionBtnTxt = this.add.text(0, scaledH / 2 + 18, btnLabel, {
             fontFamily: 'IoskeleyMono, monospace',
-            fontSize: '15px',
+            fontSize: '12.5px',
             color: '#ffffff',
             fontStyle: 'bold'
         }).setOrigin(0.5).setResolution(2);
 
-        card.add([bg, header, title, sellerTxt, priceBadge, priceTxt, actionBtnBg, actionBtnTxt]);
+        card.add([scaleWrapper, priceBadge, priceTxt, actionBtnBg, actionBtnTxt]);
         this.productsContainer.add(card);
     }
 
@@ -620,35 +653,41 @@ export default class ShopScene extends Phaser.Scene {
                 const h = 352;
                 const glowRect = this.add.rectangle(0, 0, w + 12, h + 12, glowColor, 1)
                     .setStrokeStyle(3, 0x090d16);
-                const bgPaper = this.add.rectangle(0, 0, w, h, 0xfaf8f5, 1);
-                const frameKey = cardDto.isHero ? 'card_frame_hero' : 'card_frame_playable';
-                const frameImg = this.add.image(0, 0, frameKey).setDisplaySize(w, h);
 
-                const nameTxt = this.add.text(0, -h / 2 + 20, cardDto.cardName, {
-                    fontFamily: 'IoskeleyMono, monospace',
-                    fontSize: '13.5px',
-                    color: '#090d16',
-                    fontStyle: 'bold',
-                    align: 'center',
-                    wordWrap: { width: w * 0.82 }
-                }).setOrigin(0.5).setResolution(2);
+                const isHero = Boolean(cardDto.isHero || cardDto.cardType === 'HERO');
+                const fullDto = resolveFullCardOrHeroData(cardDto, isHero);
+                const cardScale = w / BOARD_LAYOUT.MEDIUM_CARD.width;
+                const scaleWrapper = this.add.container(0, 0).setScale(cardScale);
 
-                const rarityBadge = this.add.rectangle(0, -28, w - 24, 26, 0x090d16);
-                const rarityTxt = this.add.text(0, -28, `★ ${cardDto.rarity} • ${cardDto.cardType}`, {
-                    fontFamily: 'IoskeleyMono, monospace',
-                    fontSize: '11.5px',
-                    color: '#ffe600',
-                    fontStyle: 'bold'
-                }).setOrigin(0.5).setResolution(2);
-
-                const descTxt = this.add.text(-w / 2 + 16, -4, cardDto.descricao || '', {
-                    fontFamily: 'IoskeleyMono, monospace',
-                    fontSize: '11.5px',
-                    color: '#090d16',
-                    fontStyle: 'bold',
-                    align: 'left',
-                    wordWrap: { width: w - 36 }
-                }).setOrigin(0, 0).setResolution(2);
+                let cardModel;
+                if (isHero) {
+                    cardModel = new HeroCardPrefab(
+                        this,
+                        0,
+                        0,
+                        {
+                            ...fullDto,
+                            vidaAtual: fullDto.vidaMaxima ?? fullDto.vidaAtual ?? 15,
+                            estaVivo: true,
+                            estaAtivo: true
+                        },
+                        false
+                    );
+                    cardModel.setShowFullText(true);
+                    this.input.setDraggable(cardModel, false);
+                } else {
+                    cardModel = new PlayableCardPrefab(
+                        this,
+                        0,
+                        0,
+                        { ...fullDto, faceUp: true },
+                        false,
+                        'MEDIUM',
+                        0
+                    );
+                    cardModel.setShowFullText(true);
+                }
+                scaleWrapper.add(cardModel);
 
                 const ownedTag = this.add.text(0, h / 2 + 22, `Na Coleção: ${cardDto.ownedCopiesAfterPull}x`, {
                     fontFamily: 'IoskeleyMono, monospace',
@@ -657,7 +696,7 @@ export default class ShopScene extends Phaser.Scene {
                     fontStyle: 'bold'
                 }).setOrigin(0.5).setResolution(2);
 
-                slotContainer.add([glowRect, bgPaper, frameImg, nameTxt, rarityBadge, rarityTxt, descTxt, ownedTag]);
+                slotContainer.add([glowRect, scaleWrapper, ownedTag]);
 
                 this.tweens.add({
                     targets: slotContainer,

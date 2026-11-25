@@ -23,6 +23,7 @@ public class Card {
 
     private UUID uuid;
     private String cardName;
+    private String imagem;
     private CardType cardType;
     private Colors color;
     private CardRarity rarity;

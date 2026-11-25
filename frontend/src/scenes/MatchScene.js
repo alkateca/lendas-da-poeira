@@ -11,6 +11,7 @@ import MatchRecapSidebar from '../ui/MatchRecapSidebar.js';
 import { formatCardDescriptionWithKeywords } from '../config/keywordsConfig.js';
 import { normalizeCountersList, computeCounterLayoutPositions } from '../config/counterConfig.js';
 import { API_BASE_URL } from '../config/apiConfig.js';
+import { preloadAllCardArts, resolveCardArtTextureKey, applyCrtPipelineToScene } from '../config/cardArtConfig.js';
 
 export default class MatchScene extends Phaser.Scene {
     constructor() {
@@ -140,71 +141,11 @@ export default class MatchScene extends Phaser.Scene {
             this.load.image('vfx_cura_raw', 'images/HealingEffect_spritesheet.png');
         }
 
-        const cardKeys = [
-            'ataqueMagico', 'atmosferaPesada', 'autoDefesaMagica', 'banir', 'barreiraDeGelo',
-            'bolaDeFogo', 'brocheCristal', 'convocacao', 'determinacaoCristalina', 'dragaoCristal',
-            'dragast', 'estatica', 'exumacao', 'fragmentoAfiado', 'garraEspectral',
-            'golpesPesados', 'grandeMachadoSombrio', 'homunculoCarniceiro', 'laminaDeCristal',
-            'maestriaComChamas', 'massacreCristalino', 'mirarNaCabeca', 'paraRaios', 'pontoFinal',
-            'quebra', 'quimera', 'quimeraNegra', 'racaoDeEmergencia', 'rapieiraDeCristal',
-            'risadaSarcastica', 'ritosFunebres', 'tristeza', 'vendavalArcano'
-        ];
-        cardKeys.forEach(key => {
-            if (!this.textures.exists(key)) {
-                this.load.image(key, `images/cartas/${key}.png`);
-            }
-        });
-
-        // Mapeamento das artes de cartas existentes em assets/images/cartas/
-        const cardArtFiles = {
-            'Ataque Mágico': 'ataqueMagico.png',
-            'Atmosfera Pesada': 'atmosferaPesada.png',
-            'Auto Defesa Magica': 'autoDefesaMagica.png',
-            'Banir!': 'banir.png',
-            'Barreira de Gelo': 'barreiraDeGelo.png',
-            'Bola de fogo': 'bolaDeFogo.png',
-            'Bola de Fogo': 'bolaDeFogo.png',
-            'Broche de Cristal': 'brocheCristal.png',
-            'Convocação': 'convocacao.png',
-            'Determinação Cristalina': 'determinacaoCristalina.png',
-            'Dragão de Cristal': 'dragaoCristal.png',
-            'Dragast': 'dragast.png',
-            'Estatica': 'estatica.png',
-            'Exumação': 'exumacao.png',
-            'Fragmento Afiado': 'fragmentoAfiado.png',
-            'Garra espectral': 'garraEspectral.png',
-            'Golpes Pesados': 'golpesPesados.png',
-            'Grande Machado Sombrio': 'grandeMachadoSombrio.png',
-            'Homunculo Carniceiro': 'homunculoCarniceiro.png',
-            'Lamina de Cristal': 'laminaDeCristal.png',
-            'Maestria com Chamas': 'maestriaComChamas.png',
-            'Massacre Cristalino': 'massacreCristalino.png',
-            'Mirar na cabeça': 'mirarNaCabeca.png',
-            'Para-raios': 'paraRaios.png',
-            'Ponto Final': 'pontoFinal.png',
-            'Quebra!': 'quebra.png',
-            'Quimera': 'quimera.png',
-            'Quimera Negra': 'quimeraNegra.png',
-            'Ração de emergencia': 'racaoDeEmergencia.png',
-            'Rapieira de Cristal': 'rapieiraDeCristal.png',
-            'Risada Sarcástica': 'risadaSarcastica.png',
-            'Ritos Fúnebres': 'ritosFunebres.png',
-            'Tristeza': 'tristeza.png',
-            'Vendaval Arcano': 'vendavalArcano.png'
-        };
-
-        Object.entries(cardArtFiles).forEach(([cardName, fileName]) => {
-            if (!this.textures.exists(cardName)) {
-                this.load.image(cardName, `images/cartas/${fileName}`);
-            }
-        });
+        preloadAllCardArts(this);
     }
 
     create() {
-        if (this.renderer.pipelines) {
-            this.renderer.pipelines.addPostPipeline('CRTPostFX', CRTPostFXPipeline);
-            this.cameras.main.setPostPipeline('CRTPostFX');
-        }
+        applyCrtPipelineToScene(this, CRTPostFXPipeline);
 
         this.registerCombatAnimations();
         this.heroPrefabs.clear();
@@ -1224,12 +1165,7 @@ export default class MatchScene extends Phaser.Scene {
                 .setText(formatCardDescriptionWithKeywords(cardOrHeroDto.descricao || ''));
         }
 
-        const camelKey = PlayableCardPrefab.prototype.toCamelCaseKey(cardOrHeroDto.cardName);
-        const artKey = (cardOrHeroDto.imagem && this.textures.exists(cardOrHeroDto.imagem))
-            ? cardOrHeroDto.imagem
-            : (this.textures.exists(cardOrHeroDto.cardName)
-                ? cardOrHeroDto.cardName
-                : (camelKey && this.textures.exists(camelKey) ? camelKey : null));
+        const artKey = resolveCardArtTextureKey(this, cardOrHeroDto);
 
         if (artKey) {
             if (!this.lpArtSprite) {
